@@ -87,7 +87,7 @@ exports.run = function(files, _opts, runDone) {
 						c.end();
 						return cb();
 					}
-					c.post(post, function(err, messageId) {
+					c.post(post.data, function(err, messageId) {
 						if(!err) {
 							// TODO: add message-id
 						}

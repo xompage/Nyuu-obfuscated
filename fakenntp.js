@@ -8,11 +8,16 @@ function DiskNNTP(opts) {
 	this.path = opts.path + '/';
 }
 
+var crypto = require('crypto');
+
 DiskNNTP.prototype = {
 	connect: process.nextTick.bind(process),
 	end: function() {},
 	post: function(post, cb) {
-		fs.writeFile(this.path + post.messageId, post.data, cb);
+		var messageId = crypto.psuedoRandomBytes(24).toString('hex') + '@nyuu';
+		fs.writeFile(this.path + messageId, post, function(err) {
+			cb(err, messageId);
+		});
 	}
 };
 
