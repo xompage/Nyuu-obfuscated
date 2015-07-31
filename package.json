@@ -1,0 +1,13 @@
+{
+  "name": "Nyuu",
+  "version": "0.1.0",
+  "description": "Usenet binary poster",
+  "license": "Public Domain",
+  "author": "Anime Tosho",
+  "main": "index.js",
+  "dependencies" : {
+    "async" : "*",
+    "binary-reader" : "*",
+    "yencode" : "*"
+  }
+}
