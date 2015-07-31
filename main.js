@@ -16,13 +16,19 @@ var subject_func = function(comment, comment2, filename, part, parts, size) {
 	return ret + '"' + filename.replace(/"/g, '') + '" yEnc (' + part + '/' + parts + ') ' + size + (comment2 ? ' ' + comment2 : '');
 };
 
-exports.run = function(files, opts, runDone) {
-	var _opts = require('./config');
-	for(var i in _opts)
-		if(!(i in opts))
+exports.run = function(files, _opts, runDone) {
+	var defaultOpts = require('./config');
+	var opts = {};
+	for(var i in defaultOpts)
+		if(i in _opts)
 			opts[i] = _opts[i];
+		else
+			opts[i] = defaultOpts[i];
 	
-	var sf = subject_func.bind(null, opts.comment, opts.comment2);
+	// TODO: need to do a clone + somehow set subject even though case can be bad
+	if(!opts.postHeaders.Subject)
+		opts.postHeaders.Subject = subject_func.bind(null, opts.comment, opts.comment2);
+	
 	var nzbFiles = [];
 	
 	async.parallel([
@@ -40,7 +46,7 @@ exports.run = function(files, opts, runDone) {
 					var r = reader.open(file, readerOpts);
 					exports.log.info('Processing file %s...', file);
 					
-					var enc = new ArticleEncoder(fnBase, stats.size, Math.ceil(stats.size / opts.articleSize), sf, opts.bytesPerLine);
+					var enc = new ArticleEncoder(fnBase, stats.size, Math.ceil(stats.size / opts.articleSize), opts.bytesPerLine);
 					var articles = [];
 					async.until(r.isEOF.bind(r), function(cb) {
 						r.read(opts.articleSize, function(size, buffer) {
@@ -81,7 +87,7 @@ exports.run = function(files, opts, runDone) {
 						c.end();
 						return cb();
 					}
-					c.post(post, function(err, result) {
+					c.post(post, function(err, messageId) {
 						if(!err) {
 							// TODO: add message-id
 						}

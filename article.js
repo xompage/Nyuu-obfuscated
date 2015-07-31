@@ -4,7 +4,7 @@ var y = require('yencode');
 var ENCODING = 'utf8';
 
 // TODO: should we switch to single encoding mode if only 1 part?
-function MultiEncoder(filename, size, parts, subject_func, line_size) {
+function MultiEncoder(filename, size, parts, line_size) {
 	if(!line_size) line_size = 128;
 	
 	this.size = size;
@@ -16,7 +16,7 @@ function MultiEncoder(filename, size, parts, subject_func, line_size) {
 	this.crc = new Buffer([0,0,0,0]);
 	
 	filename = filename.replace(/\r\n\0/g, '').substr(0, 256);
-	this.subject_func = subject_func.bind(null, filename);
+	this.filename = filename;
 	this.yInfo = new Buffer(' total='+parts+' line='+line_size+' size='+size+' name='+filename+'\r\n', ENCODING);
 }
 MultiEncoder.prototype = {
@@ -37,22 +37,16 @@ MultiEncoder.prototype = {
 			fullCrc = ' crc32='+this.crc.toString('hex');
 		}
 		
-		var messageId = ''; // TODO: auto generate here?
 		var subject;
 		var headerData = '';
 		for(var h in headers) {
 			var v = headers[h], hl = h.toLowerCase();
+			if(typeof v == 'function')
+				v = v(this.filename, this.part, this.parts, this.size);
+			
 			// hack for inserting part # in subject line
 			if(hl == 'subject') {
-				if(!v && this.subject_func)
-					v = this.subject_func(this.part, this.parts, this.size);
 				subject = v;
-			} else if(hl == 'message-id') {
-				if(v) messageId = v;
-				else {
-					// TODO: auto-generate
-					messageId = v = 'BLARGH';
-				}
 			}
 			
 			var header = h + ': ' + v.replace(/[\r\n]/g, '');
@@ -75,7 +69,6 @@ MultiEncoder.prototype = {
 		
 		this.pos = end;
 		return {
-			messageId: messageId,
 			data: ret,
 			subject: subject,
 			part: this.part

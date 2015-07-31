@@ -27,6 +27,7 @@ module.exports = {
 	comment2: '', // subject post-comment
 	// TODO: subject format
 	
+	// if any of the following are functions, they'll be called with args(filename, part, parts, size)
 	postHeaders: {
 		Subject: null, // will be overwritten if set to null
 		From: 'A Poster <a.poster@example.com>',
@@ -35,7 +36,8 @@ module.exports = {
 		Date: (new Date()).toISOString(),
 		Path: '',
 		//Organization: '',
-		'User-Agent': 'Nyuu'.
+		'User-Agent': 'Nyuu',
+		//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; }
 	},
 	
 	nzb: {
