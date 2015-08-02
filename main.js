@@ -4,7 +4,7 @@ var async = require('async');
 var path = require('path');
 var fs = require('fs');
 var reader = require('binary-reader'), readerOpts = {highWaterMark: 1048576}; // 1MB buffer
-var queue = new (require('./queue'))(10); // TODO: change size
+var Queue = require('./queue');
 var NNTP = require('./fakenntp');
 var ArticleEncoder = require('./article');
 
@@ -29,6 +29,7 @@ exports.run = function(files, _opts, runDone) {
 	if(!opts.postHeaders.Subject)
 		opts.postHeaders.Subject = subject_func.bind(null, opts.comment, opts.comment2);
 	
+	var queue = new Queue(opts.articleQueueBuffer);
 	var nzbFiles = [];
 	
 	async.parallel([

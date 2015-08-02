@@ -9,6 +9,8 @@ module.exports = {
 		password: null,
 		// TODO: SSL options
 		timeout: 60000, // in ms
+		connTimeout: 30000, // in ms
+		reconnectDelay: 5000, // in ms
 		// TODO: reconnect, max retries etc
 	},
 	connections: 3, // number of connections
@@ -22,6 +24,8 @@ module.exports = {
 	articleSize: 768000,
 	//articleLines: null,
 	bytesPerLine: 128, // note: as per yEnc specifications, it's possible to exceed this number
+	
+	articleQueueBuffer: 10, // number of buffered articles; just leave it alone
 	
 	comment: '', // subject pre-comment
 	comment2: '', // subject post-comment
