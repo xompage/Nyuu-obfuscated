@@ -2,7 +2,7 @@
 
 // TODO: grab cmd args etc
 
-var FileUploader = require('./fileuploader');
+var FileUploader = require('./lib/fileuploader');
 
 FileUploader.log = console;
 
