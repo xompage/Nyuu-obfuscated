@@ -36,7 +36,6 @@ module.exports = {
 		Subject: null, // will be overwritten if set to null
 		From: 'A Poster <a.poster@example.com>',
 		Newsgroups: 'alt.binaries.test', // comma seperated list
-		'Message-ID': null, // will be overwritten if set to null
 		Date: (new Date()).toISOString(),
 		Path: '',
 		//Organization: '',
