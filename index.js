@@ -2,13 +2,13 @@
 
 // TODO: grab cmd args etc
 
-var main = require('./main');
+var FileUploader = require('./fileuploader');
 
-main.log = console;
+FileUploader.log = console;
 
 var opts = {server: {path: './output'}};
 
-main.run(['main.js'], opts, function(err) {
+FileUploader.upload(['index.js'], opts, function(err) {
 	if(err) console.error(err);
 	else console.log('Complete!');
 });
