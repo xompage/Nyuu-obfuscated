@@ -25,6 +25,8 @@ module.exports = {
 	//articleLines: null,
 	bytesPerLine: 128, // note: as per yEnc specifications, it's possible to exceed this number
 	
+	diskReqSize: 768000, // chunk size when reading from disk
+	diskBufferSize: 1536000, // amount of data to buffer; ideally a multiple of articleSize
 	articleQueueBuffer: 10, // number of buffered articles; just leave it alone
 	
 	comment: '', // subject pre-comment
