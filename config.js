@@ -52,6 +52,10 @@ module.exports = {
 	
 	nzb: {
 		writeTo: '', // TODO: filename, output stream (eg stdout) etc
+		writeOpts: {
+			//mode: 0666,
+			encoding: 'utf8',
+		},
 		minify: false,
 		compression: '', // TODO: gzip etc
 		metaData: {
