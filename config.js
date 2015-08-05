@@ -54,7 +54,7 @@ module.exports = {
 		writeTo: '', // TODO: filename, output stream (eg stdout) etc
 		writeOpts: {
 			//mode: 0666,
-			encoding: 'utf8',
+			encoding: 'utf-8',
 		},
 		minify: false,
 		compression: '', // TODO: gzip etc
