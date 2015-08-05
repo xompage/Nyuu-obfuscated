@@ -14,7 +14,8 @@ describe('NZB Generator', function() {
 				another_tag : '"hello world"'
 			},
 			data.push.bind(data),
-			true
+			true,
+			'utf8'
 		);
 		
 		nzb.file('i_am_insane.jpg', 2, null);
