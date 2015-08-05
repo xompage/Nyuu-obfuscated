@@ -5,6 +5,8 @@ var Queue = require('../lib/queue');
 
 var tl = require('./_testlib');
 
+describe('Buffered Queue', function() {
+
 it('should return queued in order', function(done) {
 	// queue up 1,2; it should return 1,2
 	var q = new Queue(10);
@@ -148,4 +150,6 @@ it('should wait when queue size exceeded', function(done) {
 			});
 		});
 	});
+});
+
 });
