@@ -105,6 +105,7 @@ it('should return empty on finished', function(done) {
 		assert.equal(n, undefined);
 		done();
 	});
+	assert.equal(q.takeSync(), undefined);
 });
 
 it('should return empty on finished (with items)', function(done) {
