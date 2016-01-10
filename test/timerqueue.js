@@ -3,15 +3,13 @@
 var assert = require("assert");
 var TimerQueue = require('../lib/timerqueue');
 
-var tl = require('./_testlib');
-
 describe('Timer Queue', function() {
 
 it('should return queued in order', function(done) {
 	var q = new TimerQueue();
+	var s = Date.now();
 	q.add(20, 1);
 	q.add(40, 2);
-	var s = Date.now();
 	q.take(function(n) {
 		assert(Date.now() - s >= 20);
 		assert.equal(n, 1);
@@ -165,7 +163,7 @@ it('should return empty on finished (out of order request)', function(done) {
 it('should disable add on finished', function(done) {
 	var q = new TimerQueue();
 	q.finished();
-	assert.throws(q.add.bind(q, 1, tl.emptyFn));
+	assert.throws(q.add.bind(q, 0, 1));
 	done();
 });
 
