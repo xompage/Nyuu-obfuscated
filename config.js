@@ -14,6 +14,7 @@ module.exports = {
 		connTimeout: 30000, // in ms
 		reconnectDelay: 5000, // in ms
 		connectRetries: 3,
+		postRetries: 1, // how many times to retry if server returns 441 response to posted article
 		// TODO: reconnect, max retries etc
 	},
 	connections: 3, // number of connections
