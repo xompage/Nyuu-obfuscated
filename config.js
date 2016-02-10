@@ -24,10 +24,12 @@ module.exports = {
 	},
 	headerCheckConnections: 0, // probably not much of a reason to go above 1
 	headerCheckDelays: [40, 20], // further retries will use the last number specified
-	headerCheckRetries: 3,
+	headerCheckTries: 3,
+	headerCheckGroup: '', // which group to check in; if left blank, will auto determine from posting headers
+	headerCheckUlConnReuse: false, // use uploading connections for header checks
 	// TODO: check delay, max tries, multiple servers?
 	
-	articleSize: 768000,
+	articleSize: 768000, // must be a multiple of 2
 	//articleLines: null,
 	bytesPerLine: 128, // note: as per yEnc specifications, it's possible to exceed this number
 	
