@@ -1,6 +1,7 @@
 module.exports = {
 	
 	// usenet server
+	// TODO: consider multi-server?
 	server: { // connection settings
 		connect: {
 			host: 'news.example.com',
@@ -36,6 +37,22 @@ module.exports = {
 	diskReqSize: 768000, // chunk size when reading from disk
 	diskBufferSize: 1536000, // amount of data to buffer; ideally a multiple of articleSize
 	articleQueueBuffer: 10, // number of buffered articles; just leave it alone
+	
+	/**
+	 * Folder handling - this can be:
+	 *
+	 * - skip: skips files in folders
+	 * - keep: uploads all files in folders - use the subdirNameTransform to specify what filenames to use
+	 * - archive: automatically wraps files into 7z archives (one archive for each folder)
+	 * - archiveAll: merges all folders into a single 7z archive
+	 */
+	subdirs: 'skip',
+	// if above setting is 'keep', filenames will be transformed according to this setting
+	// the default is to keep the filename component only, which essentially flattens all files into a single directory
+	// this is similar to how other clients handle folders
+	subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; },
+	// another example: include path, seperated by dashes (e.g. "MyFolder - SubFolder - SomeFile.txt")
+	// subdirNameTransform: function(fileName, pathName, fullPath) { return pathName.replace(/\//g, ' - ') + fileName; },
 	
 	comment: '', // subject pre-comment
 	comment2: '', // subject post-comment
