@@ -8,14 +8,18 @@ describe('Timer Queue', function() {
 it('should return queued in order', function(done) {
 	var q = new TimerQueue();
 	var s = Date.now();
+	assert.equal(q.totalQueueSize(), 0);
 	q.add(20, 1);
 	q.add(40, 2);
+	assert.equal(q.totalQueueSize(), 2);
 	q.take(function(n) {
 		assert(Date.now() - s >= 20);
 		assert.equal(n, 1);
+		assert.equal(q.totalQueueSize(), 1);
 		q.take(function(n) {
 			assert(Date.now() - s >= 40);
 			assert.equal(n, 2);
+			assert.equal(q.totalQueueSize(), 0);
 			
 			done();
 		});
@@ -53,12 +57,14 @@ it('should return queued in order (out of order requests)', function(done) {
 		
 		done();
 	});
+	assert.equal(q.totalQueueSize(), 0);
 	q.add(20, 1);
 });
 
 it('should handle 0 time', function(done) {
 	var q = new TimerQueue();
 	q.add(0, 1);
+	assert.equal(q.totalQueueSize(), 1);
 	q.take(function(n) {
 		assert.equal(n, 1);
 		done();
@@ -69,10 +75,13 @@ it('should work with both async/sync takes', function(done) {
 	var q = new TimerQueue();
 	assert.equal(q.takeSync(), undefined);
 	q.add(0, 1);
+	assert.equal(q.totalQueueSize(), 1);
 	assert.equal(q.takeSync(), 1);
+	assert.equal(q.totalQueueSize(), 0);
 	
 	q.take(function(n) {
 		assert.equal(n, 2);
+		assert.equal(q.totalQueueSize(), 0);
 		q.add(20, 3);
 	});
 	assert.equal(q.takeSync(), undefined);
@@ -95,6 +104,7 @@ it('should work with both async/sync takes', function(done) {
 it('should return empty on finished', function(done) {
 	var q = new TimerQueue();
 	q.finished();
+	assert.equal(q.totalQueueSize(), 0);
 	q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
@@ -112,6 +122,7 @@ it('should return empty on finished (with items)', function(done) {
 		assert(Date.now() - s >= 20);
 	});
 	q.finished();
+	assert.equal(q.totalQueueSize(), 2);
 	q.take(function(n) {
 		assert.equal(n, 2);
 		assert(Date.now() - s >= 40);

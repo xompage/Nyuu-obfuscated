@@ -106,6 +106,7 @@ it('should return empty on finished', function(done) {
 		done();
 	});
 	assert.equal(q.takeSync(), undefined);
+	assert.equal(q.hasFinished, true);
 });
 
 it('should return empty on finished (with items)', function(done) {
@@ -116,10 +117,12 @@ it('should return empty on finished (with items)', function(done) {
 		assert.equal(n, 1);
 	});
 	q.finished();
+	assert.equal(q.hasFinished, true);
 	q.take(function(n) {
 		assert.equal(n, 2);
 	});
 	q.take(function(n) {
+		assert.equal(q.hasFinished, true);
 		assert.equal(n, undefined);
 	});
 	q.take(function(n) {

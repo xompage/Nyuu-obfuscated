@@ -257,6 +257,7 @@ it('basic test', function(done) {
 			},
 			connections: 1,
 			headerCheckTries: 0,
+			headerCheckDelays: [10, 10],
 			postHeaders: {
 				Subject: null, // will be overwritten if set to null
 				From: 'Nyuumaster <nyuu@animetosho.org>',

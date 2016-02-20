@@ -24,9 +24,9 @@ module.exports = {
 		// same as 'server' above; missing fields are copied from there
 		// TODO: multiple servers?
 	},
-	headerCheckConnections: 0, // probably not much of a reason to go above 1
-	headerCheckDelays: [40, 20], // further retries will use the last number specified
-	headerCheckTries: 3,
+	headerCheckConnections: 1, // probably not much of a reason to go above 1
+	headerCheckDelays: [40*1000, 20*1000], // (in ms) further retries will use the last number specified
+	headerCheckTries: 3, // number of retries; should be 0 if not performing header checks
 	headerCheckGroup: '', // which group to check in; if left blank, will auto determine from posting headers
 	headerCheckUlConnReuse: false, // use uploading connections for header checks; only works if checking the same server as the one being uploaded to
 	headerCheckFailAction: 'error', // what to do when header check fails to get the post; options are 'error' (die), 'warn' (ignore and print warning), 'repost' (re-post article)
