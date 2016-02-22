@@ -231,63 +231,106 @@ NNTPConnection.prototype = {
 	}
 };
 
+function deepMerge(dest, src) {
+	for(var k in src) {
+		if((k in dest) && typeof dest[k] == 'object' && !Array.isArray(dest[k])) {
+			deepMerge(dest[k], src[k]);
+		} else {
+			dest[k] = src[k];
+		}
+	}
+}
 
 var USE_PORT = 38174;
-describe('Nyuu', function() {
-
-it('basic test', function(done) {
+var doTest = function(files, opts, cb) {
+	var o = {
+		server: {
+			connect: {
+				host: '127.0.0.1',
+				port: USE_PORT,
+			},
+			secure: false, // set to 'true' to use SSL
+			user: 'joe',
+			password: 'blogs',
+			timeout: 100,
+			connTimeout: 100,
+			reconnectDelay: 50,
+			connectRetries: 1,
+			postRetries: 1
+		},
+		connections: 1,
+		headerCheckConnections: 0,
+		headerCheckTries: 0,
+		headerCheckDelays: [10, 10],
+		headerCheckUlConnReuse: false,
+		headerCheckFailAction: 'error',
+		maxCheckBuffer: 50,
+		articleSize: 768000,
+		subdirs: 'keep',
+		subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; },
+		postHeaders: {
+			Subject: null, // will be overwritten if set to null
+			From: 'Nyuumaster <nyuu@animetosho.org>',
+			Newsgroups: 'rifles', // comma seperated list
+			Date: (new Date()).toISOString(),
+			Path: '',
+			'User-Agent': 'Nyuu',
+			//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; }
+		},
+		nzb: {
+			writeTo: 'output.nzb', // TODO: filename, output stream (eg stdout) etc
+			writeOpts: {
+				//mode: 0666,
+				encoding: 'utf8',
+			},
+			minify: false,
+			compression: '', // TODO: gzip etc
+			metaData: {
+				client: 'Nyuu',
+			},
+		},
+		logLevel: 'info',
+	};
+	
+	deepMerge(o, opts);
 	
 	var server = new NNTPServer({});
 	server.listen(USE_PORT, function() {
-		
-		// TODO: change to folder
-		FileUploader.upload(['index.js'], {
-			server: {
-				connect: {
-					host: '127.0.0.1',
-					port: USE_PORT,
-				},
-				secure: false, // set to 'true' to use SSL
-				user: 'joe',
-				password: 'blogs',
-				timeout: 100,
-				connTimeout: 100,
-				reconnectDelay: 50,
-				connectRetries: 1,
-			},
-			connections: 1,
-			headerCheckTries: 0,
-			headerCheckDelays: [10, 10],
-			postHeaders: {
-				Subject: null, // will be overwritten if set to null
-				From: 'Nyuumaster <nyuu@animetosho.org>',
-				Newsgroups: 'rifles', // comma seperated list
-				Date: (new Date()).toISOString(),
-				Path: '',
-				'User-Agent': 'Nyuu',
-				//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; }
-			},
-			nzb: {
-				writeTo: 'output.nzb', // TODO: filename, output stream (eg stdout) etc
-				writeOpts: {
-					//mode: 0666,
-					encoding: 'utf8',
-				},
-				minify: false,
-				compression: '', // TODO: gzip etc
-				metaData: {
-					client: 'Nyuu',
-				},
-			},
-			
-		}, function(err) {
-			if(err) return done(err);
-			// TODO: check server contents to see if stuff is there
-			
-			server.close(done);
+		FileUploader.upload(files, o, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
+			});
 		});
+	});
+};
+
+describe('Nyuu', function() {
+
+it('basic test', function(done) {
+	doTest(['index.js'], {
+		connections: 1,
+		headerCheckTries: 0,
+		headerCheckDelays: [10, 10]
+	}, function(err, server) {
+		assert.equal(Object.keys(server.posts.rifles).length, 1);
+		assert.equal(Object.keys(server.postIdMap).length, 1);
+		done(err);
 	});
 });
 
+it('complex test', function(done) {
+	doTest(['lib/', 'index.js'], {
+		connections: 3,
+		headerCheckConnections: 1,
+		headerCheckTries: 1,
+		headerCheckDelays: [10, 10]
+	}, function(err, server) {
+		var numFiles = require('fs').readdirSync('lib/').length +1;
+		assert.equal(Object.keys(server.posts.rifles).length, numFiles);
+		assert.equal(Object.keys(server.postIdMap).length, numFiles);
+		done(err);
+	});
+});
 
 });
