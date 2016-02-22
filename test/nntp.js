@@ -504,7 +504,7 @@ it('should return error on request timeout', function(done) {
 				// never give a response...
 				tim = setTimeout(function() {
 					assert.fail('Client did not time out');
-				}, 125)
+				}, 125);
 			});
 			client.date(function(err, date) {
 				clearTimeout(tim);
@@ -516,7 +516,39 @@ it('should return error on request timeout', function(done) {
 	], done);
 	
 });
-it('should return error on posting timeout');
+it('should return error on posting timeout', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var tim;
+			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this.expect(msg, function() {
+					// never give a response...
+					tim = setTimeout(function() {
+						assert.fail('Client did not time out');
+					}, 125);
+				});
+				this.respond('340  Send article');
+			});
+			client.post(msg, function(err, a) {
+				clearTimeout(tim);
+				assert(err);
+				assert(!a);
+				closeTest(client, server, cb);
+			});
+		}
+	], done);
+});
+
 it('should deal with connection timeouts');
 it('should do nothing on an idle too long message');
 
@@ -535,5 +567,6 @@ it('should deal with socket errors');
 it('should deal with a socket error during connect');
 // TODO: connect() callback shouldn't be called on first error?
 
+// TODO: consider testing recoverability after an error occurrence?
 
 });
