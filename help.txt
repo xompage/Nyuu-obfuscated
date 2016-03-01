@@ -1,0 +1,45 @@
+Nyuu v0.1.0
+-----------
+
+Usage: nyuu -h example.com [options] file1 file2
+
+All options take one parameter, except for those marked as a flag option.
+
+Upload Server Options:
+
+  -h,  --host                Host/server to upload to
+  -P,  --port                Port to connect to (default 119)
+       --ssl                 Connect over SSL (flag option)
+  -u,  --user                Username to use
+  -p,  --password            Password to use
+  -c,  --connections         Number of connections to use (default 1)
+       --timeout             
+       --connect-timeout     
+       --reconnect-delay     
+       --connect-retries     
+       --post-retries        
+
+Article/Post Options:
+
+  -a,  --article-size        Size of each news post (default 750K)
+       --article-line-size   Max bytes per line (default 128)
+       --comment             
+       --comment2            
+  -s,  --subject             
+  -f,  --from                
+  -g,  --groups              
+
+NZB Output Options:
+
+  -o,  --nzb-out             If supplied, will write NZB to this file
+       --nzb-minify          Minify outputted XML (flag option)
+
+Other Options:
+
+  -r,  --subdirs             
+       --help                Display this help screen (flag option)
+       --version             Print application version number (flag option)
+
+------------------
+Examples
+
