@@ -117,9 +117,13 @@ var optMap = {
 	version: {
 		type: 'bool'
 	},
-	loglevel: {
+	'log-level': {
 		type: 'int',
 		alias: 'l'
+	},
+	'log-time': {
+		type: 'bool',
+		alias: 'T'
 	},
 	verbose: {
 		type: 'bool',
@@ -265,12 +269,23 @@ if(argv.quiet && argv.verbose)
 	error('Cannot specify both `--quiet` and `--verbose`');
 
 var verbosity = 3;
-if(argv.loglevel) {
+if(argv.loglevel)
 	verbosity = argv.loglevel;
-} else if(argv.quiet)
+else if(argv.quiet)
 	verbosity = 2;
-else if(argv.verbose);
+else if(argv.verbose)
 	verbosity = 4;
+
+var logTimestamp;
+if(argv['log-time']) {
+	var tzOffset = (new Date()).getTimezoneOffset() * 60000;
+	logTimestamp = function(addSpace) {
+		process.stderr.write('[' + (new Date(Date.now() - tzOffset)).toISOString().replace('T', ' ').replace('Z', '') + ']');
+		if(addSpace) process.stderr.write(' ');
+	};
+} else {
+	logTimestamp = function(){};
+}
 
 var Nyuu = require('../');
 if(process.stderr.isTTY) {
@@ -278,21 +293,25 @@ if(process.stderr.isTTY) {
 	Nyuu.log = {
 		debug: function(msg) {
 			process.stderr.write('\x1B[36m');
+			logTimestamp(1);
 			console.error(msg);
 			process.stderr.write('\x1B[39m');
 		},
 		info: function(msg) {
 			process.stderr.write('\x1B[32m');
+			logTimestamp(1);
 			console.error(msg);
 			process.stderr.write('\x1B[39m');
 		},
 		warn: function(msg) {
 			process.stderr.write('\x1B[33m');
+			logTimestamp(1);
 			console.error(msg);
 			process.stderr.write('\x1B[39m');
 		},
 		error: function(msg) {
 			process.stderr.write('\x1B[31m');
+			logTimestamp(1);
 			console.error(msg);
 			process.stderr.write('\x1B[39m');
 		}
@@ -300,16 +319,23 @@ if(process.stderr.isTTY) {
 } else {
 	Nyuu.log = {
 		debug: function(msg) {
-			console.error('[DEBUG] ' + msg);
+			logTimestamp();
+			process.stderr.write('[DBG]  ');
+			console.error(msg);
 		},
 		info: function(msg) {
-			console.error('[INFO] ' + msg);
+			logTimestamp();
+			process.stderr.write('[INFO] ');
+			console.error(msg);
 		},
 		warn: function(msg) {
-			console.error('[WARN] ' + msg);
+			logTimestamp();
+			process.stderr.write('[WARN] ');
+			console.error(msg);
 		},
 		error: function(msg) {
-			process.stderr.write('[ERROR]');
+			logTimestamp();
+			process.stderr.write('[ERR]  ');
 			console.error(msg);
 		}
 	};
