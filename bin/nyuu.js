@@ -76,7 +76,7 @@ var optMap = {
 		type: 'map',
 		alias: 'H'
 	},
-	subject: {
+	subject: { // TODO: handle this better
 		type: 'string',
 		alias: 's',
 		map: 'postHeaders/Subject'
@@ -116,8 +116,19 @@ var optMap = {
 	},
 	version: {
 		type: 'bool'
+	},
+	loglevel: {
+		type: 'int',
+		alias: 'l'
+	},
+	verbose: {
+		type: 'bool',
+		alias: 'v'
+	},
+	quiet: {
+		type: 'bool',
+		alias: 'q'
 	}
-	// TODO: verbosity option
 };
 
 
@@ -250,11 +261,75 @@ if(!argv._.length)              error('Must supply at least one input file');
 //if(!ulOpts.server.connect.port) error('Invalid port specified');
 // TODO:
 
+if(argv.quiet && argv.verbose)
+	error('Cannot specify both `--quiet` and `--verbose`');
 
-require('../').upload(argv._, ulOpts, function(err) {
+var verbosity = 3;
+if(argv.loglevel) {
+	verbosity = argv.loglevel;
+} else if(argv.quiet)
+	verbosity = 2;
+else if(argv.verbose);
+	verbosity = 4;
+
+var Nyuu = require('../');
+if(process.stderr.isTTY) {
+	// assume colours are supported
+	Nyuu.log = {
+		debug: function(msg) {
+			process.stderr.write('\x1B[36m');
+			console.error(msg);
+			process.stderr.write('\x1B[39m');
+		},
+		info: function(msg) {
+			process.stderr.write('\x1B[32m');
+			console.error(msg);
+			process.stderr.write('\x1B[39m');
+		},
+		warn: function(msg) {
+			process.stderr.write('\x1B[33m');
+			console.error(msg);
+			process.stderr.write('\x1B[39m');
+		},
+		error: function(msg) {
+			process.stderr.write('\x1B[31m');
+			console.error(msg);
+			process.stderr.write('\x1B[39m');
+		}
+	};
+} else {
+	Nyuu.log = {
+		debug: function(msg) {
+			console.error('[DEBUG] ' + msg);
+		},
+		info: function(msg) {
+			console.error('[INFO] ' + msg);
+		},
+		warn: function(msg) {
+			console.error('[WARN] ' + msg);
+		},
+		error: function(msg) {
+			process.stderr.write('[ERROR]');
+			console.error(msg);
+		}
+	};
+}
+
+if(verbosity < 4) Nyuu.log.debug = function(){};
+if(verbosity < 3) Nyuu.log.info = function(){};
+if(verbosity < 2) Nyuu.log.warn = function(){};
+if(verbosity < 1) {
+	Nyuu.log.error = function(){};
+	// suppress output from uncaught exceptions
+	process.once('uncaughtException', function(err) {
+		process.exit(2);
+	});
+}
+
+Nyuu.upload(argv._, ulOpts, function(err) {
 	if(err) {
-		console.error(err);
+		Nyuu.log.error(err);
 	} else {
-		console.error('Process Complete');
+		Nyuu.log.info('Process Complete');
 	}
 });

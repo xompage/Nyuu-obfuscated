@@ -45,6 +45,14 @@ NZB Output Options:
 Other Options:
 
   -r,  --subdirs             
+  -l,  --loglevel            Controls the output verbosity, value can be:
+                                 0: completely silent (if command parsed)
+                                 1: only show fatal errors
+                                 2: show warnings
+                                 3: show information (default)
+                                 4: show debugging info
+  -v,  --verbose             Alias for `-l4`
+  -q,  --quiet               Alias for `-l2`
   -?,  --help                Display this help screen (flag option)
        --version             Print application version number (flag option)
 
