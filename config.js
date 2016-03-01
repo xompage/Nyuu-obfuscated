@@ -1,3 +1,5 @@
+// this is the default config file
+
 module.exports = {
 	
 	// usenet server
@@ -5,7 +7,7 @@ module.exports = {
 	server: { // connection settings
 		connect: {
 			host: 'news.example.com',
-			port: 119,
+			port: null
 		},
 		secure: false, // set to 'true' to use SSL
 		user: null,
