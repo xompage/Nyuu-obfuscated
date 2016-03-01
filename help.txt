@@ -26,18 +26,26 @@ Article/Post Options:
        --comment             
        --comment2            
   -s,  --subject             
-  -f,  --from                
-  -g,  --groups              
+  -f,  --from                Shortcut for `-H From=...`
+  -g,  --groups              Shortcut for `-H Newsgroups=...`
+  -H,  --header              Specify an NNTP header in either of these forms:
+                                 -H "MyHeader: MyValue"
+                                 -H MyHeader=MyValue
+                             This option can be specified multiple times. Note
+                             that specifying the same header more than once is
+                             currently not supported.
 
 NZB Output Options:
 
-  -o,  --nzb-out             If supplied, will write NZB to this file
-       --nzb-minify          Minify outputted XML (flag option)
+  -o,  --out                 If supplied, will write NZB to this file
+       --minify              Minify outputted XML (flag option)
+  -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
+                             above for syntax details.
 
 Other Options:
 
   -r,  --subdirs             
-       --help                Display this help screen (flag option)
+  -?,  --help                Display this help screen (flag option)
        --version             Print application version number (flag option)
 
 ------------------

@@ -72,7 +72,10 @@ var optMap = {
 		type: 'string',
 		map: 'comment2'
 	},
-	// TODO: custom headers
+	header: {
+		type: 'map',
+		alias: 'H'
+	},
 	subject: {
 		type: 'string',
 		alias: 's',
@@ -88,14 +91,18 @@ var optMap = {
 		alias: 'g',
 		map: 'postHeaders/Newsgroups'
 	},
-	'nzb-out': {
+	out: {
 		type: 'string',
 		alias: 'o',
 		map: 'nzb/writeTo'
 	},
-	'nzb-minify': {
+	minify: {
 		type: 'bool',
 		map: 'nzb/minify'
+	},
+	meta: {
+		type: 'map',
+		alias: 'M'
 	},
 	subdirs: {
 		type: 'string',
@@ -183,6 +190,26 @@ for(var k in argv) {
 		if(!v) error('Invalid size specified for `' + k + '`');
 	}
 	
+	// fix arrays/maps
+	var isArray = Array.isArray(v);
+	if(o.type == 'array' || o.type == 'map') {
+		if(!isArray) argv[k] = [v];
+		// create map
+		if(o.type == 'map') {
+			v = {};
+			argv[k].forEach(function(h) {
+				var m;
+				if(m = h.match(/^(.+?)[=:](.*)$/)) {
+					v[m[1].trim()] = m[2].trim();
+				} else {
+					error('Invalid format for `' + k + '`');
+				}
+			});
+			argv[k] = v;
+		}
+	} else if(isArray)
+		error('Multiple values supplied for `' + k + '`!');
+	
 	if(o.map) {
 		var path = o.map.split('/');
 		var config = ulOpts;
@@ -191,6 +218,30 @@ for(var k in argv) {
 		config[path.slice(-1)] = v;
 	}
 }
+
+// map custom headers
+if(argv.headers) {
+	// to preserve case, build case-insensitive lookup
+	var headerCMap = {};
+	for(var k in ulOpts.postHeaders)
+		headerCMap[k.toLowerCase()] = k;
+	
+	for(var k in argv.headers) {
+		// handle casing wierdness
+		var kk = headerCMap[k.toLowerCase()];
+		if(!kk) {
+			headerCMap[k.toLowerCase()] = kk = k;
+		}
+		ulOpts.postHeaders[kk] = argv.headers[k];
+	}
+}
+
+// map custom meta tags
+if(argv.meta) {
+	for(var k in argv.meta)
+		ulOpts.nzb.metaData[k] = argv.meta[k];
+}
+
 
 
 // custom validation rules
