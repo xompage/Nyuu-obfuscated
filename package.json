@@ -2,11 +2,28 @@
   "name": "Nyuu",
   "version": "0.1.0",
   "description": "Usenet binary poster",
-  "license": "Public Domain",
+  "keywords": [
+    "usenet",
+    "nntp"
+  ],
+  "license": "CC0-1.0",
   "author": "Anime Tosho",
-  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/animetosho/nyuu.git"
+  },
+  "main": "lib/fileuploader.js",
+  "bin": "bin/nyuu.js",
+  "engines": {
+    "node": ">=0.10"
+  },
   "dependencies" : {
     "async" : "*",
-    "yencode" : "*"
-  }
+    "minimist": "*",
+    "yencode" : ">=1.0.4"
+  },
+  "bugs": {
+    "url": "https://github.com/animetosho/nyuu/issues"
+  },
+  "homepage": "https://animetosho.org/app/nyuu"
 }
