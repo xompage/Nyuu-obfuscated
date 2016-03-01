@@ -363,7 +363,7 @@ if(verbosity < 1) {
 	Nyuu.log.error = function(){};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
-		process.exit(2);
+		process.exit(8);
 	});
 }
 
@@ -371,6 +371,6 @@ Nyuu.upload(argv._, ulOpts, function(err) {
 	if(err) {
 		Nyuu.log.error(err);
 	} else {
-		Nyuu.log.info('Process Complete');
+		Nyuu.log.info('Process complete');
 	}
 });
