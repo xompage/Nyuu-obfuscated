@@ -25,7 +25,17 @@ Article/Post Options:
        --article-line-size   Max bytes per line (default 128)
        --comment             
        --comment2            
-  -s,  --subject             
+  -s,  --subject             Subject to use for posts. The following
+                             placeholders are available:
+                                 {comment}   Text specified in `--comment`
+                                 {comment2}  Text specified in `--comment2`
+                                 {filename}  File's name
+                                 {filesize}  File's size in bytes
+                                 {part}      Article part number
+                                 {parts}     Number of articles for the file
+                                 {size}      File chunk size (before yEnc)
+                             Default is similar to the following:
+                                 {comment} "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
   -f,  --from                Shortcut for `-H From=...`
   -g,  --groups              Shortcut for `-H Newsgroups=...`
   -H,  --header              Specify an NNTP header in either of these forms:

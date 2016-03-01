@@ -76,10 +76,9 @@ var optMap = {
 		type: 'map',
 		alias: 'H'
 	},
-	subject: { // TODO: handle this better
+	subject: {
 		type: 'string',
-		alias: 's',
-		map: 'postHeaders/Subject'
+		alias: 's'
 	},
 	from: {
 		type: 'string',
@@ -232,6 +231,22 @@ for(var k in argv) {
 			config = config[path[i]];
 		config[path.slice(-1)] = v;
 	}
+}
+
+if(argv.subject) {
+	ulOpts.postHeaders.Subject = function(comment, comment2, filename, filesize, part, parts, size) {
+		return argv.subject.replace(/\{(comment2?|filename|filesize|parts?|size)\}/ig, function(p) {
+			switch(p[1].toLowerCase()) {
+				case 'comment': return comment;
+				case 'comment2': return comment2;
+				case 'filename': return filename;
+				case 'filesize': return filesize;
+				case 'part': return part;
+				case 'parts': return parts;
+				case 'size': return size;
+			}
+		});
+	};
 }
 
 // map custom headers
