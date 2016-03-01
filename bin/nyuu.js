@@ -284,8 +284,8 @@ if(argv.quiet && argv.verbose)
 	error('Cannot specify both `--quiet` and `--verbose`');
 
 var verbosity = 3;
-if(argv.loglevel)
-	verbosity = argv.loglevel;
+if(argv['log-level'])
+	verbosity = argv['log-level'];
 else if(argv.quiet)
 	verbosity = 2;
 else if(argv.verbose)
@@ -302,10 +302,10 @@ if(argv['log-time']) {
 	logTimestamp = function(){};
 }
 
-var Nyuu = require('../');
+var logger;
 if(process.stderr.isTTY) {
 	// assume colours are supported
-	Nyuu.log = {
+	logger = {
 		debug: function(msg) {
 			process.stderr.write('\x1B[36m');
 			logTimestamp(1);
@@ -332,7 +332,7 @@ if(process.stderr.isTTY) {
 		}
 	};
 } else {
-	Nyuu.log = {
+	logger = {
 		debug: function(msg) {
 			logTimestamp();
 			process.stderr.write('[DBG]  ');
@@ -356,17 +356,19 @@ if(process.stderr.isTTY) {
 	};
 }
 
-if(verbosity < 4) Nyuu.log.debug = function(){};
-if(verbosity < 3) Nyuu.log.info = function(){};
-if(verbosity < 2) Nyuu.log.warn = function(){};
+if(verbosity < 4) logger.debug = function(){};
+if(verbosity < 3) logger.info = function(){};
+if(verbosity < 2) logger.warn = function(){};
 if(verbosity < 1) {
-	Nyuu.log.error = function(){};
+	logger.error = function(){};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
 		process.exit(8);
 	});
 }
 
+var Nyuu = require('../');
+Nyuu.setLogger(logger);
 Nyuu.upload(argv._, ulOpts, function(err) {
 	if(err) {
 		Nyuu.log.error(err);
