@@ -217,7 +217,7 @@ NNTPConnection.prototype = {
 		var re = /([a-zA-Z0-9\-_]+) *\: *([^\r\n]*)\r\n/;
 		sData = sData.replace(new RegExp(re.source, 'g'), function(m) {
 			m = m.match(re);
-			h[m[1].toLowerCase()] = m[2]; // TODO: unescaping?
+			h[m[1].toLowerCase()] = m[2];
 			return '';
 		});
 		if(sData.length) throw new Error('Unexpected header data received!');
@@ -259,12 +259,15 @@ var doTest = function(files, opts, cb) {
 			postRetries: 1
 		},
 		connections: 1,
-		headerCheckConnections: 0,
-		headerCheckTries: 0,
-		headerCheckDelays: [10, 10],
-		headerCheckUlConnReuse: false,
-		headerCheckFailAction: 'error',
-		maxCheckBuffer: 50,
+		headerCheck: {
+			connections: 0,
+			checkDelay: 10,
+			recheckDelay: 10,
+			tries: 0,
+			ulConnReuse: false,
+			failAction: 'error',
+			maxBuffer: 50,
+		},
 		articleSize: 768000,
 		subdirs: 'keep',
 		subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; },
@@ -289,7 +292,6 @@ var doTest = function(files, opts, cb) {
 				client: 'Nyuu',
 			},
 		},
-		logLevel: 'info',
 	};
 	
 	deepMerge(o, opts);
@@ -310,8 +312,11 @@ describe('Nyuu', function() {
 it('basic test', function(done) {
 	doTest(['index.js'], {
 		connections: 1,
-		headerCheckTries: 0,
-		headerCheckDelays: [10, 10]
+		headerCheck: {
+			checkDelay: 10,
+			recheckDelay: 10,
+			tries: 0,
+		}
 	}, function(err, server) {
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);
@@ -322,9 +327,12 @@ it('basic test', function(done) {
 it('complex test', function(done) {
 	doTest(['lib/', 'index.js'], {
 		connections: 3,
-		headerCheckConnections: 1,
-		headerCheckTries: 1,
-		headerCheckDelays: [10, 10]
+		headerCheck: {
+			connections: 1,
+			checkDelay: 10,
+			recheckDelay: 10,
+			tries: 1,
+		}
 	}, function(err, server) {
 		var numFiles = require('fs').readdirSync('lib/').length +1;
 		assert.equal(Object.keys(server.posts.rifles).length, numFiles);
