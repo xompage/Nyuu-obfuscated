@@ -28,7 +28,7 @@ module.exports = {
 	},
 	headerCheckConnections: 1, // probably not much of a reason to go above 1
 	headerCheckDelays: [40*1000, 20*1000], // (in ms) further retries will use the last number specified
-	headerCheckTries: 3, // number of retries; should be 0 if not performing header checks
+	headerCheckTries: 0, // number of retries; should be 0 if not performing header checks
 	headerCheckGroup: '', // which group to check in; if left blank, will auto determine from posting headers
 	headerCheckUlConnReuse: false, // use uploading connections for header checks; only works if checking the same server as the one being uploaded to
 	headerCheckFailAction: 'error', // what to do when header check fails to get the post; options are 'error' (die), 'warn' (ignore and print warning), 'repost' (re-post article)
@@ -64,14 +64,17 @@ module.exports = {
 	
 	// if any of the following are functions, they'll be called with args(filename, part, parts, size)
 	postHeaders: {
+		// required headers
 		Subject: null, // will be overwritten if set to null
 		From: 'A Poster <a.poster@example.com>',
 		Newsgroups: 'alt.binaries.test', // comma seperated list
-		Date: (new Date()).toISOString(),
+		Date: (new Date()).toUTCString(),
 		Path: '',
+		//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; },
+		
+		// optional headers
 		//Organization: '',
-		'User-Agent': 'Nyuu',
-		//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; }
+		'User-Agent': 'Nyuu'
 	},
 	
 	nzb: {
@@ -86,7 +89,5 @@ module.exports = {
 			client: 'Nyuu',
 		},
 	},
-	
-	logLevel: 'info',
 	
 };
