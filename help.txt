@@ -11,8 +11,8 @@ Upload Server Options:
   -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
                              is specified)
   -S,  --ssl                 Connect over SSL (flag option)
-  -u,  --user                Username to use
-  -p,  --password            Password to use
+  -u,  --user                Username to authenticate with
+  -p,  --password            Password to authenticate with
   -c,  --connections         Number of connections to use (default 1)
        --timeout             
        --connect-timeout     
@@ -24,8 +24,8 @@ Article/Post Options:
 
   -a,  --article-size        Size of each news post (default 750K)
        --article-line-size   Max bytes per line (default 128)
-       --comment             
-       --comment2            
+       --comment             Comment to insert before post subject
+       --comment2            Comment to append after post subject
   -s,  --subject             Subject to use for posts. The following
                              placeholders are available:
                                  {comment}   Text specified in `--comment`
@@ -39,6 +39,7 @@ Article/Post Options:
                                  {comment} "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
   -f,  --from                Shortcut for `-H From=...`
   -g,  --groups              Shortcut for `-H Newsgroups=...`
+                             Separate multiple groups with commas.
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
@@ -49,13 +50,16 @@ Article/Post Options:
 NZB Output Options:
 
   -o,  --out                 If supplied, will write NZB to this file
+                             Can also be '-' which writes the NZB to stdout
        --minify              Minify outputted XML (flag option)
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
 
 Other Options:
 
-  -r,  --subdirs             
+  -r,  --subdirs             How sub-directories should be handled, can be:
+                                 skip: ignore nested files (default)
+                                 keep: upload all files in sub-directories
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
                                  1: only show fatal errors
