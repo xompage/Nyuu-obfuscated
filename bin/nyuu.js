@@ -31,7 +31,7 @@ var optMap = {
 	},
 	connections: {
 		type: 'int',
-		alias: 'c',
+		alias: 'n',
 		map: 'connections'
 	},
 	timeout: {
@@ -54,7 +54,35 @@ var optMap = {
 		type: 'int',
 		map: 'server/postRetries'
 	},
-	// TODO: header check options
+	'check-connections': {
+		type: 'int',
+		map: 'headerCheck/connections'
+	},
+	'check-reuse-conn': {
+		type: 'bool',
+		map: 'headerCheck/ulConnReuse'
+	},
+	'check-delay': {
+		type: 'time',
+		map: 'headerCheck/checkDelay'
+	},
+	'check-retry-delay': {
+		type: 'time',
+		map: 'headerCheck/recheckDelay'
+	},
+	'check-tries': {
+		type: 'int',
+		map: 'headerCheck/tries',
+		alias: 'c'
+	},
+	'check-group': {
+		type: 'string',
+		map: 'headerCheck/group'
+	},
+	'check-onfail': {
+		type: 'string',
+		map: 'headerCheck/failAction'
+	},
 	'article-size': {
 		type: 'size',
 		alias: 'a',
@@ -168,7 +196,7 @@ var error = function(msg) {
 	process.exit(1);
 };
 var parseSize = function(s) {
-	if(typeof s == 'number') return Math.floor(s);
+	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s);
 	var parts;
 	if(parts = s.match(/^([0-9.]+)([kKmMgGtTpPeE])$/)) {
 		var num = +(parts[1]);
@@ -180,7 +208,24 @@ var parseSize = function(s) {
 			case 'M': num *= 1024;
 			case 'K': num *= 1024;
 		}
-		if(isNaN(num) || num < 1) return false;
+		if(isNaN(num)) return false;
+		return Math.floor(num);
+	}
+	return false;
+};
+var parseTime = function(s) {
+	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s*1000);
+	var parts;
+	if(parts = s.match(/^([0-9.]+)([mM]?[sS]|[mMhHdDwW])$/)) {
+		var num = +(parts[1]);
+		switch(parts[2].toUpperCase()) {
+			case 'w': num *= 7;
+			case 'd': num *= 24;
+			case 'h': num *= 60;
+			case 'm': num *= 60;
+			case 's': num *= 1000;
+		}
+		if(isNaN(num)) return false;
 		return Math.floor(num);
 	}
 	return false;
@@ -202,6 +247,10 @@ for(var k in argv) {
 	if(o.type == 'size') {
 		v = parseSize(v);
 		if(!v) error('Invalid size specified for `' + k + '`');
+	}
+	if(o.type == 'time') {
+		v = parseTime(v);
+		if(v === false) error('Invalid time specified for `' + k + '`');
 	}
 	
 	// fix arrays/maps
