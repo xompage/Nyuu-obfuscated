@@ -127,6 +127,14 @@ var optMap = {
 		type: 'bool',
 		map: 'nzb/minify'
 	},
+	'nzb-compress': {
+		type: 'string',
+		map: 'nzb/compression'
+	},
+	'nzb-compress-level': {
+		type: 'int',
+		map: 'nzb/compressOpts/level'
+	},
 	meta: {
 		type: 'map',
 		alias: 'M'
@@ -328,6 +336,8 @@ if(!argv.host)                  error('Server host must be supplied');
 if(!argv._.length)              error('Must supply at least one input file');
 if(argv.subdirs && ['skip','keep'].indexOf(argv.subdirs) < 0)
 	error('Invalid option supplied for `--subdirs`');
+if(argv['nzb-compress'] && ['gzip','zlib','deflate','xz'].indexOf(argv['nzb-compress']) < 0)
+	error('Invalid value supplied for `--nzb-compress`');
 // TODO: more validation
 
 if(argv.quiet && argv.verbose)

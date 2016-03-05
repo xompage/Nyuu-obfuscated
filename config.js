@@ -88,7 +88,8 @@ module.exports = {
 			encoding: 'utf-8',
 		},
 		minify: false,
-		compression: '', // TODO: gzip etc
+		compression: '', // can be 'gzip', 'zlib', 'deflate', 'xz' or '' (none)
+		compressOpts: {}, // options for zlib
 		metaData: {
 			client: 'Nyuu',
 		},

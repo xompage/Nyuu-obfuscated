@@ -22,6 +22,9 @@
     "minimist": "*",
     "yencode" : ">=1.0.4"
   },
+  "optionalDependencies" : {
+    "xz" : "*"
+  },
   "bugs": {
     "url": "https://github.com/animetosho/nyuu/issues"
   },
