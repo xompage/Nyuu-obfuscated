@@ -19,6 +19,9 @@ var optMap = {
 		type: 'bool',
 		map: 'server/secure',
 	},
+	'no-check-cert': {
+		type: 'bool'
+	},
 	user: {
 		type: 'string',
 		alias: 'u',
@@ -305,6 +308,9 @@ if(argv.subject) {
 		});
 	};
 }
+
+if(argv['no-check-cert'])
+	ulOpts.server.connect.rejectUnauthorized = false;
 
 // map custom headers
 if(argv.headers) {

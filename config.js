@@ -7,12 +7,15 @@ module.exports = {
 	server: { // connection settings
 		connect: {
 			host: 'news.example.com',
-			port: null
+			port: null,
+			
+			// SSL options
+			rejectUnauthorized: true,
+			servername: undefined, // SNI host name
 		},
 		secure: false, // set to 'true' to use SSL
 		user: null,
 		password: null,
-		// TODO: SSL options
 		timeout: 60000, // in ms
 		connTimeout: 30000, // in ms
 		reconnectDelay: 5000, // in ms
