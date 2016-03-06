@@ -418,6 +418,8 @@ it('should attempt to rejoin a group if connection is lost', function(done) {
 		}
 	], done);
 });
+it('should clear receive buffer on connection dropout');
+it('should disconnect if response received exceeds 4KB in size');
 
 it('should resend request if connection lost before response received', function(done) {
 	var server, client;
