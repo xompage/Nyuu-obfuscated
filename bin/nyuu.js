@@ -311,6 +311,8 @@ if(argv.subject) {
 
 if(argv['no-check-cert'])
 	ulOpts.server.connect.rejectUnauthorized = false;
+if(argv.out === '-')
+	ulOpts.nzb.writeTo = process.stdout;
 
 // map custom headers
 if(argv.headers) {
