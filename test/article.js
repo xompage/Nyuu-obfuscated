@@ -19,10 +19,10 @@ it('should work', function(done) {
 		Subject: 'first post!',
 		From: function(filename, filesize, part, parts, size) {
 			assert.equal(filename, 'somefile');
-			assert.equal(filesize, 3);
+			assert.equal(filesize, 6);
 			assert.equal(part, 1);
 			assert.equal(parts, 2);
-			assert.equal(size, 6);
+			assert.equal(size, 3);
 			return 'fromfield';
 		}
 	}, Buffer('abc'));

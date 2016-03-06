@@ -31,8 +31,11 @@ NNTPServer.prototype = {
 		}
 	},
 	postById: function(grp, id) {
-		if(typeof id != 'number')
-			id = this.postIdMap[id];
+		if(typeof id != 'number') {
+			var post = this.postIdMap[id];
+			if(post && !(grp in post._groupNum)) return false;
+			return post;
+		}
 		if(!(grp in this.posts)) return false;
 		return this.posts[grp][id];
 	},
@@ -241,7 +244,7 @@ function deepMerge(dest, src) {
 	}
 }
 
-var USE_PORT = 38174;
+var USE_PORT = 38175;
 var doTest = function(files, opts, cb) {
 	var o = {
 		server: {
@@ -260,6 +263,7 @@ var doTest = function(files, opts, cb) {
 		},
 		connections: 1,
 		headerCheck: {
+			server: {},
 			connections: 0,
 			checkDelay: 10,
 			recheckDelay: 10,
