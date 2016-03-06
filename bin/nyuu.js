@@ -438,6 +438,7 @@ Nyuu.setLogger(logger);
 Nyuu.upload(argv._, ulOpts, function(err) {
 	if(err) {
 		Nyuu.log.error(err);
+		process.exit(2);
 	} else {
 		Nyuu.log.info('Process complete');
 	}
