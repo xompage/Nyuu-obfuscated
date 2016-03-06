@@ -73,7 +73,7 @@ module.exports = {
 	postHeaders: {
 		// required headers
 		Subject: null, // will be overwritten if set to null
-		From: 'A Poster <a.poster@example.com>',
+		From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + (process.env.USER || process.env.USERNAME || 'user').replace(/[" (),:;<>@]/g, '') + '@' + require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '') + '>', // 'A Poster <a.poster@example.com>'
 		Newsgroups: 'alt.binaries.test', // comma seperated list
 		Date: (new Date()).toUTCString(),
 		Path: '',

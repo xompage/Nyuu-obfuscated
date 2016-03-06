@@ -1,13 +1,13 @@
 Nyuu v0.1.0
 -----------
 
-Usage: nyuu -h example.com [options] file1 file2
+Usage: nyuu -h [server] [options] file1 file2
 
 All options take one parameter, except for those marked as a flag option.
 
 Upload Server Options:
 
-  -h,  --host                Host/server to upload to
+  -h,  --host                Host/server to upload to (required)
   -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
                              is specified)
   -S,  --ssl                 Connect over SSL (flag option)
@@ -39,8 +39,10 @@ Article/Post Options:
                              Default is similar to the following:
                                  {comment} "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
   -f,  --from                Shortcut for `-H From=...`
+                             Defaults to 'username <username@host>'
   -g,  --groups              Shortcut for `-H Newsgroups=...`
                              Separate multiple groups with commas.
+                             Defaults to alt.binaries.test
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
@@ -102,3 +104,10 @@ Other Options:
 ------------------
 Examples
 
+  nyuu -h example.com some_file
+      Uploads some_file to the NNTP server at example.com
+
+  nyuu -h news.example.com -S -u cat -p nyahaha -n3 -f 'Cat <eager-poster@computer>' -g alt.binaries.multimedia -o my_cat.nzb my_cat.mp4
+      Uploads my_cat.mp4 to NNTPS server at news.example.com in group
+      alt.binaries.multimedia. Upload is performed using 3 connections. 
+      The from username is specified, and Nyuu will output an NZB, my_cat.nzb.
