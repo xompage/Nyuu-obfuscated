@@ -5,6 +5,20 @@ var async = require('async');
 var NNTP = require('../lib/nntp');
 var net = require('net');
 
+// hijack crypto.pseudoRandomBytes for testing purposes
+var crypto = require('crypto');
+crypto._real_pseudoRandomBytes = crypto.pseudoRandomBytes;
+
+crypto.pseudoRandomBytes = function(len) {
+	var r = new Buffer(len);
+	r.fill(0xAA);
+	return r;
+};
+// the post format that NNTP sends - needs to be the same as in lib/nntp.js
+var expectedPost = function(headers, msg) {
+	return headers.join('\r\n') + '\r\nMessage-ID: <' + crypto.pseudoRandomBytes(24).toString('hex') + '@nyuu>\r\n\r\n' + msg;
+};
+
 var tl = require('./_testlib');
 
 var DEBUG = false;
@@ -207,12 +221,13 @@ it('should handle basic tasks', function(done) {
 			assert.equal(a[1], 'a-random-post');
 			
 			// test posting
+			var headers = ['My-Secret: not telling'];
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(msg, '240 <new-article> Article received ok');
+				this.expect(expectedPost(headers, msg), '240 <new-article> Article received ok');
 				this.respond('340  Send article');
 			});
-			client.post(msg, cb);
+			client.post(headers, new Buffer(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
@@ -467,18 +482,20 @@ it('should reattempt to post if connection drops out', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
+			var headers = ['My-Secret: not telling'];
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var fMsg = expectedPost(headers, msg);
 			server.expect('POST\r\n', function() {
-				this.expect(msg, function() {
+				this.expect(fMsg, function() {
 					this.expect('POST\r\n', function() {
-						this.expect(msg, '240 <new-article> Article received ok');
+						this.expect(fMsg, '240 <new-article> Article received ok');
 						this.respond('340  Send article');
 					});
 					this.drop();
 				});
 				this.respond('340  Send article');
 			});
-			client.post(msg, cb);
+			client.post(headers, new Buffer(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
@@ -531,9 +548,10 @@ it('should return error on posting timeout', function(done) {
 			assert.equal(client.state, 'connected');
 			
 			var tim;
+			var headers = ['My-Secret: not telling'];
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(msg, function() {
+				this.expect(expectedPost(headers, msg), function() {
 					// never give a response...
 					tim = setTimeout(function() {
 						assert.fail('Client did not time out');
@@ -541,7 +559,7 @@ it('should return error on posting timeout', function(done) {
 				});
 				this.respond('340  Send article');
 			});
-			client.post(msg, function(err, a) {
+			client.post(headers, new Buffer(msg), function(err, a) {
 				clearTimeout(tim);
 				assert(err);
 				assert(!a);
