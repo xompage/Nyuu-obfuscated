@@ -13,7 +13,7 @@ it('should work', function(done) {
 	assert.equal(a.filename, 'somefile');
 	assert.ok(a.line_size);
 	
-	var s;
+	var s, headers;
 	
 	var a1 = a.generate({
 		Subject: 'first post!',
@@ -29,11 +29,12 @@ it('should work', function(done) {
 	assert.equal(a1.part, 1);
 	assert.equal(a1.subject, 'first post!');
 	s = a1.data.toString();
+	headers = a1.headers.join('\r\n');
 	
 	// first part should not have a crc32 (but may have a pcrc32)
 	assert(!s.match(/[^p]crc32=/));
-	assert.notEqual(s.indexOf('first post!'), -1);
-	assert.notEqual(s.indexOf('fromfield'), -1);
+	assert.notEqual(headers.indexOf('first post!'), -1);
+	assert.notEqual(headers.indexOf('fromfield'), -1);
 	
 	// TODO: consider parsing data and checking everything
 	
@@ -42,10 +43,11 @@ it('should work', function(done) {
 	}, Buffer('def'));
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
+	headers = a2.headers.join('\r\n');
 	
 	// check a2 has a crc32
 	assert.notEqual(s.indexOf('crc32='), -1);
-	assert.notEqual(s.indexOf('X-Test:'), -1);
+	assert.notEqual(headers.indexOf('X-Test:'), -1);
 	assert(!a2.subject); // since we didn't supply one
 	
 	assert.equal(a.pos, 6);

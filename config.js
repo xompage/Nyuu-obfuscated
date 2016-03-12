@@ -77,7 +77,7 @@ module.exports = {
 		Newsgroups: 'alt.binaries.test', // comma seperated list
 		Date: (new Date()).toUTCString(),
 		Path: '',
-		//'Message-ID': function() { return require('crypto').pseudoRandomBytes(24).toString('hex') + '@nyuu'; },
+		// don't supply Message-ID - it is always set
 		
 		// optional headers
 		//Organization: '',
