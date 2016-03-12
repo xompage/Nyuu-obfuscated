@@ -336,11 +336,13 @@ it('complex test', function(done) {
 			checkDelay: 10,
 			recheckDelay: 10,
 			tries: 1,
-		}
+		},
+		articleSize: 4096
 	}, function(err, server) {
+		// TODO: better checks
 		var numFiles = require('fs').readdirSync('lib/').length +1;
-		assert.equal(Object.keys(server.posts.rifles).length, numFiles);
-		assert.equal(Object.keys(server.postIdMap).length, numFiles);
+		assert(Object.keys(server.posts.rifles).length >= numFiles);
+		assert(Object.keys(server.postIdMap).length >= numFiles);
 		done(err);
 	});
 });

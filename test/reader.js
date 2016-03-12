@@ -92,6 +92,25 @@ it('should terminate all read calls on end', function(done) {
 	});
 });
 
+it('should handle incomplete read call after end', function(done) {
+	var s = makeStream();
+	var r = new BufferedStreamReader(s, 10);
+	
+	r.read(5, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), 'abcde');
+	});
+	s.push('abcdef');
+	s.push(null);
+	tl.defer(function() {
+		r.read(5, function(err, data) {
+			if(err) throw err;
+			assert.equal(data.toString(), 'f');
+			done();
+		});
+	});
+});
+
 it('should mark EOF on end', function(done) {
 	var s = makeStream();
 	var r = new BufferedStreamReader(s, 10);
