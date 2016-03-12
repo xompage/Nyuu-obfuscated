@@ -15,11 +15,11 @@ Upload Server Options:
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 1)
-       --timeout             
-       --connect-timeout     
-       --reconnect-delay     
-       --connect-retries     
-       --post-retries        
+       --timeout             Timeout on server responses (default 60s)
+       --connect-timeout     Connect timeout (default 30s)
+       --connect-retries     Number of connection retry attempts (default 1)
+       --reconnect-delay     Delay connection retries (default 5s)
+       --post-retries        Number of post retry attempts (default 1)
 
 Article/Post Options:
 
