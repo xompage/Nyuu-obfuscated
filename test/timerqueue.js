@@ -28,8 +28,8 @@ it('should return queued in order', function(done) {
 
 it('should return queued in order (no waiting)', function(done) {
 	var q = new TimerQueue();
-	q.add(40, 2);
 	var s = Date.now();
+	q.add(40, 2);
 	q.take(function(n) {
 		assert(Date.now() - s >= 20);
 		assert.equal(n, 1);
@@ -114,9 +114,9 @@ it('should return empty on finished', function(done) {
 
 it('should return empty on finished (with items)', function(done) {
 	var q = new TimerQueue();
+	var s = Date.now();
 	q.add(20, 1);
 	q.add(40, 2);
-	var s = Date.now();
 	q.take(function(n) {
 		assert.equal(n, 1);
 		assert(Date.now() - s >= 20);
@@ -139,9 +139,9 @@ it('should return empty on finished (with items)', function(done) {
 
 it('should return empty on finished (with items v2)', function(done) {
 	var q = new TimerQueue();
+	var s = Date.now();
 	q.add(20, 1);
 	q.add(40, 2);
-	var s = Date.now();
 	q.take(function(n) {
 		assert.equal(n, 1);
 		assert(Date.now() - s >= 20);
