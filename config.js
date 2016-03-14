@@ -1,6 +1,6 @@
 // this is the default config file
 
-var appName = 'Nyuu v' + require('./package.json').version + ' [https://animetosho.org/app/nyuu]';
+var appVer = require('./package.json').version;
 
 module.exports = {
 	
@@ -83,7 +83,7 @@ module.exports = {
 		
 		// optional headers
 		//Organization: '',
-		'User-Agent': appName
+		'User-Agent': 'Nyuu/' + appVer
 	},
 	
 	nzb: {
@@ -96,7 +96,7 @@ module.exports = {
 		compression: '', // can be 'gzip', 'zlib', 'deflate', 'xz' or '' (none)
 		compressOpts: {}, // options for zlib
 		metaData: {
-			generator: appName,
+			'x-generator': 'Nyuu v' + appVer + ' [https://animetosho.org/app/nyuu]',
 		},
 	},
 	
