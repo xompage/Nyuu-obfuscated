@@ -5,18 +5,13 @@ var async = require('async');
 var NNTP = require('../lib/nntp');
 var net = require('net');
 
-// hijack crypto.pseudoRandomBytes for testing purposes
-var crypto = require('crypto');
-crypto._real_pseudoRandomBytes = crypto.pseudoRandomBytes;
-
-crypto.pseudoRandomBytes = function(len) {
-	var r = new Buffer(len);
-	r.fill(0xAA);
-	return r;
+// hijack Message-ID generator for testing purposes
+NNTP._makeMsgId = function() {
+	return 'xxxx@xxx';
 };
 // the post format that NNTP sends - needs to be the same as in lib/nntp.js
 var expectedPost = function(headers, msg) {
-	return headers.join('\r\n') + '\r\nMessage-ID: <' + crypto.pseudoRandomBytes(24).toString('hex') + '@nyuu>\r\n\r\n' + msg;
+	return headers.join('\r\n') + '\r\nMessage-ID: <' + NNTP._makeMsgId() + '>\r\n\r\n' + msg;
 };
 
 var tl = require('./_testlib');

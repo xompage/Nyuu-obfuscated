@@ -84,6 +84,8 @@ module.exports = {
 		// optional headers
 		//Organization: '',
 		'User-Agent': 'Nyuu/' + appVer
+		
+		// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm
 	},
 	
 	nzb: {
