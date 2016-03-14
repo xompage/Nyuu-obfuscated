@@ -98,40 +98,44 @@ TestServer.prototype = {
 
 var currentServer;
 var USE_PORT = 38174;
+var newNNTP = function() { // TODO: add options
+	return new NNTP({ // connection settings
+		connect: {
+			host: 'localhost',
+			port: USE_PORT,
+		},
+		secure: false, // we won't bother testing SSL, since it's a minimal change on our side
+		user: null,
+		password: null,
+		timeout: 75,
+		connTimeout: 500, // timeout is higher than the reconnect delay - a test relies on it
+		reconnectDelay: 300,
+		connectRetries: 1,
+		postRetries: 1,
+	});
+};
+function killServer(cb) {
+	if(!currentServer) return cb();
+	try {
+		currentServer.close(function() {
+			currentServer = null;
+			cb();
+		});
+		return;
+	} catch(x) { cb(); } // failed to close, just continue...
+}
 function setupTest(cb) {
 	nntpLastLog = {warn: null, info: null, debug: null};
 	
 	if(currentServer) { // previous test failed?
-		try {
-			currentServer.close(function() {
-				currentServer = null;
-				setupTest(cb);
-			});
-			return;
-		} catch(x) {} // failed to close, just continue...
+		killServer(setupTest.bind(null, cb));
 	}
 	
 	var server = new TestServer(function() {
 		server.respond('200 host test server');
 	});
-	var client;
 	server.listen(USE_PORT, function() {
-		client = new NNTP({ // connection settings
-			connect: {
-				host: 'localhost',
-				port: USE_PORT,
-			},
-			secure: false, // we won't bother testing SSL, since it's a minimal change on our side
-			user: null,
-			password: null,
-			timeout: 75,
-			connTimeout: 100,
-			reconnectDelay: 500,
-			connectRetries: 1,
-			postRetries: 1,
-		});
-		
-		cb(null, server, client);
+		cb(null, server, newNNTP());
 	});
 	currentServer = server;
 }
@@ -569,7 +573,81 @@ it('should do nothing on an idle too long message');
 
 it('should not allow concurrent requests');
 
-it('should retry reconnecting if it only fails once'); // also test that the delay period works
+it('should retry reconnecting if it only fails once', function(done) {
+	var server, client;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			// we don't start a server so that the connect fails, but start it up a while after so that the retry should succeed
+			var server, client = newNNTP();
+			var s = Date.now();
+			client.connect(function(err) {
+				var timeTaken = Date.now() - s;
+				assert(timeTaken >= 300); // reconnect delay should be 300ms
+				assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+				assert(server);
+				cb(err, server, client);
+			});
+			setTimeout(function() {
+				server = new TestServer(function() {
+					server.respond('200 host test server');
+				});
+				server.listen(USE_PORT, function() {});
+				currentServer = server;
+			}, 150);
+		},
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			server.expect('DATE\r\n', '111 20110204060810');
+			client.date(cb);
+		},
+		function(date, cb) {
+			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should retry reconnecting if init sequence fails', function(done) {
+	var server, client;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			var dropped = false;
+			var s = Date.now();
+			var server = new TestServer(function() {
+				// first connection = drop, otherwise continue
+				if(dropped) {
+					var timeTaken = Date.now() - s;
+					assert(timeTaken >= 300); // reconnect delay should be 300ms
+					assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+					server.respond('200 host test server');
+				} else {
+					server.drop();
+					dropped = true;
+				}
+			});
+			server.listen(USE_PORT, function() {
+				cb(null, server, newNNTP());
+			});
+			currentServer = server;
+		},
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should throw error on auth failure');
+it('should throw error if selected group fails on connect');
 
 it('should warn on unexpected spurious data received');
 
