@@ -22,6 +22,10 @@ var optMap = {
 	'no-check-cert': {
 		type: 'bool'
 	},
+	'sni-host': {
+		type: 'string',
+		map: 'server/connect/servername'
+	},
 	user: {
 		type: 'string',
 		alias: 'u',
@@ -86,6 +90,49 @@ var optMap = {
 		type: 'string',
 		map: 'headerCheck/failAction'
 	},
+	'check-host': {
+		type: 'string',
+		map: 'headerCheck/server/connect/host'
+	},
+	'check-port': {
+		type: 'int',
+		map: 'headerCheck/server/connect/port'
+	},
+	'check-ssl': {
+		type: 'bool',
+		map: 'headerCheck/server/secure',
+	},
+	'check-no-check-cert': {
+		type: 'bool'
+	},
+	'check-sni-host': {
+		type: 'string',
+		map: 'headerCheck/server/connect/servername'
+	},
+	'check-user': {
+		type: 'string',
+		map: 'headerCheck/server/user'
+	},
+	'check-password': {
+		type: 'string',
+		map: 'headerCheck/server/password'
+	},
+	'check-timeout': {
+		type: 'int',
+		map: 'headerCheck/server/timeout'
+	},
+	'check-connect-timeout': {
+		type: 'int',
+		map: 'headerCheck/server/connTimeout'
+	},
+	'check-reconnect-delay': {
+		type: 'int',
+		map: 'headerCheck/server/reconnectDelay'
+	},
+	'check-connect-retries': {
+		type: 'int',
+		map: 'headerCheck/server/connectRetries'
+	},
 	'article-size': {
 		type: 'size',
 		alias: 'a',
@@ -138,6 +185,10 @@ var optMap = {
 		type: 'int',
 		map: 'nzb/compressOpts/level'
 	},
+	'nzb-encoding': {
+		type: 'string',
+		map: 'nzb/writeOpts/encoding'
+	},
 	meta: {
 		type: 'map',
 		alias: 'M'
@@ -146,6 +197,22 @@ var optMap = {
 		type: 'string',
 		alias: 'r',
 		map: 'subdirs'
+	},
+	'disk-req-size': {
+		type: 'size',
+		map: 'diskReqSize'
+	},
+	'disk-buf-size': {
+		type: 'size',
+		map: 'diskBufferSize'
+	},
+	'post-queue-size': {
+		type: 'int',
+		map: 'articleQueueBuffer'
+	},
+	'check-queue-size': {
+		type: 'int',
+		map: 'headerCheck/maxBuffer'
 	},
 	
 	help: {
@@ -287,8 +354,11 @@ for(var k in argv) {
 	if(o.map) {
 		var path = o.map.split('/');
 		var config = ulOpts;
-		for(var i=0; i<path.length-1; i++)
+		for(var i=0; i<path.length-1; i++) {
+			if(!(path[i] in config))
+				config[path[i]] = {};
 			config = config[path[i]];
+		}
 		config[path.slice(-1)] = v;
 	}
 }
@@ -311,6 +381,8 @@ if(argv.subject) {
 
 if(argv['no-check-cert'])
 	ulOpts.server.connect.rejectUnauthorized = false;
+if(argv['check-no-check-cert'])
+	ulOpts.headerCheck.server.connect.rejectUnauthorized = false;
 if(argv.out === '-')
 	ulOpts.nzb.writeTo = process.stdout;
 
