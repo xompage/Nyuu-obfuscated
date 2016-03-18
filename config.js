@@ -74,7 +74,7 @@ module.exports = {
 	// if any of the following are functions, they'll be called with args(filename, part, parts, size)
 	postHeaders: {
 		// required headers
-		Subject: null, // will be overwritten if set to null
+		Subject: null, // will be overwritten if set to null; will also have (filenum, filenumtotal) prepended to args list
 		From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + (process.env.USER || process.env.USERNAME || 'user').replace(/[" (),:;<>@]/g, '') + '@' + require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '') + '>', // 'A Poster <a.poster@example.com>'
 		Newsgroups: 'alt.binaries.test', // comma seperated list
 		Date: (new Date()).toUTCString(),

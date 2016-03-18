@@ -30,15 +30,15 @@ Article/Post Options:
        --comment2            Comment to append after post subject
   -s,  --subject             Subject to use for posts. The following
                              placeholders are available:
-                                 {comment}   Text specified in `--comment`
-                                 {comment2}  Text specified in `--comment2`
+                                 {filenum}   Current file number in collection
+                                 {files}     Number of files in collection
                                  {filename}  File's name
                                  {filesize}  File's size in bytes
                                  {part}      Article part number
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
                              Default is similar to the following:
-                                 {comment} "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
+                                 {comment} [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>'
   -g,  --groups              Shortcut for `-H Newsgroups=...`

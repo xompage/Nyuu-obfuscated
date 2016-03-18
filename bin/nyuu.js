@@ -364,11 +364,11 @@ for(var k in argv) {
 }
 
 if(argv.subject) {
-	ulOpts.postHeaders.Subject = function(comment, comment2, filename, filesize, part, parts, size) {
-		return argv.subject.replace(/\{(comment2?|filename|filesize|parts?|size)\}/ig, function(p) {
+	ulOpts.postHeaders.Subject = function(filenum, filenumtotal, filename, filesize, part, parts, size) {
+		return argv.subject.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(p) {
 			switch(p[1].toLowerCase()) {
-				case 'comment': return comment;
-				case 'comment2': return comment2;
+				case 'filenum': return filenum;
+				case 'files': return filenumtotal;
 				case 'filename': return filename;
 				case 'filesize': return filesize;
 				case 'part': return part;
