@@ -162,6 +162,46 @@ it('should propagate errors to waiting reads', function(done) {
 	});
 });
 
+it('should deal with buffering disabled', function(done) {
+	var s = makeStream();
+	var r = new BufferedStreamReader(s, 0);
+	
+	var bigdata = Buffer(65536*4); // should be large enough to exceed any node buffers; has nothing to do with a particular fad term
+	s.push(bigdata);
+	tl.defer(function() {
+		r.read(65536*2, function(err, data) {
+			if(err) throw err;
+			
+			assert(!r.EOF);
+			assert.equal(data.length, 65536*2);
+			
+			s.push(bigdata);
+			
+			tl.defer(function() {
+				r.read(65536*4, function(err, data) {
+					if(err) throw err;
+					
+					assert(!r.EOF);
+					assert.equal(data.length, 65536*4);
+					
+					s.push(null);
+					
+					r.read(65536*2, function(err, data) {
+						if(err) throw err;
+						
+						tl.defer(function() {
+							assert(r.EOF);
+							assert.equal(data.length, 65536*2);
+							done();
+						});
+					});
+				});
+			});
+		});
+	});
+});
+
+
 // TODO: is there a way to test the pause/resume semantics of the buffer size?
 // - should pause if amount of buffered data exceeds limit
 // - also need to test case that a read request exceeds the buffer limit
