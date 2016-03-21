@@ -144,6 +144,7 @@ var optMap = {
 	},
 	comment: {
 		type: 'string',
+		alias: 't',
 		map: 'comment'
 	},
 	comment2: {

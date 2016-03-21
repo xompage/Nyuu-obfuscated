@@ -26,7 +26,7 @@ Article/Post Options:
 
   -a,  --article-size        Size of each news post (default 750K)
        --article-line-size   Max bytes per line (default 128)
-       --comment             Comment to insert before post subject
+  -t,  --comment             Comment to insert before post subject
        --comment2            Comment to append after post subject
   -s,  --subject             Subject to use for posts. The following
                              placeholders are available:
