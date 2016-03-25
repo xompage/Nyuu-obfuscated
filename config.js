@@ -89,7 +89,7 @@ module.exports = {
 	},
 	
 	nzb: {
-		writeTo: null, // supply a writable stream or filename for NZB output
+		writeTo: null, // supply a writable stream (or function which returns one) or filename for NZB output
 		writeOpts: {
 			//mode: 0666,
 			encoding: 'utf-8',

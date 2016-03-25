@@ -83,9 +83,14 @@ Header Check Options:
 NZB Output Options:
 
   -o,  --out                 If supplied, will write NZB to this file
-                             Can also be '-' which writes the NZB to stdout
+                             Can be '-' which writes the NZB to stdout
                              Note: due to a bug in minimist, `--out -` will not
                              work, use `-o-` instead.
+                             You can also pipe this into the stdin of another
+                             process by prefixing a command with `proc://`, for
+                             example: `-o 'proc://cat>out.nzb'`, which is the
+                             same as using `-o- | cat>out.nzb`. The stdout and
+                             stderr of the process is discarded.
        --minify              Minify outputted XML (flag option)
        --nzb-compress        Compress outputted NZB. Can be gzip, zlib or
                              deflate. If node-xz is installed, xz is also

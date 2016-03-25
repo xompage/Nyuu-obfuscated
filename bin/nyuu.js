@@ -386,6 +386,19 @@ if(argv['check-no-check-cert'])
 	ulOpts.headerCheck.server.connect.rejectUnauthorized = false;
 if(argv.out === '-')
 	ulOpts.nzb.writeTo = process.stdout;
+else if(argv.out.match(/^proc:\/\//i)) {
+	ulOpts.nzb.writeTo = function(cmd) {
+		var spawn = require('child_process').spawn;
+		var opts = {stdio: ['pipe','ignore','ignore']};
+		if(process.platform === 'win32') {
+			opts.windowsVerbatimArguments = true;
+			return spawn(process.env.comspec || 'cmd.exe', ['/s', '/c', '"' + cmd + '"'], opts).stdin;
+		} else {
+			return spawn('/bin/sh', ['-c', cmd], opts).stdin;
+		}
+		// if process exits early, the write stream should break and throw an error
+	}.bind(null, argv.out.substr(7));
+}
 
 // map custom headers
 if(argv.headers) {
