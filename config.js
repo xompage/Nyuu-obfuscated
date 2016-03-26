@@ -69,6 +69,7 @@ module.exports = {
 	
 	comment: '', // subject pre-comment
 	comment2: '', // subject post-comment
+	groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 	// TODO: subject format
 	
 	// if any of the following are functions, they'll be called with args(filename, part, parts, size)

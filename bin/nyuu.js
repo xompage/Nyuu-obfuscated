@@ -151,6 +151,11 @@ var optMap = {
 		type: 'string',
 		map: 'comment2'
 	},
+	'group-files': {
+		type: 'bool',
+		alias: 'F',
+		map: 'groupFiles'
+	},
 	header: {
 		type: 'map',
 		alias: 'H'

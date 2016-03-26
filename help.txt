@@ -28,6 +28,9 @@ Article/Post Options:
        --article-line-size   Max bytes per line (default 128)
   -t,  --comment             Comment to insert before post subject
        --comment2            Comment to append after post subject
+  -F,  --group-files         Group files by filename, similar to how indexers
+                             would see them. This only affects the file counter
+                             placed in the subject (flag option)
   -s,  --subject             Subject to use for posts. The following
                              placeholders are available:
                                  {filenum}   Current file number in collection
