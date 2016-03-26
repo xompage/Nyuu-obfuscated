@@ -14,6 +14,12 @@ var expectedPost = function(headers, msg) {
 	return headers.join('\r\n') + '\r\nMessage-ID: <' + NNTP._makeMsgId() + '>\r\n\r\n' + msg;
 };
 
+var newFakeConn = function() {
+	var fakeConn = new (require('stream').Writable)();
+	fakeConn.destroy = function() {};
+	return fakeConn;
+};
+
 var tl = require('./_testlib');
 
 var DEBUG = false;
@@ -248,8 +254,8 @@ it('should honour a request made before connected', function(done) {
 			client = _client;
 			
 			server.expect('DATE\r\n', '111 20110204060810');
-			client.date(cb);
 			client.connect();
+			client.date(cb);
 		},
 		function(date, cb) {
 			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
@@ -598,10 +604,83 @@ it('should retry on posting timeout', function(done) {
 	], done);
 });
 
-it('should return error if reconnect fails during a request');
-it('should return error if requesting whilst disconnected without pending connect');
+it('should return error if reconnect completely fails during a request', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			server.close(); // reject all future connect attempts
+			currentServer = null;
+			// send req
+			server.expect('DATE\r\n', function() {
+				this.expect('DATE\r\n', '111 20110204060810');
+				this.drop();
+			});
+			client.date(function(err, date) {
+				assert(!date);
+				assert.equal(err.code, 'connect_fail');
+				assert(!client.active);
+				cb();
+			});
+		}
+	], done);
+});
+it('should return error if requesting whilst disconnected without pending connect', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert(client.active);
+			server.close(); // reject all future connect attempts
+			server.drop();
+			currentServer = null;
+			
+			// wait after all reconnect attempts have been tried
+			setTimeout(function() {
+				assert(!client.active);
+				client.date(function(err, date) {
+					assert(!date);
+					assert.equal(err.code, 'not_connected');
+					cb();
+				});
+			}, 1000);
+		}
+	], done);
+});
 
-it('should deal with connection timeouts');
+it('should deal with connection timeouts', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			// simulate a connection timeout by hijacking the connect method, so that it does nothing on the first call
+			var net = require('net');
+			var realConnect = net.connect;
+			net.connect = function() {
+				net.connect = realConnect;
+				return newFakeConn();
+			};
+			
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 it('should do nothing on an idle too long message');
 
 it('should not allow concurrent requests');
@@ -679,7 +758,35 @@ it('should retry reconnecting if init sequence fails', function(done) {
 		}
 	], done);
 });
-it('should retry on timeout during init sequence');
+it('should retry on timeout during init sequence', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			client.opts.user = 'nyuu';
+			client.opts.password = 'iamreallylucy';
+			server.expect('AUTHINFO USER nyuu\r\n', function() {
+				assert.equal(client.state, 'auth');
+				this.expect('AUTHINFO PASS iamreallylucy\r\n', function() {
+					// do nothing to timeout
+					this.expect('AUTHINFO USER nyuu\r\n', function() {
+						this.expect('AUTHINFO PASS iamreallylucy\r\n', '281 User logged in');
+						this.respond('381 Give AUTHINFO PASS command');
+					});
+				});
+				this.respond('381 Give AUTHINFO PASS command');
+			});
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 it('should throw error on auth failure');
 it('should throw error if selected group fails on connect');
 
