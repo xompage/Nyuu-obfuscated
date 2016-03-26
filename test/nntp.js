@@ -496,7 +496,11 @@ it('should reattempt to post if connection drops out', function(done) {
 						this.expect(fMsg, '240 <new-article> Article received ok');
 						this.respond('340  Send article');
 					});
-					this.drop();
+					// we'll hijack this test case to check that the input buffer gets cleared on reconnect, by sending some junk data
+					this._conn.write('blah'); // should be ignored by client
+					setTimeout(function() {
+						server.drop();
+					}, 30);
 				});
 				this.respond('340  Send article');
 			});
@@ -508,6 +512,42 @@ it('should reattempt to post if connection drops out', function(done) {
 			closeTest(client, server, cb);
 		}
 	], done);
+});
+
+it('should reattempt to post if first time fails', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var headers = ['My-Secret: not telling'];
+			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var fMsg = expectedPost(headers, msg);
+			server.expect('POST\r\n', function() {
+				this.expect(fMsg, function() {
+					this.expect('POST\r\n', function() {
+						this.expect(fMsg, '240 <new-article> Article received ok');
+						this.respond('340 Send article');
+					});
+					this.respond('441 posting failed');
+				});
+				this.respond('340 Send article');
+			});
+			client.post(headers, new Buffer(msg), cb);
+		},
+		function(a, cb) {
+			assert.equal(a, 'new-article');
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+	
 });
 
 it('should resend request if connection lost and reconnect fails once', function(done) {
