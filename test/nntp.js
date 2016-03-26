@@ -193,7 +193,7 @@ it('should handle basic tasks', function(done) {
 			
 			server.expect('GROUP invalid-group\r\n', '411 No such newsgroup (Mailbox does not exist)');
 			client.group('invalid-group', function(err) {
-				assert(err);
+				assert.equal(err.code, 'invalid_group');
 				assert.equal(client.currentGroup, 'some-group');
 				cb();
 			});
@@ -335,7 +335,7 @@ it('should not honor half-open destroy request', function(done) {
 				});
 			});
 			client.date(function(err) {
-				assert(err);
+				assert.equal(err.code, 'closed');
 			});
 			client.destroy();
 			assert.equal(client.state, 'disconnected');
@@ -526,7 +526,7 @@ it('should return error on request timeout', function(done) {
 			});
 			client.date(function(err, date) {
 				clearTimeout(tim);
-				assert(err);
+				assert.equal(err.code, 'timeout');
 				assert(!date);
 				closeTest(client, server, cb);
 			});
@@ -560,7 +560,7 @@ it('should return error on posting timeout', function(done) {
 			});
 			client.post(headers, new Buffer(msg), function(err, a) {
 				clearTimeout(tim);
-				assert(err);
+				assert.equal(err.code, 'timeout');
 				assert(!a);
 				closeTest(client, server, cb);
 			});
