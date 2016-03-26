@@ -177,7 +177,11 @@ Alternatives
 
 The following are all the command-line usenet posters I could find:
 
--   [Newsmangler](<https://github.com/alexis57/newsmangler>): no longer
+-   [GoPostStuff](<https://github.com/madcowfred/GoPostStuff/>): newer post tool
+    written in Go, by the same author as Newsmangler. Haven’t tested it. Doesn’t
+    appear to support NZB generation.
+
+-   [Newsmangler](<https://github.com/madcowfred/newsmangler>): no longer
     maintained tool written in Python. Relatively basic and lacks some features
     I’d like to have (e.g. specifying where NZBs are written to), but otherwise
     quite capable.
