@@ -505,7 +505,7 @@ it('should reattempt to post if connection drops out', function(done) {
 	
 });
 
-it('should return error on request timeout', function(done) {
+it('should retry on request timeout', function(done) {
 	var server, client;
 	async.waterfall([
 		setupTest,
@@ -517,24 +517,21 @@ it('should return error on request timeout', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var tim;
 			server.expect('DATE\r\n', function() {
 				// never give a response...
-				tim = setTimeout(function() {
-					assert.fail('Client did not time out');
-				}, 125);
+				// give one on second try
+				server.expect('DATE\r\n', '111 20110204060810');
 			});
-			client.date(function(err, date) {
-				clearTimeout(tim);
-				assert.equal(err.code, 'timeout');
-				assert(!date);
-				closeTest(client, server, cb);
-			});
+			client.date(cb);
+		},
+		function(date, cb) {
+			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			closeTest(client, server, cb);
 		}
 	], done);
 	
 });
-it('should return error on posting timeout', function(done) {
+it('should retry on posting timeout', function(done) {
 	var server, client;
 	async.waterfall([
 		setupTest,
@@ -546,27 +543,30 @@ it('should return error on posting timeout', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var tim;
 			var headers = ['My-Secret: not telling'];
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
 				this.expect(expectedPost(headers, msg), function() {
 					// never give a response...
-					tim = setTimeout(function() {
-						assert.fail('Client did not time out');
-					}, 125);
+					// give one on second try
+					this.expect('POST\r\n', function() {
+						this.expect(expectedPost(headers, msg), '240 <new-article> Article received ok');
+						this.respond('340  Send article');
+					});
 				});
 				this.respond('340  Send article');
 			});
-			client.post(headers, new Buffer(msg), function(err, a) {
-				clearTimeout(tim);
-				assert.equal(err.code, 'timeout');
-				assert(!a);
-				closeTest(client, server, cb);
-			});
+			client.post(headers, new Buffer(msg), cb);
+		},
+		function(a, cb) {
+			assert.equal(a, 'new-article');
+			closeTest(client, server, cb);
 		}
 	], done);
 });
+
+it('should return error if reconnect fails during a request');
+it('should return error if requesting whilst disconnected without pending connect');
 
 it('should deal with connection timeouts');
 it('should do nothing on an idle too long message');
@@ -646,6 +646,7 @@ it('should retry reconnecting if init sequence fails', function(done) {
 		}
 	], done);
 });
+it('should retry on timeout during init sequence');
 it('should throw error on auth failure');
 it('should throw error if selected group fails on connect');
 
