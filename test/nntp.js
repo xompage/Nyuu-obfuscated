@@ -502,8 +502,41 @@ it('should reattempt to post if connection drops out', function(done) {
 			closeTest(client, server, cb);
 		}
 	], done);
-	
 });
+
+it('should resend request if connection lost and reconnect fails once', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.currentGroup = 'some-group';
+			server.expect('GROUP some-group\r\n', '211 2 1 2 some-group');
+			client.connect(cb);
+		},
+		function(cb) {
+			// send req
+			server.expect('DATE\r\n', function() {
+				this.expect('GROUP some-group\r\n', function() {
+					this.expect('GROUP some-group\r\n', function() {
+						this.expect('DATE\r\n', '111 20110204060810');
+						this.respond('211 2 1 2 some-group');
+					});
+					this.drop(); // drop a second time (this will be in the connect init sequence)
+				});
+				this.drop(); // drop first time
+			});
+			client.date(cb);
+		},
+		function(date, cb) {
+			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
 
 it('should retry on request timeout', function(done) {
 	var server, client;
