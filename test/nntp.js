@@ -6,8 +6,9 @@ var NNTP = require('../lib/nntp');
 var net = require('net');
 
 // hijack Message-ID generator for testing purposes
+var useMsgId = null;
 NNTP._makeMsgId = function() {
-	return 'xxxx@xxx';
+	return useMsgId || 'xxxx@xxx';
 };
 // the post format that NNTP sends - needs to be the same as in lib/nntp.js
 var expectedPost = function(headers, msg) {
@@ -531,6 +532,8 @@ it('should reattempt to post if first time fails', function(done) {
 			var fMsg = expectedPost(headers, msg);
 			server.expect('POST\r\n', function() {
 				this.expect(fMsg, function() {
+					useMsgId = 'new-message-id';
+					fMsg = expectedPost(headers, msg);
 					this.expect('POST\r\n', function() {
 						this.expect(fMsg, '240 <new-article> Article received ok');
 						this.respond('340 Send article');
@@ -544,6 +547,7 @@ it('should reattempt to post if first time fails', function(done) {
 		function(a, cb) {
 			assert.equal(a, 'new-article');
 			
+			useMsgId = null;
 			closeTest(client, server, cb);
 		}
 	], done);
