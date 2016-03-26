@@ -7,13 +7,20 @@ process.title = 'Nyuu';
 var optMap = {
 	host: {
 		type: 'string',
-		alias: 'h',
-		map: 'server/connect/host'
+		alias: 'h'
 	},
 	port: {
 		type: 'int',
 		alias: 'P',
 		map: 'server/connect/port'
+	},
+	'bind-host': {
+		type: 'string',
+		map: 'server/connect/localAddress'
+	},
+	ipv6: {
+		type: 'bool',
+		alias: '6'
 	},
 	ssl: {
 		type: 'bool',
@@ -25,6 +32,14 @@ var optMap = {
 	'sni-host': {
 		type: 'string',
 		map: 'server/connect/servername'
+	},
+	'ssl-ciphers': {
+		type: 'string',
+		map: 'server/connect/ciphers'
+	},
+	'ssl-method': {
+		type: 'string',
+		map: 'server/connect/secureProtocol'
 	},
 	user: {
 		type: 'string',
@@ -91,12 +106,18 @@ var optMap = {
 		map: 'headerCheck/failAction'
 	},
 	'check-host': {
-		type: 'string',
-		map: 'headerCheck/server/connect/host'
+		type: 'string'
 	},
 	'check-port': {
 		type: 'int',
 		map: 'headerCheck/server/connect/port'
+	},
+	'check-bind-host': {
+		type: 'string',
+		map: 'server/headerCheck/connect/localAddress'
+	},
+	'check-ipv6': {
+		type: 'bool'
 	},
 	'check-ssl': {
 		type: 'bool',
@@ -108,6 +129,14 @@ var optMap = {
 	'check-sni-host': {
 		type: 'string',
 		map: 'headerCheck/server/connect/servername'
+	},
+	'check-ssl-ciphers': {
+		type: 'string',
+		map: 'headerCheck/server/connect/ciphers'
+	},
+	'check-ssl-method': {
+		type: 'string',
+		map: 'headerCheck/server/connect/secureProtocol'
 	},
 	'check-user': {
 		type: 'string',
@@ -385,10 +414,26 @@ if(argv.subject) {
 	};
 }
 
-if(argv['no-check-cert'])
-	ulOpts.server.connect.rejectUnauthorized = false;
-if(argv['check-no-check-cert'])
-	ulOpts.headerCheck.server.connect.rejectUnauthorized = false;
+var connOptMap = {
+	'no-check-cert': function(o) {
+		o.rejectUnauthorized = false;
+	},
+	ipv6: function(o) {
+		o.family = 6;
+	},
+	host: function(o, v) {
+		if(v.match(/^unix:/i))
+			o.path = v.substr(5);
+		else
+			o.host = v;
+	}
+};
+for(var k in connOptMap) {
+	if(argv[k])
+		connOptMap[k](ulOpts.server.connect, argv[k]);
+	if(argv['check-'+k])
+		connOptMap[k](ulOpts.headerCheck.server.connect, argv['check-'+k]);
+}
 if(argv.out === '-')
 	ulOpts.nzb.writeTo = process.stdout;
 else if(argv.out.match(/^proc:\/\//i)) {

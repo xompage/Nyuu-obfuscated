@@ -7,12 +7,22 @@ All options take one parameter, except for those marked as a flag option.
 
 Upload Server Options:
 
-  -h,  --host                Host/server to upload to (required)
+  -h,  --host                Host/server to upload to (required). Prefix with
+                             `unix:` to specify a Unix socket path.
+                             SSL with Unix sockets requires NodeJS >= 0.12
   -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
                              is specified)
+  -6,  --ipv6                Connect over IPv6 (flag option)
+                             Requires NodeJS >= 0.12
+       --bind-host           Local address to bind to
   -S,  --ssl                 Connect over SSL (flag option)
        --no-check-cert       Ignore SSL certificate problems
        --sni-host            SNI host name to send if connecting over SSL
+       --ssl-ciphers         List of SSL ciphers to use, in OpenSSL format
+                             See https://nodejs.org/api/tls.html for defaults
+                             Requires NodeJS >= 0.12
+       --ssl-method          Force SSL/TLS method. For details, see
+                             https://nodejs.org/api/tls.html
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 1)
