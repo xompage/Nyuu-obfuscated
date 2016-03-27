@@ -101,9 +101,13 @@ var optMap = {
 		type: 'string',
 		map: 'check/group'
 	},
-	'check-onfail': {
-		type: 'string',
-		map: 'check/failAction'
+	'check-post-tries': {
+		type: 'int',
+		map: 'check/postRetries'
+	},
+	'check-ignore-fail': {
+		type: 'bool',
+		map: 'check/ignoreFailure'
 	},
 	'check-host': {
 		type: 'string'

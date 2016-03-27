@@ -35,11 +35,11 @@ module.exports = {
 		connections: 1, // probably not much of a reason to go above 1
 		delay: 40*1000, // (in ms) initial delay for performing check
 		recheckDelay: 20*1000, // (in ms) delay retries by this amount of time
-		tries: 0, // number of retries; should be 0 if not performing post checks
+		tries: 0, // number of check attempts; should be 0 if not performing post checks
 		group: '', // which group to check in; if left blank, will auto determine from posting headers
 		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
-		failAction: 'error', // what to do when post check fails to get the post; options are 'error' (die), 'warn' (ignore and print warning), 'repost' (re-post article)
-		// TODO: max repost tries
+		postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
+		ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
 		maxBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
 	},
 	

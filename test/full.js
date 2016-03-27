@@ -19,6 +19,7 @@ function NNTPServer(opts) {
 	}.bind(this));
 }
 NNTPServer.prototype = {
+	dropPostCount: 0,
 	
 	groupNumPosts: function(grp) {
 		if(this.groups.indexOf(grp) < 0)
@@ -62,6 +63,11 @@ NNTPServer.prototype = {
 		post._msg = msg;
 		post._groupNum = {};
 		
+		var dropPost = this.dropPostCount; // drop the post to simulate it going missing
+		if(dropPost) {
+			this.dropPostCount--;
+		}
+		
 		// add post to specified groups
 		var groups = headers.newsgroups.split(',');
 		for(var i in groups) {
@@ -70,13 +76,16 @@ NNTPServer.prototype = {
 			if(grpCount === false)
 				return false;
 			post._groupNum[grp] = grpCount;
-			if(!(grp in this.posts))
-				this.posts[grp] = [];
-			this.posts[grp].push(post);
+			if(!dropPost) {
+				if(!(grp in this.posts))
+					this.posts[grp] = [];
+				this.posts[grp].push(post);
+			}
 		}
 		
 		// add thing in ID mapping
-		this.postIdMap[messageId] = post;
+		if(!dropPost)
+			this.postIdMap[messageId] = post;
 		return messageId;
 	},
 	listen: function(port, cb) {
@@ -244,8 +253,7 @@ function deepMerge(dest, src) {
 	}
 }
 
-var USE_PORT = 38175;
-var doTest = function(files, opts, cb) {
+var clientOpts = function(opts) {
 	var o = {
 		server: {
 			connect: {
@@ -269,7 +277,8 @@ var doTest = function(files, opts, cb) {
 			recheckDelay: 10,
 			tries: 0,
 			ulConnReuse: false,
-			failAction: 'error',
+			postRetries: 1,
+			ignoreFailure: false,
 			maxBuffer: 50,
 		},
 		articleSize: 768000,
@@ -299,10 +308,14 @@ var doTest = function(files, opts, cb) {
 	};
 	
 	deepMerge(o, opts);
-	
+	return o;
+};
+
+var USE_PORT = 38175;
+var doTest = function(files, opts, cb) {
 	var server = new NNTPServer({});
 	server.listen(USE_PORT, function() {
-		FileUploader.upload(files, o, function(err) {
+		FileUploader.upload(files, clientOpts(opts), function(err) {
 			if(err) return cb(err);
 			server.close(function() {
 				cb(null, server);
@@ -346,5 +359,36 @@ it('complex test', function(done) {
 		done(err);
 	});
 });
+
+it('should retry post if post check finds first attempt missing', function(done) {
+	var files = ['index.js'];
+	var opts = {
+		connections: 1,
+		check: {
+			connections: 1,
+			delay: 10,
+			recheckDelay: 10,
+			tries: 1,
+		}
+	};
+	
+	(function(cb) {
+		var server = new NNTPServer({});
+		server.dropPostCount = 1;
+		server.listen(USE_PORT, function() {
+			FileUploader.upload(files, clientOpts(opts), function(err) {
+				if(err) return cb(err);
+				server.close(function() {
+					cb(null, server);
+				});
+			});
+		});
+	})(function(err, server) {
+		assert.equal(Object.keys(server.posts.rifles).length, 1);
+		assert.equal(Object.keys(server.postIdMap).length, 1);
+		done(err);
+	});
+});
+
 
 });
