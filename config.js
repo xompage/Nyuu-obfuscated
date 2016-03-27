@@ -27,20 +27,20 @@ module.exports = {
 	},
 	connections: 3, // number of connections
 	
-	headerCheck: {
+	check: {
 		server: {
 			// same as 'server' above; missing fields are copied from there
 			// TODO: multiple servers?
 		},
 		connections: 1, // probably not much of a reason to go above 1
-		checkDelay: 40*1000, // (in ms) initial delay for performing check
+		delay: 40*1000, // (in ms) initial delay for performing check
 		recheckDelay: 20*1000, // (in ms) delay retries by this amount of time
-		tries: 0, // number of retries; should be 0 if not performing header checks
+		tries: 0, // number of retries; should be 0 if not performing post checks
 		group: '', // which group to check in; if left blank, will auto determine from posting headers
-		ulConnReuse: false, // use uploading connections for header checks; only works if checking the same server as the one being uploaded to
-		failAction: 'error', // what to do when header check fails to get the post; options are 'error' (die), 'warn' (ignore and print warning), 'repost' (re-post article)
+		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
+		failAction: 'error', // what to do when post check fails to get the post; options are 'error' (die), 'warn' (ignore and print warning), 'repost' (re-post article)
 		// TODO: max repost tries
-		maxBuffer: 50, // maximum number of posts in the header-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
+		maxBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
 	},
 	
 	articleSize: 768000, // must be a multiple of 2

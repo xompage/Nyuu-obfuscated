@@ -64,26 +64,26 @@ Article/Post Options:
                              that specifying the same header more than once is
                              currently not supported.
 
-Header Check Options:
+Post Check Options:
 
-       --check-connections   Number of connections to use for header checking
+       --check-connections   Number of connections to use for post checking
                              Generally shouldn't be changed (default 1)
-                             Disables header checking if set to 0, unless
+                             Disables post checking if set to 0, unless
                              `--check-reuse-conn` is specified.
                              You can prefix any of the options above, in the
                              "Upload Server Options" section, with `--check-`
                              to override that behaviour on these checking
                              connections, for example `--check-host` makes
-                             Nyuu perform header checking on a different host.
+                             Nyuu perform post checking on a different host.
                              `--check-post-retries` is unavailable as no
                              posting is performed on these connections.
-       --check-reuse-conn    Reuse uploading connections for header checking
+       --check-reuse-conn    Reuse uploading connections for post checking
                              (flag option). If this option is set,
                              `--check-connections` can be set to 0 if you don't
                              wish to create more connections than specified by
                              `--connections`
   -c,  --check-tries         Maximum number of check attempts to perform.
-                             A value of 0 disables header checking. (default 0)
+                             A value of 0 disables post checking. (default 0)
        --check-delay         Initial delay after posting before performing
                              check (default 40s)
        --check-retry-delay   Delay for check retries, if a check fails

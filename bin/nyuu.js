@@ -78,89 +78,89 @@ var optMap = {
 	},
 	'check-connections': {
 		type: 'int',
-		map: 'headerCheck/connections'
+		map: 'check/connections'
 	},
 	'check-reuse-conn': {
 		type: 'bool',
-		map: 'headerCheck/ulConnReuse'
+		map: 'check/ulConnReuse'
 	},
 	'check-delay': {
 		type: 'time',
-		map: 'headerCheck/checkDelay'
+		map: 'check/delay'
 	},
 	'check-retry-delay': {
 		type: 'time',
-		map: 'headerCheck/recheckDelay'
+		map: 'check/recheckDelay'
 	},
 	'check-tries': {
 		type: 'int',
-		map: 'headerCheck/tries',
+		map: 'check/tries',
 		alias: 'c'
 	},
 	'check-group': {
 		type: 'string',
-		map: 'headerCheck/group'
+		map: 'check/group'
 	},
 	'check-onfail': {
 		type: 'string',
-		map: 'headerCheck/failAction'
+		map: 'check/failAction'
 	},
 	'check-host': {
 		type: 'string'
 	},
 	'check-port': {
 		type: 'int',
-		map: 'headerCheck/server/connect/port'
+		map: 'check/server/port'
 	},
 	'check-bind-host': {
 		type: 'string',
-		map: 'server/headerCheck/connect/localAddress'
+		map: 'check/server/localAddress'
 	},
 	'check-ipv6': {
 		type: 'bool'
 	},
 	'check-ssl': {
 		type: 'bool',
-		map: 'headerCheck/server/secure',
+		map: 'check/server/secure',
 	},
 	'check-no-check-cert': {
 		type: 'bool'
 	},
 	'check-sni-host': {
 		type: 'string',
-		map: 'headerCheck/server/connect/servername'
+		map: 'check/server/servername'
 	},
 	'check-ssl-ciphers': {
 		type: 'string',
-		map: 'headerCheck/server/connect/ciphers'
+		map: 'check/server/ciphers'
 	},
 	'check-ssl-method': {
 		type: 'string',
-		map: 'headerCheck/server/connect/secureProtocol'
+		map: 'check/server/secureProtocol'
 	},
 	'check-user': {
 		type: 'string',
-		map: 'headerCheck/server/user'
+		map: 'check/server/user'
 	},
 	'check-password': {
 		type: 'string',
-		map: 'headerCheck/server/password'
+		map: 'check/server/password'
 	},
 	'check-timeout': {
 		type: 'int',
-		map: 'headerCheck/server/timeout'
+		map: 'check/server/timeout'
 	},
 	'check-connect-timeout': {
 		type: 'int',
-		map: 'headerCheck/server/connTimeout'
+		map: 'check/server/connTimeout'
 	},
 	'check-reconnect-delay': {
 		type: 'int',
-		map: 'headerCheck/server/reconnectDelay'
+		map: 'check/server/reconnectDelay'
 	},
 	'check-connect-retries': {
 		type: 'int',
-		map: 'headerCheck/server/connectRetries'
+		map: 'check/server/connectRetries'
 	},
 	'article-size': {
 		type: 'size',
@@ -247,7 +247,7 @@ var optMap = {
 	},
 	'check-queue-size': {
 		type: 'int',
-		map: 'headerCheck/maxBuffer'
+		map: 'check/maxBuffer'
 	},
 	
 	help: {
@@ -432,7 +432,7 @@ for(var k in connOptMap) {
 	if(argv[k])
 		connOptMap[k](ulOpts.server.connect, argv[k]);
 	if(argv['check-'+k])
-		connOptMap[k](ulOpts.headerCheck.server.connect, argv['check-'+k]);
+		connOptMap[k](ulOpts.check.server, argv['check-'+k]);
 }
 if(argv.out === '-')
 	ulOpts.nzb.writeTo = process.stdout;

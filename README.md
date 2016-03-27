@@ -31,7 +31,7 @@ All the usual:
 
 -   yEnc encoding
 
--   Header checking
+-   Post checking
 
 -   NZB creation, with minification & compression
 
@@ -41,7 +41,7 @@ All the usual:
 
 -   Multiple uploading connections
 
--   Header check is asynchronous (minimal impact on speed)
+-   Post checking is asynchronous (minimal impact on speed)
 
 -   Fastest yEnc and CRC32 implementations
 

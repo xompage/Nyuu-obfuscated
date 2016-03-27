@@ -262,10 +262,10 @@ var doTest = function(files, opts, cb) {
 			postRetries: 1
 		},
 		connections: 1,
-		headerCheck: {
+		check: {
 			server: {},
 			connections: 0,
-			checkDelay: 10,
+			delay: 10,
 			recheckDelay: 10,
 			tries: 0,
 			ulConnReuse: false,
@@ -316,8 +316,8 @@ describe('Nyuu', function() {
 it('basic test', function(done) {
 	doTest(['index.js'], {
 		connections: 1,
-		headerCheck: {
-			checkDelay: 10,
+		check: {
+			delay: 10,
 			recheckDelay: 10,
 			tries: 0,
 		}
@@ -331,9 +331,9 @@ it('basic test', function(done) {
 it('complex test', function(done) {
 	doTest(['lib/', 'index.js'], {
 		connections: 3,
-		headerCheck: {
+		check: {
 			connections: 1,
-			checkDelay: 10,
+			delay: 10,
 			recheckDelay: 10,
 			tries: 1,
 		},
