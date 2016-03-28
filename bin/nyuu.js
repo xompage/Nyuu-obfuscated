@@ -97,6 +97,10 @@ var optMap = {
 		map: 'check/tries',
 		alias: 'c'
 	},
+	'check-group': {
+		type: 'string',
+		map: 'check/group'
+	},
 	'check-post-tries': {
 		type: 'int',
 		map: 'check/postRetries'

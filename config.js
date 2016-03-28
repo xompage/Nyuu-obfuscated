@@ -36,6 +36,7 @@ module.exports = {
 		delay: 5*1000, // (in ms) initial delay for performing check
 		recheckDelay: 30*1000, // (in ms) delay retries by this amount of time
 		tries: 0, // number of check attempts; should be 0 if not performing post checks
+		group: '', // if set, will switch checking connections to this group; some servers seem to want one when STATing posts, otherwise they fail to show them; if set, should be a valid group you never post to, eg "bit.test"
 		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 		postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 		ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)

@@ -94,6 +94,10 @@ Post Check Options:
        --check-post-tries    Maximum number of attempts to re-post articles
                              that the post check could not find. Set to 0 to
                              disable re-posting articles (default 1)
+       --check-group         Checking connections will be set to this group.
+                             Some servers seem to want one set, otherwise
+                             checking fails. If you set one, use a valid group
+                             that you're not posting to, such as "bit.test"
        --check-ignore-fail   If post checking fails to find the posted article,
                              even after re-posting, continue on assuming the
                              last post attempt succeeded. If this is not set,
