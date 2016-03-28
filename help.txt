@@ -91,9 +91,6 @@ Post Check Options:
        --check-post-tries    Maximum number of attempts to re-post articles
                              that the post check could not find. Set to 0 to
                              disable re-posting articles (default 1)
-       --check-group         Which newsgroup to perform checks on. Default is
-                             to use the first group specified in the Newsgroup
-                             NNTP header.
        --check-ignore-fail   If post checking fails to find the posted article,
                              even after re-posting, continue on assuming the
                              last post attempt succeeded. If this is not set,
