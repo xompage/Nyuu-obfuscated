@@ -47,6 +47,8 @@ module.exports = {
 	//articleLines: null,
 	bytesPerLine: 128, // note: as per yEnc specifications, it's possible to exceed this number
 	
+	dumpPosts: '', // dump all successfully posted article headers (excluding Message-ID) to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
+	
 	diskReqSize: 768000, // chunk size when reading from disk
 	diskBufferSize: 1536000, // amount of data to buffer; ideally a multiple of articleSize
 	articleQueueBuffer: 10, // number of buffered articles; just leave it alone
