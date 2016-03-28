@@ -32,14 +32,15 @@ module.exports = {
 			// same as 'server' above; missing fields are copied from there
 			// TODO: multiple servers?
 		},
-		connections: 1, // probably not much of a reason to go above 1
-		delay: 40*1000, // (in ms) initial delay for performing check
-		recheckDelay: 20*1000, // (in ms) delay retries by this amount of time
+		connections: 1, // 1 is a good number, but if you're uploading fast enough that it becomes a bottleneck, increase it
+		delay: 5*1000, // (in ms) initial delay for performing check
+		recheckDelay: 30*1000, // (in ms) delay retries by this amount of time
 		tries: 0, // number of check attempts; should be 0 if not performing post checks
 		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 		postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 		ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
 		queueBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
+		method: 'stat', // 'stat', 'head' or 'newnews' ; TODO: ?
 	},
 	
 	articleSize: 768000, // must be a multiple of 2

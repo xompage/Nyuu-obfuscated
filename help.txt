@@ -67,7 +67,8 @@ Article/Post Options:
 Post Check Options:
 
        --check-connections   Number of connections to use for post checking
-                             Generally shouldn't be changed (default 1)
+                             Generally shouldn't be changed (default 1), unless
+                             it becomes a bottleneck and stalls posting.
                              Disables post checking if set to 0, unless
                              `--check-reuse-conn` is specified.
                              You can prefix any of the options above, in the
@@ -82,12 +83,14 @@ Post Check Options:
                              `--check-connections` can be set to 0 if you don't
                              wish to create more connections than specified by
                              `--connections`
+                             This flag is experimental and generally shouldn't
+                             be used
   -c,  --check-tries         Maximum number of check attempts to perform.
                              A value of 0 disables post checking. (default 0)
        --check-delay         Initial delay after posting before performing
-                             check (default 40s)
+                             first check (default 5s)
        --check-retry-delay   Delay for check retries, if a check fails
-                             (default 20s)
+                             (default 30s)
        --check-post-tries    Maximum number of attempts to re-post articles
                              that the post check could not find. Set to 0 to
                              disable re-posting articles (default 1)
