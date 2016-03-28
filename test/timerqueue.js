@@ -235,14 +235,14 @@ it('should wait when queue size exceeded', function(done) {
 	});
 });
 
-it('single item queue test with overflow', function(done) {
+it('test queue overflow', function(done) {
 	var q = new TimerQueue(2);
 	var addDone = 0;
 	q.add(0, 1, function() {
 		assert.equal(addDone, 0);
 		addDone = 1;
 		q.add(500, 4, function() { // added out of order
-			assert.equal(addDone, 6);
+			assert.equal(addDone, 1);
 			addDone = 4;
 		});
 	});
@@ -250,11 +250,11 @@ it('single item queue test with overflow', function(done) {
 	q.add(20, 3, function() { addDone = 3; q.add(100, 6, function() { addDone = 6; }); });
 	
 	tl.defer(function() {
-		assert.equal(addDone, 1); // queue size is 4 at this point
+		assert.equal(addDone, 4); // queue size is 4 at this point
 		q.take(function(n) {
 			assert.equal(n, 1);
 			tl.defer(function() {
-				assert.equal(addDone, 1); // q size is 3 (2,3,4)
+				assert.equal(addDone, 4); // q size is 3 (2,3,4)
 				q.take(function(n) {
 					assert.equal(n, 2);
 					assert.equal(addDone, 2); // q size is 3 (3,5,4)
@@ -265,14 +265,14 @@ it('single item queue test with overflow', function(done) {
 					q.take(function(n) {
 						assert.equal(n, 5);
 						tl.defer(function() {
-							assert.equal(addDone, 6);
+							assert.equal(addDone, 5);
 							q.take(function(n) {
 								assert.equal(n, 6);
 							});
 							q.take(function(n) {
 								assert.equal(n, 4);
 								tl.defer(function() {
-									assert.equal(addDone, 4);
+									assert.equal(addDone, 6);
 									done();
 								});
 							});
