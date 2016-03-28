@@ -40,7 +40,7 @@ module.exports = {
 		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 		postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 		ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
-		maxBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
+		queueBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
 	},
 	
 	articleSize: 768000, // must be a multiple of 2

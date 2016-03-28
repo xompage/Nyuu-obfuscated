@@ -178,5 +178,6 @@ it('should disable add on finished', function(done) {
 	done();
 });
 
+// TODO: test with queue size
 
 });

@@ -251,7 +251,7 @@ var optMap = {
 	},
 	'check-queue-size': {
 		type: 'int',
-		map: 'check/maxBuffer'
+		map: 'check/queueBuffer'
 	},
 	
 	help: {

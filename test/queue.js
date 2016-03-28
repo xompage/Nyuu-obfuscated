@@ -169,23 +169,29 @@ it('should wait when queue size exceeded', function(done) {
 				q.take(function(n) {
 					assert.equal(n, 1);
 					tl.defer(function() {
-						assert.equal(addDone, 1);
+						assert.equal(addDone, 0); // still have 1 too many item in queue, so add(3) shouldn't be done yet
 						q.add(5, function(err) {
 							if(err) throw err;
 							addDone = 3;
 						});
 						tl.defer(function() {
-							assert.equal(addDone, 1);
+							assert.equal(addDone, 0);
 							q.take(function(n) {
 								assert.equal(n, 2);
+								assert.equal(addDone, 0);
 							});
 							q.take(function(n) {
 								assert.equal(n, 3);
 								tl.defer(function() {
-									assert.equal(addDone, 3);
+									assert.equal(addDone, 1);
 									q.take(function(n) {
+										assert.equal(addDone, 2);
 										assert.equal(n, 4);
-										done();
+										q.take(function(n) {
+											assert.equal(addDone, 3);
+											assert.equal(n, 5);
+											done();
+										});
 									});
 								});
 							});

@@ -98,6 +98,11 @@ Post Check Options:
                              even after re-posting, continue on assuming the
                              last post attempt succeeded. If this is not set,
                              Nyuu will error out instead (flag option)
+       --check-queue-size    Max number of articles queued for checking.
+                             Posting will stall if the number of articles to be
+                             checked exceeds this number. Increase this number
+                             to avoid these stalls, at the expense of higher
+                             memory usage (default 50)
 
 NZB Output Options:
 
@@ -126,7 +131,6 @@ Advanced:
                              Set to 0 to disable read-ahead buffering
        --post-queue-size     Max number of buffered articles for posting
                              (default 10)
-       --check-queue-size    
 
 Other Options:
 
