@@ -19,7 +19,7 @@ function NNTPServer(opts) {
 	}.bind(this));
 }
 NNTPServer.prototype = {
-	dropPostCount: 0,
+	onPostHook: null,
 	
 	groupNumPosts: function(grp) {
 		if(this.groups.indexOf(grp) < 0)
@@ -63,30 +63,35 @@ NNTPServer.prototype = {
 		post._msg = msg;
 		post._groupNum = {};
 		
-		var dropPost = this.dropPostCount; // drop the post to simulate it going missing
-		if(dropPost) {
-			this.dropPostCount--;
+		var dropPost = false; // drop the post to simulate it going missing?
+		if(this.onPostHook) {
+			var f = this.onPostHook;
+			this.onPostHook = null;
+			dropPost = f(post);
 		}
 		
+		if(!dropPost)
+			if(!this.insertPost(post))
+				return false;
+		return messageId;
+	},
+	insertPost: function(post) {
 		// add post to specified groups
-		var groups = headers.newsgroups.split(',');
+		var groups = post.newsgroups.split(',');
 		for(var i in groups) {
 			var grp = groups[i].trim();
 			var grpCount = this.groupNumPosts(grp);
 			if(grpCount === false)
 				return false;
 			post._groupNum[grp] = grpCount;
-			if(!dropPost) {
-				if(!(grp in this.posts))
-					this.posts[grp] = [];
-				this.posts[grp].push(post);
-			}
+			if(!(grp in this.posts))
+				this.posts[grp] = [];
+			this.posts[grp].push(post);
 		}
 		
 		// add thing in ID mapping
-		if(!dropPost)
-			this.postIdMap[messageId] = post;
-		return messageId;
+		this.postIdMap[post.messageId] = post;
+		return true;
 	},
 	listen: function(port, cb) {
 		this.server.listen(port, 'localhost', cb);
@@ -360,6 +365,48 @@ it('complex test', function(done) {
 	});
 });
 
+it('should retry check if first attempt doesn\'t find it', function(done) {
+	var files = ['index.js'];
+	var opts = {
+		connections: 1,
+		check: {
+			connections: 1,
+			delay: 10,
+			recheckDelay: 500,
+			tries: 2,
+		}
+	};
+	
+	var s = Date.now();
+	(function(cb) {
+		var server = new NNTPServer({});
+		var post;
+		server.onPostHook = function(post) {
+			setTimeout(function() {
+				// make this post magically appear later
+				server.insertPost(post);
+			}, 200);
+			return true; // drop this post
+		};
+		server.listen(USE_PORT, function() {
+			FileUploader.upload(files, clientOpts(opts), function(err) {
+				if(err) return cb(err);
+				var t = Date.now() - s;
+				assert(t > 500); // should try once
+				assert(t < 1000); // but not twice (won't happen since we restrict tries to 1, in which case, it shouldn't re-post)
+				server.close(function() {
+					cb(null, server);
+				});
+			});
+		});
+	})(function(err, server) {
+		assert.equal(Object.keys(server.posts.rifles).length, 1);
+		assert.equal(Object.keys(server.postIdMap).length, 1);
+		done(err);
+	});
+});
+
+
 it('should retry post if post check finds first attempt missing', function(done) {
 	var files = ['index.js'];
 	var opts = {
@@ -374,7 +421,7 @@ it('should retry post if post check finds first attempt missing', function(done)
 	
 	(function(cb) {
 		var server = new NNTPServer({});
-		server.dropPostCount = 1;
+		server.onPostHook = function(){ return true; }; // drop the first post
 		server.listen(USE_PORT, function() {
 			FileUploader.upload(files, clientOpts(opts), function(err) {
 				if(err) return cb(err);

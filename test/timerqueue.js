@@ -2,6 +2,7 @@
 
 var assert = require("assert");
 var TimerQueue = require('../lib/timerqueue');
+var tl = require('./_testlib');
 
 describe('Timer Queue', function() {
 
@@ -138,7 +139,7 @@ it('should return empty on finished (with items)', function(done) {
 });
 
 it('should return empty on finished (with items v2)', function(done) {
-	var q = new TimerQueue();
+	var q = new TimerQueue(1);
 	var s = Date.now();
 	q.add(20, 1);
 	q.add(40, 2);
@@ -178,6 +179,111 @@ it('should disable add on finished', function(done) {
 	done();
 });
 
-// TODO: test with queue size
+// this is just a ported copy/paste from timer test case
+it('should wait when queue size exceeded', function(done) {
+	var q = new TimerQueue(2);
+	var addDone = 0;
+	q.add(0, 1, function(err) {
+		if(err) throw err;
+		q.add(0, 2, function(err) {
+			if(err) throw err;
+			q.add(0, 3, function(err) {
+				if(err) throw err;
+				addDone = 1;
+			});
+			q.add(0, 4, function(err) {
+				if(err) throw err;
+				addDone = 2;
+			});
+			
+			tl.defer(function() {
+				assert.equal(addDone, 0);
+				q.take(function(n) {
+					assert.equal(n, 1);
+					tl.defer(function() {
+						assert.equal(addDone, 0); // still have 1 too many item in queue, so add(3) shouldn't be done yet
+						q.add(0, 5, function(err) {
+							if(err) throw err;
+							addDone = 3;
+						});
+						tl.defer(function() {
+							assert.equal(addDone, 0);
+							q.take(function(n) {
+								assert.equal(n, 2);
+								assert.equal(addDone, 0);
+							});
+							q.take(function(n) {
+								assert.equal(n, 3);
+								tl.defer(function() {
+									assert.equal(addDone, 1);
+									q.take(function(n) {
+										assert.equal(addDone, 2);
+										assert.equal(n, 4);
+										q.take(function(n) {
+											assert.equal(addDone, 3);
+											assert.equal(n, 5);
+											done();
+										});
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		});
+	});
+});
+
+it('single item queue test with overflow', function(done) {
+	var q = new TimerQueue(2);
+	var addDone = 0;
+	q.add(0, 1, function() {
+		assert.equal(addDone, 0);
+		addDone = 1;
+		q.add(500, 4, function() { // added out of order
+			assert.equal(addDone, 6);
+			addDone = 4;
+		});
+	});
+	q.add(10, 2, function() { addDone = 2; q.add(50, 5, function() { addDone = 5; }); });
+	q.add(20, 3, function() { addDone = 3; q.add(100, 6, function() { addDone = 6; }); });
+	
+	tl.defer(function() {
+		assert.equal(addDone, 1); // queue size is 4 at this point
+		q.take(function(n) {
+			assert.equal(n, 1);
+			tl.defer(function() {
+				assert.equal(addDone, 1); // q size is 3 (2,3,4)
+				q.take(function(n) {
+					assert.equal(n, 2);
+					assert.equal(addDone, 2); // q size is 3 (3,5,4)
+					q.take(function(n) {
+						assert.equal(addDone, 3); // q size 3 (5,6,4)
+						assert.equal(n, 3);
+					});
+					q.take(function(n) {
+						assert.equal(n, 5);
+						tl.defer(function() {
+							assert.equal(addDone, 6);
+							q.take(function(n) {
+								assert.equal(n, 6);
+							});
+							q.take(function(n) {
+								assert.equal(n, 4);
+								tl.defer(function() {
+									assert.equal(addDone, 4);
+									done();
+								});
+							});
+						});
+					});
+				});
+			});
+		});
+	});
+});
+
+// TODO: need more test cases
 
 });
