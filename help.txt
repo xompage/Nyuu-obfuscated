@@ -90,7 +90,7 @@ Post Check Options:
        --check-delay         Initial delay after posting before performing
                              first check (default 5s)
        --check-retry-delay   Delay for check retries, if a check fails
-                             (default 30s)
+                             (default 30s). Not used if `--check-tries` < 2
        --check-post-tries    Maximum number of attempts to re-post articles
                              that the post check could not find. Set to 0 to
                              disable re-posting articles (default 1)
