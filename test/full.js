@@ -31,11 +31,9 @@ NNTPServer.prototype = {
 			return 0;
 		}
 	},
-	postById: function(grp, id) {
+	postById: function(id, grp) {
 		if(typeof id != 'number') {
-			var post = this.postIdMap[id];
-			if(post && !(grp in post._groupNum)) return false;
-			return post;
+			return this.postIdMap[id];
 		}
 		if(!(grp in this.posts)) return false;
 		return this.posts[grp][id];
@@ -183,20 +181,20 @@ NNTPConnection.prototype = {
 				this._respond(111, '20101122013344');
 			break;
 			case 'STAT':
-				if(!this.group) {
-					this._respond(412, 'No newsgroup has been selected');
+				var msgId, post;
+				if(msgId = data.match(/^<(.*)>$/)) {
+					post = this.server.postById(msgId[1]);
 				} else {
-					var msgId, post;
-					if(msgId = data.match(/^<(.*)>$/)) {
-						post = this.server.postById(this.group, msgId[1]);
-					} else {
-						post = this.server.postById(this.group, data|0);
+					if(!this.group) {
+						this._respond(412, 'No newsgroup has been selected');
+						break;
 					}
-					if(post)
-						this._respond(223, post._groupNum[this.group] + ' <' + post.messageId + '> article retrieved - request text separately');
-					else
-						this._respond(423, ''); // TODO:
+					post = this.server.postById(data|0, this.group);
 				}
+				if(post)
+					this._respond(223, (post._groupNum[this.group] || 0) + ' <' + post.messageId + '> article retrieved - request text separately');
+				else
+					this._respond(423, ''); // TODO:
 			break;
 			case 'GROUP':
 				var np = this.server.groupNumPosts(data);
