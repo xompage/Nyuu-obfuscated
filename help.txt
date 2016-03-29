@@ -67,10 +67,11 @@ Article/Post Options:
 Post Check Options:
 
        --check-connections   Number of connections to use for post checking
-                             Generally shouldn't be changed (default 1), unless
-                             it becomes a bottleneck and stalls posting.
-                             Disables post checking if set to 0, unless
-                             `--check-reuse-conn` is specified.
+                             (default 0). Set to 1 to enable checking (setting
+                             `--check-reuse-conn` will also enable checking).
+                             Higher numbers of connections are only useful if
+                             post checking is bottlenecking the rest of the
+                             proces.
                              You can prefix any of the options above, in the
                              "Upload Server Options" section, with `--check-`
                              to override that behaviour on these checking
@@ -86,7 +87,7 @@ Post Check Options:
                              This flag is experimental and generally shouldn't
                              be used
   -c,  --check-tries         Maximum number of check attempts to perform.
-                             A value of 0 disables post checking. (default 0)
+                             A value of 0 disables post checking. (default 3)
        --check-delay         Initial delay after posting before performing
                              first check (default 5s)
        --check-retry-delay   Delay for check retries, if a check fails
