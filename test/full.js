@@ -274,7 +274,7 @@ var clientOpts = function(opts) {
 			connections: 1
 		},
 		check: {
-			server: {connections: 0},
+			server: {},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 0,
@@ -309,6 +309,8 @@ var clientOpts = function(opts) {
 		},
 	};
 	
+	deepMerge(o.check.server, o.server);
+	o.check.server.connections = 0;
 	deepMerge(o, opts);
 	return o;
 };

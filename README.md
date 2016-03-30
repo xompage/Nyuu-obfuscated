@@ -58,6 +58,8 @@ All the usual:
 
 **Highly configurable:**
 
+-   Lots of connection and SSL options
+
 -   NNTP article posting: article/line sizes, header customisation
 
 -   Configure timeouts, delays and error handling parameters
