@@ -115,33 +115,33 @@ var optMap = {
 	},
 	'check-port': {
 		type: 'int',
-		map: 'check/server/port'
+		map: 'check/server/connect/port'
 	},
 	'check-bind-host': {
 		type: 'string',
-		map: 'check/server/localAddress'
+		map: 'check/server/connect/localAddress'
 	},
 	'check-ipv6': {
 		type: 'bool'
 	},
 	'check-ssl': {
 		type: 'bool',
-		map: 'check/server/secure',
+		map: 'check/server/connect/secure',
 	},
 	'check-no-check-cert': {
 		type: 'bool'
 	},
 	'check-sni-host': {
 		type: 'string',
-		map: 'check/server/servername'
+		map: 'check/server/connect/servername'
 	},
 	'check-ssl-ciphers': {
 		type: 'string',
-		map: 'check/server/ciphers'
+		map: 'check/server/connect/ciphers'
 	},
 	'check-ssl-method': {
 		type: 'string',
-		map: 'check/server/secureProtocol'
+		map: 'check/server/connect/secureProtocol'
 	},
 	'check-user': {
 		type: 'string',
@@ -437,7 +437,7 @@ for(var k in connOptMap) {
 	if(argv[k])
 		connOptMap[k](ulOpts.server.connect, argv[k]);
 	if(argv['check-'+k])
-		connOptMap[k](ulOpts.check.server, argv['check-'+k]);
+		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
 }
 if(argv.out) {
 	if(argv.out === '-')

@@ -28,6 +28,7 @@ module.exports = {
 	
 	check: {
 		server: {
+			connect: {},
 			// same as 'server' above; missing fields are copied from there
 			// TODO: multiple servers?
 			connections: 0, // 1 is a good number, but if you're uploading fast enough that it becomes a bottleneck, increase it
