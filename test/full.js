@@ -270,12 +270,11 @@ var clientOpts = function(opts) {
 			connTimeout: 100,
 			reconnectDelay: 50,
 			connectRetries: 1,
-			postRetries: 1
+			postRetries: 1,
+			connections: 1
 		},
-		connections: 1,
 		check: {
-			server: {},
-			connections: 0,
+			server: {connections: 0},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 0,
@@ -331,7 +330,9 @@ describe('Nyuu', function() {
 
 it('basic test', function(done) {
 	doTest(['index.js'], {
-		connections: 1,
+		server: {
+			connections: 1
+		},
 		check: {
 			delay: 10,
 			recheckDelay: 10,
@@ -346,9 +347,13 @@ it('basic test', function(done) {
 
 it('complex test', function(done) {
 	doTest(['lib/', 'index.js'], {
-		connections: 3,
+		server: {
+			connections: 3
+		},
 		check: {
-			connections: 1,
+			server: {
+				connections: 1
+			},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 1,
@@ -366,9 +371,13 @@ it('complex test', function(done) {
 it('should retry check if first attempt doesn\'t find it', function(done) {
 	var files = ['index.js'];
 	var opts = {
-		connections: 1,
+		server: {
+			connections: 1
+		},
 		check: {
-			connections: 1,
+			server: {
+				connections: 1
+			},
 			delay: 10,
 			recheckDelay: 500,
 			tries: 2,
@@ -408,9 +417,13 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 it('should retry post if post check finds first attempt missing', function(done) {
 	var files = ['index.js'];
 	var opts = {
-		connections: 1,
+		server: {
+			connections: 1
+		},
 		check: {
-			connections: 1,
+			server: {
+				connections: 1
+			},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 1,

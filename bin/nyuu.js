@@ -55,7 +55,7 @@ var optMap = {
 	connections: {
 		type: 'int',
 		alias: 'n',
-		map: 'connections'
+		map: 'server/connections'
 	},
 	timeout: {
 		type: 'int',
@@ -79,7 +79,7 @@ var optMap = {
 	},
 	'check-connections': {
 		type: 'int',
-		map: 'check/connections'
+		map: 'check/server/connections'
 	},
 	'check-reuse-conn': {
 		type: 'bool',

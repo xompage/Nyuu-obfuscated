@@ -23,16 +23,15 @@ module.exports = {
 		reconnectDelay: 5000, // in ms
 		connectRetries: 1,
 		postRetries: 1, // how many times to retry if server returns 441 response to posted article
-		// TODO: reconnect, max retries etc
+		connections: 3, // number of connections
 	},
-	connections: 3, // number of connections
 	
 	check: {
 		server: {
 			// same as 'server' above; missing fields are copied from there
 			// TODO: multiple servers?
+			connections: 0, // 1 is a good number, but if you're uploading fast enough that it becomes a bottleneck, increase it
 		},
-		connections: 0, // 1 is a good number, but if you're uploading fast enough that it becomes a bottleneck, increase it
 		delay: 5*1000, // (in ms) initial delay for performing check
 		recheckDelay: 30*1000, // (in ms) delay retries by this amount of time; not used if tries<2
 		tries: 3, // number of check attempts; should be 0 if not performing post checks
