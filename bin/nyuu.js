@@ -27,7 +27,7 @@ var optMap = {
 		map: 'server/secure',
 		alias: 'S'
 	},
-	'no-check-cert': {
+	'ignore-cert': {
 		type: 'bool'
 	},
 	'sni-host': {
@@ -128,7 +128,7 @@ var optMap = {
 		type: 'bool',
 		map: 'check/server/connect/secure',
 	},
-	'check-no-check-cert': {
+	'check-ignore-cert': {
 		type: 'bool'
 	},
 	'check-sni-host': {
@@ -420,7 +420,7 @@ if(argv.subject) {
 }
 
 var connOptMap = {
-	'no-check-cert': function(o) {
+	'ignore-cert': function(o) {
 		o.rejectUnauthorized = false;
 	},
 	ipv6: function(o) {

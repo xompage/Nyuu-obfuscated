@@ -1,7 +1,7 @@
 Nyuu v0.1.0
 -----------
 
-Usage: nyuu -h [server] [options] file1 file2
+Usage: nyuu -h [server] [options] file1 file2 ...
 
 All options take one parameter, except for those marked as a flag option.
 
@@ -16,7 +16,7 @@ Upload Server Options:
                              Requires NodeJS >= 0.12
        --bind-host           Local address to bind to
   -S,  --ssl                 Connect over SSL (flag option)
-       --no-check-cert       Ignore SSL certificate problems
+       --ignore-cert         Ignore SSL certificate problems
        --sni-host            SNI host name to send if connecting over SSL
        --ssl-ciphers         List of SSL ciphers to use, in OpenSSL format
                              See https://nodejs.org/api/tls.html for defaults
@@ -34,7 +34,8 @@ Upload Server Options:
 
 Article/Post Options:
 
-  -a,  --article-size        Size of each news post (default 750K)
+  -a,  --article-size        Target size of each news post (default 750K). Note
+                             that yEnc makes the actual size larger.
        --article-line-size   Max bytes per line (default 128)
   -t,  --comment             Comment to insert before post subject
        --comment2            Comment to append after post subject
