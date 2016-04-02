@@ -15,12 +15,13 @@ function deepMerge(dest, src) {
 	}
 }
 
+var lastServerPort = 0;
 var clientOpts = function(opts) {
 	var o = {
 		server: {
 			connect: {
 				host: '127.0.0.1',
-				port: USE_PORT,
+				port: lastServerPort,
 			},
 			secure: false, // set to 'true' to use SSL
 			user: 'joe',
@@ -75,15 +76,19 @@ var clientOpts = function(opts) {
 	return o;
 };
 
-var USE_PORT = 38175;
-var doTest = function(files, opts, cb) {
+var testSkel = function(files, opts, cb) {
 	var server = new NNTPServer({});
-	server.listen(USE_PORT, function() {
-		FileUploader.upload(files, clientOpts(opts), function(err) {
-			if(err) return cb(err);
-			server.close(function() {
-				cb(null, server);
-			});
+	server.listen(0, function() {
+		lastServerPort = server.address().port;
+		FileUploader.upload(files, clientOpts(opts), cb);
+	});
+	return server;
+};
+var doTest = function(files, opts, cb) {
+	var server = testSkel(files, opts, function(err) {
+		if(err) return cb(err);
+		server.close(function() {
+			cb(null, server);
 		});
 	});
 };
@@ -148,7 +153,15 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 	
 	var s = Date.now();
 	(function(cb) {
-		var server = new NNTPServer({});
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			var t = Date.now() - s;
+			assert(t > 500); // should try once
+			assert(t < 1000); // but not twice (won't happen since we restrict tries to 1, in which case, it shouldn't re-post)
+			server.close(function() {
+				cb(null, server);
+			});
+		});
 		var post;
 		server.onPostHook = function(post) {
 			setTimeout(function() {
@@ -157,17 +170,6 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 			}, 200);
 			return true; // drop this post
 		};
-		server.listen(USE_PORT, function() {
-			FileUploader.upload(files, clientOpts(opts), function(err) {
-				if(err) return cb(err);
-				var t = Date.now() - s;
-				assert(t > 500); // should try once
-				assert(t < 1000); // but not twice (won't happen since we restrict tries to 1, in which case, it shouldn't re-post)
-				server.close(function() {
-					cb(null, server);
-				});
-			});
-		});
 	})(function(err, server) {
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);
@@ -193,16 +195,13 @@ it('should retry post if post check finds first attempt missing', function(done)
 	};
 	
 	(function(cb) {
-		var server = new NNTPServer({});
-		server.onPostHook = function(){ return true; }; // drop the first post
-		server.listen(USE_PORT, function() {
-			FileUploader.upload(files, clientOpts(opts), function(err) {
-				if(err) return cb(err);
-				server.close(function() {
-					cb(null, server);
-				});
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
 			});
 		});
+		server.onPostHook = function(){ return true; }; // drop the first post
 	})(function(err, server) {
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);

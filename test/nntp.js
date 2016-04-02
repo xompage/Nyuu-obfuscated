@@ -99,18 +99,21 @@ TestServer.prototype = {
 		this._conn = null;
 	},
 	listen: function(port, cb) {
-		this.server.listen(port, 'localhost', cb);
+		this.server.listen(port, 'localhost', function() {
+			lastServerPort = this.server.address().port;
+			cb();
+		}.bind(this));
 	}
 };
 
 
 var currentServer;
-var USE_PORT = 38174;
+var lastServerPort = 0;
 var newNNTP = function() { // TODO: add options
 	return new NNTP({ // connection settings
 		connect: {
 			host: 'localhost',
-			port: USE_PORT,
+			port: lastServerPort,
 		},
 		secure: false, // we won't bother testing SSL, since it's a minimal change on our side
 		user: null,
@@ -143,7 +146,7 @@ function setupTest(cb) {
 	var server = new TestServer(function() {
 		server.respond('200 host test server');
 	});
-	server.listen(USE_PORT, function() {
+	server.listen(0, function() {
 		cb(null, server, newNNTP());
 	});
 	currentServer = server;
@@ -736,6 +739,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 		killServer,
 		function(cb) {
 			// we don't start a server so that the connect fails, but start it up a while after so that the retry should succeed
+			lastServerPort = 53151;
 			var server, client = newNNTP();
 			var emitted = false;
 			var s = Date.now();
@@ -753,7 +757,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 				server = new TestServer(function() {
 					server.respond('200 host test server');
 				});
-				server.listen(USE_PORT, function() {});
+				server.listen(lastServerPort, function() {});
 				currentServer = server;
 				
 				if(!emitted)
@@ -793,7 +797,7 @@ it('should retry reconnecting if init sequence fails', function(done) {
 					dropped = true;
 				}
 			});
-			server.listen(USE_PORT, function() {
+			server.listen(0, function() {
 				cb(null, server, newNNTP());
 			});
 			currentServer = server;
