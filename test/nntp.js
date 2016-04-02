@@ -48,6 +48,7 @@ function TestServer(onConn) {
 	this.server = net.createServer(function(c) {
 		if(this._conn) throw new Error('Multiple connections received');
 		this._conn = c;
+		this.connectedTime = Date.now();
 		c.on('data', this.onData.bind(this));
 		c.once('close', function() {
 			this._conn = null;
@@ -691,7 +692,7 @@ it('should return error if requesting whilst disconnected without pending connec
 			
 			// wait after all reconnect attempts have been tried
 			setTimeout(function() {
-				assert(!client.active);
+				assert.equal(client.active, false);
 				client.date(function(err, date) {
 					assert(!date);
 					assert.equal(err.code, 'not_connected');
@@ -834,7 +835,64 @@ it('should retry on timeout during init sequence', function(done) {
 it('should throw error on auth failure');
 it('should throw error if selected group fails on connect');
 
+it('should retry on a single auth failure');
+
 it('should warn on unexpected spurious data received');
+it('should deal with unexpected 200 messages by reconnecting', function(done) {
+	var server, client, ct;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			ct = server.connectedTime;
+			server.expect('STAT 1\r\n', '223 1 <some-post> article retrieved');
+			tl.defer(function() {
+				client.stat(1, cb);
+			});
+		},
+		function(a, cb) {
+			server.respond('200 Welcome');
+			// client should now reconnect
+			tl.defer(cb);
+		}, function(cb) {
+			assert.notEqual(server.connectedTime, ct);
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should deal with 200 responses by reconnecting', function(done) {
+	var server, client, ct;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			ct = server.connectedTime;
+			server.expect('STAT 1\r\n', function() {
+				this.expect('STAT 1\r\n', '223 1 <some-post> article retrieved');
+				this.respond('200 Welcome'); // client should drop now
+			});
+			tl.defer(function() {
+				client.stat(1, cb);
+			});
+		},
+		function(a, cb) {
+			assert.equal(client.state, 'connected');
+			assert.equal(a[0], 1);
+			assert.notEqual(server.connectedTime, ct);
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 
 it('should give up after max reconnect retries hit'); // also test that this counter is reset after a successful connect
 
