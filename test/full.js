@@ -29,6 +29,7 @@ var clientOpts = function(opts) {
 			connTimeout: 100,
 			reconnectDelay: 50,
 			connectRetries: 1,
+			requestRetries: 1,
 			postRetries: 1,
 			connections: 1
 		},

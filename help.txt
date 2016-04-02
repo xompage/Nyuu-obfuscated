@@ -30,6 +30,7 @@ Upload Server Options:
        --connect-timeout     Connect timeout (default 30s)
        --connect-retries     Number of connection retry attempts (default 1)
        --reconnect-delay     Delay connection retries (default 5s)
+       --request-retries     Number of request retry attempts (default 5)
        --post-retries        Number of post retry attempts (default 1)
 
 Article/Post Options:

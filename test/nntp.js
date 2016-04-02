@@ -119,6 +119,7 @@ var newNNTP = function() { // TODO: add options
 		connTimeout: 500, // timeout is higher than the reconnect delay - a test relies on it
 		reconnectDelay: 300,
 		connectRetries: 1,
+		requestRetries: 5,
 		postRetries: 1,
 	});
 };
@@ -152,7 +153,7 @@ function setupAuth(client, server, cb) {
 	client.opts.user = 'nyuu';
 	client.opts.password = 'iamreallylucy';
 	server.expect('AUTHINFO USER nyuu\r\n', function() {
-		assert.equal(client.state, 'auth');
+		assert.equal(client.state, 'authenticating');
 		this.respond('381 Give AUTHINFO PASS command');
 		this.expect('AUTHINFO PASS iamreallylucy\r\n', function() {
 			this.respond('281 User logged in');
@@ -669,7 +670,7 @@ it('should return error if reconnect completely fails during a request', functio
 			client.date(function(err, date) {
 				assert(!date);
 				assert.equal(err.code, 'connect_fail');
-				assert(!client.active);
+				assert.equal(client.state, 'inactive');
 				cb();
 			});
 		}
@@ -685,20 +686,19 @@ it('should return error if requesting whilst disconnected without pending connec
 			client.connect(cb);
 		},
 		function(cb) {
-			assert(client.active);
 			server.close(); // reject all future connect attempts
 			server.drop();
 			currentServer = null;
 			
 			// wait after all reconnect attempts have been tried
 			setTimeout(function() {
-				assert.equal(client.active, false);
+				assert.equal(client.state, 'inactive');
 				client.date(function(err, date) {
 					assert(!date);
 					assert.equal(err.code, 'not_connected');
 					cb();
 				});
-			}, 1000);
+			}, 1500);
 		}
 	], done);
 });
@@ -737,6 +737,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 		function(cb) {
 			// we don't start a server so that the connect fails, but start it up a while after so that the retry should succeed
 			var server, client = newNNTP();
+			var emitted = false;
 			var s = Date.now();
 			client.connect(function(err) {
 				var timeTaken = Date.now() - s;
@@ -745,12 +746,18 @@ it('should retry reconnecting if it only fails once', function(done) {
 				assert(server);
 				cb(err, server, client);
 			});
+			client.socket.once('error', function() {
+				emitted = true;
+			});
 			setTimeout(function() {
 				server = new TestServer(function() {
 					server.respond('200 host test server');
 				});
 				server.listen(USE_PORT, function() {});
 				currentServer = server;
+				
+				if(!emitted)
+					client.socket.emit('error', 1); // workaround for systems that take a while to emit the connect fail error
 			}, 150);
 		},
 		function(_server, _client, cb) {
@@ -814,7 +821,7 @@ it('should retry on timeout during init sequence', function(done) {
 			client.opts.user = 'nyuu';
 			client.opts.password = 'iamreallylucy';
 			server.expect('AUTHINFO USER nyuu\r\n', function() {
-				assert.equal(client.state, 'auth');
+				assert.equal(client.state, 'authenticating');
 				this.expect('AUTHINFO PASS iamreallylucy\r\n', function() {
 					// do nothing to timeout
 					this.expect('AUTHINFO USER nyuu\r\n', function() {
@@ -895,6 +902,37 @@ it('should deal with 200 responses by reconnecting', function(done) {
 });
 
 it('should give up after max reconnect retries hit'); // also test that this counter is reset after a successful connect
+it('should give up after max request retries hit', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			var allDone = false;
+			server.expect('STAT 1\r\n', function() {
+				async.timesSeries(5, function(n, cb) {
+					server.expect('STAT 1\r\n', cb);
+					server.drop();
+				}, function(err) {
+					if(err) throw err;
+					allDone = true;
+				});
+			});
+			client.stat(1, function(err) {
+				assert(allDone);
+				assert.equal(err.code, 'request_failed');
+				cb();
+			});
+		}, function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should give up after max post retries hit');
 
 it('should deal with a connection drop after receiving partial data');
 it('should deal with the case of newlines being split across packets'); // or in unfortunate positions

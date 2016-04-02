@@ -73,6 +73,10 @@ var optMap = {
 		type: 'int',
 		map: 'server/connectRetries'
 	},
+	'request-retries': {
+		type: 'int',
+		map: 'server/requestRetries'
+	},
 	'post-retries': {
 		type: 'int',
 		map: 'server/postRetries'
@@ -166,6 +170,10 @@ var optMap = {
 	'check-connect-retries': {
 		type: 'int',
 		map: 'check/server/connectRetries'
+	},
+	'check-request-retries': {
+		type: 'int',
+		map: 'check/server/requestRetries'
 	},
 	'article-size': {
 		type: 'size',
