@@ -618,7 +618,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 var friendlySize = function(s) {
 	var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
 	for(var i=0; i<units.length; i++) {
-		if(s < 10240) break;
+		if(s < 10000) break;
 		s /= 1024;
 	}
 	return (Math.round(s *100)/100) + ' ' + units[i];
