@@ -347,7 +347,7 @@ var parseTime = function(s) {
 	var parts;
 	if(parts = s.match(/^([0-9.]+)([mM]?[sS]|[mMhHdDwW])$/)) {
 		var num = +(parts[1]);
-		switch(parts[2].toUpperCase()) {
+		switch(parts[2].toLowerCase()) {
 			case 'w': num *= 7;
 			case 'd': num *= 24;
 			case 'h': num *= 60;
