@@ -793,7 +793,7 @@ fuploader.once('start', function(files, uploader) {
 							resp.writeHead(200, {
 								'Content-Type': 'text/plain'
 							});
-							uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
+							var dumpPost = function(post) {
 								if(isCheckQueue)
 									resp.write('Message-ID: ' + post.messageId + '\r\n');
 								resp.write([
@@ -804,12 +804,20 @@ fuploader.once('start', function(files, uploader) {
 								].join('\r\n'));
 								if(isCheckQueue)
 									resp.write('Check attempts: ' + post.chkFailures + '\r\n');
+							};
+							uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
+								dumpPost(post);
 								resp.write('\r\n');
 							});
+							if(isCheckQueue && uploader.checkQueue.pendingAdds) {
+								resp.write('\r\n===== Delayed checks =====\r\n');
+								for(var k in uploader.checkQueue.queuePending) {
+									dumpPost(uploader.checkQueue.queuePending[k].data);
+									resp.write('\r\n');
+								}
+							}
 							resp.end();
 						} else if(m = path.match(/^\/(check)queue\/([^/]+)\/?$/)) {
-							// TODO: need to be able to dump from a deferred posts?
-							
 							// search queue for target post
 							var q = uploader.checkQueue.queue;
 							var post;
@@ -817,6 +825,16 @@ fuploader.once('start', function(files, uploader) {
 								if(q[k].messageId == m[2]) {
 									post = q[k];
 									break;
+								}
+							}
+							if(!post) {
+								// check deferred queue too
+								var q = uploader.checkQueue.queuePending;
+								for(var k in q) {
+									if(q[k].data.messageId == m[2]) {
+										post = q[k].data;
+										break;
+									}
 								}
 							}
 							if(post) {
