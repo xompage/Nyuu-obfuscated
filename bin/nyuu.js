@@ -277,6 +277,9 @@ var optMap = {
 	quiet: {
 		type: 'bool',
 		alias: 'q'
+	},
+	progress: {
+		type: 'array'
 	}
 };
 
@@ -517,56 +520,119 @@ if(argv['log-time']) {
 	logTimestamp = function(){};
 }
 
+var progress = [];
+var stdErrProgress = false;
+if(argv.progress) {
+	argv.progress.forEach(function(str) {
+		var m = str.match(/^([a-z]+)(:|$)/i);
+		if(!m) error('Unknown progress specification: ' + str);
+		var type = m[1].toLowerCase();
+		var arg = str.substr(m[0].length);
+		switch(type) {
+			case 'log':
+				progress.push({type: 'log', interval: parseTime(arg) || 60});
+			break;
+			case 'stderr':
+				progress.push({type: 'stderr'});
+				stdErrProgress = true;
+			break;
+			case 'tcp':
+			case 'http':
+				var o = {type: type, port: 0};
+				if(m = arg.match(/^([a-z0-9\-.]*|\[[a-f0-9:]+\]):(\d*)$/i)) {
+					if(m[1].length) {
+						if(m[1].substr(0, 1) == '[')
+							o.host = m[1].substr(1, m[1].length-2);
+						else
+							o.host = m[1];
+					}
+					o.port = m[2]|0;
+				} else if((arg|0) == arg) {
+					o.port = arg|0;
+				} else {
+					o.host = arg;
+				}
+				progress.push(o);
+			break;
+			case 'none':
+				// bypass
+			break;
+			default:
+				error('Unknown progress specification: ' + str);
+		}
+	});
+} else if(verbosity >= 3 && process.stderr.isTTY) {
+	// default progress bar
+	progress.push({type: 'stderr'});
+	stdErrProgress = true;
+}
+
+var lpad = function(s, l) {
+	if(s.length > l) return s;
+	return ' '.repeat(l-s.length) + s;
+};
+var rpad = function(s, l) {
+	if(s.length > l) return s;
+	return s + ' '.repeat(l-s.length);
+};
+
 var logger;
+var writeProgress = null;
 if(process.stderr.isTTY) {
+	var padLen = stdErrProgress ? 80 : 0;
 	// assume colours are supported
 	logger = {
 		debug: function(msg) {
 			process.stderr.write('\x1B[36m');
 			logTimestamp(1);
-			console.error(msg);
-			process.stderr.write('\x1B[39m');
+			process.stderr.write(rpad(msg, padLen));
+			process.stderr.write('\x1B[39m\r\n');
+			if(writeProgress) writeProgress();
 		},
 		info: function(msg) {
 			process.stderr.write('\x1B[32m');
 			logTimestamp(1);
-			console.error(msg);
-			process.stderr.write('\x1B[39m');
+			process.stderr.write(rpad(msg, padLen));
+			process.stderr.write('\x1B[39m\r\n');
+			if(writeProgress) writeProgress();
 		},
 		warn: function(msg) {
 			process.stderr.write('\x1B[33m');
 			logTimestamp(1);
-			console.error(msg);
-			process.stderr.write('\x1B[39m');
+			process.stderr.write(rpad(msg, padLen));
+			process.stderr.write('\x1B[39m\r\n');
+			if(writeProgress) writeProgress();
 		},
 		error: function(msg) {
 			process.stderr.write('\x1B[31m');
 			logTimestamp(1);
-			console.error(msg);
-			process.stderr.write('\x1B[39m');
+			process.stderr.write(rpad(msg, padLen));
+			process.stderr.write('\x1B[39m\r\n');
+			if(writeProgress) writeProgress();
 		}
 	};
 } else {
+	var padLen = stdErrProgress ? 73 : 0;
 	logger = {
 		debug: function(msg) {
 			logTimestamp();
 			process.stderr.write('[DBG]  ');
-			console.error(msg);
+			console.error(rpad(msg, padLen));
 		},
 		info: function(msg) {
 			logTimestamp();
 			process.stderr.write('[INFO] ');
-			console.error(msg);
+			console.error(rpad(msg, padLen));
 		},
 		warn: function(msg) {
 			logTimestamp();
 			process.stderr.write('[WARN] ');
-			console.error(msg);
+			console.error(rpad(msg, padLen));
 		},
 		error: function(msg) {
 			logTimestamp();
 			process.stderr.write('[ERR]  ');
-			console.error(msg);
+			console.error(rpad(msg, padLen));
 		}
 	};
 }
@@ -610,6 +676,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		Nyuu.log.error(err);
 		process.exit(2);
 	} else {
+		writeProgress = null;
 		Nyuu.log.info('Process complete');
 	}
 });
@@ -623,6 +690,7 @@ var friendlySize = function(s) {
 	}
 	return (Math.round(s *100)/100) + ' ' + units[i];
 };
+var retArg = function(_) { return _; };
 fuploader.once('start', function(files, uploader) {
 	var totalSize = 0, totalPieces = 0, totalFiles = 0;
 	for(var filename in files) {
@@ -632,6 +700,64 @@ fuploader.once('start', function(files, uploader) {
 		totalFiles++;
 	}
 	Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
+	
+	var startTime = Date.now();
+	progress.forEach(function(prg) {
+		switch(prg.type) {
+			case 'log':
+				setInterval(function() {
+					Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
+				}, prg.interval).unref();
+			break;
+			case 'stderr':
+				writeProgress = function() {
+					var perc = uploader.articlesChecked / totalPieces;
+					var barSize = Math.floor(perc*50);
+					var line = '='.repeat(barSize) + '-'.repeat(Math.floor(uploader.articlesPosted / totalPieces * 50) - barSize);
+					// TODO: add speed indicator
+					process.stderr.write(' ' + lpad(''+Math.round(perc*10000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
+				};
+				setInterval(writeProgress, 1000).unref();
+			break;
+			case 'tcp':
+			case 'http':
+				var server = (require(prg.type == 'tcp' ? 'net' : 'http')).createServer(function(req, resp) {
+					var conn = prg.type == 'tcp' ? req : resp;
+					if(conn.writeHead)
+						conn.writeHead(200, {
+							'Content-Type': 'text/plain'
+						});
+					// TODO: JSON output etc
+					
+					conn.end([
+						'Time: ' + (new Date()),
+						'Start time: ' + (new Date(startTime)),
+						'',
+						'Total articles: ' + totalPieces,
+						'Articles read: ' + uploader.articlesRead,
+						'Articles posted: ' + uploader.articlesPosted,
+						'Articles checked: ' + uploader.articlesChecked,
+						'',
+						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
+						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
+						'',
+						'Article queue size: ' + uploader.queue.queue.length,
+						'Check queue size: ' + uploader.checkQueue.totalQueueSize(),
+						''
+					].join('\r\n'));
+				});
+				server.listen(prg.port, prg.host, function() {
+					var addr = server.address();
+					if(addr.family == 'IPv6')
+						addr = '[' + addr.address + ']:' + addr.port;
+					else
+						addr = addr.address + ':' + addr.port;
+					Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
+				});
+				server.unref();
+			break;
+		}
+	});
 });
 fuploader.once('error', function(err) {
 	throw err; // TODO: something better
