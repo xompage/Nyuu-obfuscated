@@ -56,6 +56,8 @@ All the usual:
         just the first 16KB of each file, and may require multiple read passes
         if all recovery blocks cannot fit in memory
 
+-   Able to recovery from connection failures
+
 **Highly configurable:**
 
 -   Lots of connection and SSL options
@@ -66,6 +68,10 @@ All the usual:
 
 -   NZB meta tags
 
+-   Pipe input/output from/to processes instead of files
+
+-   Extensive upload diagnostic details available (via optional TCP/HTTP status
+    server) to help tune settings
  
 
 Installation & Requirements
@@ -177,7 +183,9 @@ Not planned
 Alternatives
 ============
 
-The following are all the command-line usenet posters I could find:
+The following are all the command-line usenet posters I could find, along with
+my rather sour and depressing comments. Many of these are probably great, but,
+competition and, ya'know...
 
 -   [GoPostStuff](<https://github.com/madcowfred/GoPostStuff/>): newer post tool
     written in Go, by the same author as Newsmangler. Haven’t tested it. Doesn’t
@@ -186,15 +194,15 @@ The following are all the command-line usenet posters I could find:
 -   [Newsmangler](<https://github.com/madcowfred/newsmangler>): no longer
     maintained tool written in Python. Relatively basic and lacks some features
     I’d like to have (e.g. specifying where NZBs are written to), but otherwise
-    quite capable.
+    quite capable. Updated forks, which add extra functionality,
+    [do exist](<https://github.com/nicors57/newsmangler>).
 
 -   [Newspost](<https://github.com/joehillen/newspost>): fairly old unmaintained
     tool written in C. Powerful, but does not generate NZBs and not particularly
     efficient.
 
 -   [NewsUP](<https://github.com/demanuel/NewsUP/>): flexible tool written in
-    Perl. Unfortunately yEnc calculation is implemented in Perl, so will smash
-    your CPU.
+    Perl. Still quite actively maintained.
 
 -   [Sanguinews](<https://github.com/tdobrovolskij/sanguinews>): inspired from
     Newsmangler and similar in a number of ways. Written in Ruby.
@@ -202,7 +210,7 @@ The following are all the command-line usenet posters I could find:
 -   [Yencee](<https://sourceforge.net/projects/yencee/>): simple tool written in
     Perl. No NZB output.
 
--   [Ypost](<https://sourceforge.net/projects/ypost/>): newer tool written in
+-   [Ypost](<https://sourceforge.net/projects/ypost/>): old tool written in
     C++. Does not generate NZBs.
 
 (to continue the obvious tradition of using a different language, Nyuu is
