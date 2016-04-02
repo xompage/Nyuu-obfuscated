@@ -119,18 +119,18 @@ it('should return empty on finished (with items)', function(done) {
 	q.add(20, 1);
 	q.add(40, 2);
 	q.take(function(n) {
-		assert.equal(n, 1);
 		assert(Date.now() - s >= 20);
+		assert.equal(n, 1);
 	});
 	q.finished();
 	assert.equal(q.totalQueueSize(), 2);
 	q.take(function(n) {
-		assert.equal(n, 2);
 		assert(Date.now() - s >= 40);
+		assert.equal(n, 2);
 	});
 	q.take(function(n) {
-		assert.equal(n, undefined);
 		assert(Date.now() - s >= 40);
+		assert.equal(n, undefined);
 	});
 	q.take(function(n) {
 		assert.equal(n, undefined);
@@ -144,16 +144,16 @@ it('should return empty on finished (with items v2)', function(done) {
 	q.add(20, 1);
 	q.add(40, 2);
 	q.take(function(n) {
-		assert.equal(n, 1);
 		assert(Date.now() - s >= 20);
+		assert.equal(n, 1);
 	});
 	q.take(function(n) {
+		assert(Date.now() - s >= 40);
 		assert.equal(n, 2);
-		assert(Date.now() - s >= 40);
 	});
 	q.take(function(n) {
-		assert.equal(n, undefined);
 		assert(Date.now() - s >= 40);
+		assert.equal(n, undefined);
 	});
 	q.take(function(n) {
 		assert.equal(n, undefined);
