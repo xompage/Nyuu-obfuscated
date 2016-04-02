@@ -584,7 +584,7 @@ if(verbosity < 1) {
 
 var Nyuu = require('../');
 Nyuu.setLogger(logger);
-Nyuu.upload(argv._.map(function(file) {
+var fuploader = Nyuu.upload(argv._.map(function(file) {
 	// TODO: consider supporting deferred filesize gathering?
 	var m = file.match(/^procjson:\/\/(.+?,.+?,.+)$/i);
 	if(m) {
@@ -612,4 +612,33 @@ Nyuu.upload(argv._.map(function(file) {
 	} else {
 		Nyuu.log.info('Process complete');
 	}
+});
+
+// display some stats
+var friendlySize = function(s) {
+	var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
+	for(var i=0; i<units.length; i++) {
+		if(s < 10240) break;
+		s /= 1024;
+	}
+	return (Math.round(s *100)/100) + ' ' + units[i];
+};
+fuploader.once('start', function(files, uploader) {
+	var totalSize = 0, totalPieces = 0, totalFiles = 0;
+	for(var filename in files) {
+		var sz = files[filename].size;
+		totalSize += sz;
+		totalPieces += Math.ceil(sz / ulOpts.articleSize);
+		totalFiles++;
+	}
+	Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
+});
+fuploader.once('error', function(err) {
+	throw err; // TODO: something better
+});
+fuploader.on('processing_file', function(file) {
+	Nyuu.log.info('Reading file ' + file.name + '...');
+})
+fuploader.once('read_complete', function() {
+	Nyuu.log.info('All file(s) read...');
 });
