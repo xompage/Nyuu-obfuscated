@@ -932,6 +932,38 @@ it('should give up after max request retries hit', function(done) {
 		}
 	], done);
 });
+it('should give up after max request retries hit (post timeout)', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			var allDone = false;
+			var headers = ['My-Secret: not telling'];
+			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			async.timesSeries(6, function(n, cb) {
+				server.expect('POST\r\n', function() {
+					this.expect(expectedPost(headers, msg), cb);
+					this.respond('340  Send article');
+				});
+			}, function(err) {
+				if(err) throw err;
+				allDone = true;
+			});
+			client.post(headers, new Buffer(msg), function(err) {
+				assert.equal(err.code, 'request_failed');
+				assert(allDone);
+				cb();
+			});
+		}, function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 it('should give up after max post retries hit');
 
 it('should deal with a connection drop after receiving partial data');
