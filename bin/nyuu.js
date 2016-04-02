@@ -729,8 +729,10 @@ fuploader.once('start', function(files, uploader) {
 						});
 					// TODO: JSON output etc
 					
-					conn.end([
-						'Time: ' + (new Date()),
+					var now = Date.now();
+					
+					conn.write([
+						'Time: ' + (new Date(now)),
 						'Start time: ' + (new Date(startTime)),
 						'',
 						'Total articles: ' + totalPieces,
@@ -741,10 +743,39 @@ fuploader.once('start', function(files, uploader) {
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
 						'',
-						'Article queue size: ' + uploader.queue.queue.length,
+						'Post queue size: ' + uploader.queue.queue.length,
 						'Check queue size: ' + uploader.checkQueue.totalQueueSize(),
-						''
+						'', ''
 					].join('\r\n'));
+					
+					var dumpConnections = function(conns) {
+						var i = 0;
+						conns.forEach(function(c) {
+							conn.write('Connection #' + (++i) + '\r\n');
+							if(c) {
+								conn.write([
+									'  State: ' + c.getCurrentActivity() + ' for ' + ((now - c.lastActivity)/1000) + 's',
+									'  Transfer (bytes): ' + c.bytesRecv + ' down / ' + c.bytesSent + ' up',
+									'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
+									'  Reconnects: ' + (c.numConnects-1),
+									'  Errors: ' + c.numErrors,
+									'', ''
+								].join('\r\n'));
+							} else {
+								conn.write('  State: finished\r\n\r\n')
+							}
+						});
+					};
+					if(uploader.postConnections.length) {
+						conn.write('===== Post Connections\' Status =====\r\n');
+						dumpConnections(uploader.postConnections);
+					}
+					if(uploader.checkConnections.length) {
+						conn.write('===== Check Connections\' Status =====\r\n');
+						dumpConnections(uploader.checkConnections);
+					}
+					
+					conn.end();
 				});
 				server.listen(prg.port, prg.host, function() {
 					var addr = server.address();
