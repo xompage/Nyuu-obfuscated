@@ -439,19 +439,23 @@ for(var k in connOptMap) {
 	if(argv['check-'+k])
 		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
 }
+
+var execOpts = function(cmd, opts) {
+	var spawn = require('child_process').spawn;
+	if(process.platform === 'win32') {
+		opts.windowsVerbatimArguments = true;
+		return spawn(process.env.comspec || 'cmd.exe', ['/s', '/c', '"' + cmd + '"'], opts);
+	} else {
+		return spawn('/bin/sh', ['-c', cmd], opts);
+	}
+};
+
 if(argv.out) {
 	if(argv.out === '-')
 		ulOpts.nzb.writeTo = process.stdout;
 	else if(argv.out.match(/^proc:\/\//i)) {
 		ulOpts.nzb.writeTo = function(cmd) {
-			var spawn = require('child_process').spawn;
-			var opts = {stdio: ['pipe','ignore','ignore']};
-			if(process.platform === 'win32') {
-				opts.windowsVerbatimArguments = true;
-				return spawn(process.env.comspec || 'cmd.exe', ['/s', '/c', '"' + cmd + '"'], opts).stdin;
-			} else {
-				return spawn('/bin/sh', ['-c', cmd], opts).stdin;
-			}
+			return execOpts(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
 			// if process exits early, the write stream should break and throw an error
 		}.bind(null, argv.out.substr(7));
 	}
@@ -580,7 +584,28 @@ if(verbosity < 1) {
 
 var Nyuu = require('../');
 Nyuu.setLogger(logger);
-Nyuu.upload(argv._, ulOpts, function(err) {
+Nyuu.upload(argv._.map(function(file) {
+	// TODO: consider supporting deferred filesize gathering?
+	var m = file.match(/^procjson:\/\/(.+?,.+?,.+)$/i);
+	if(m) {
+		if(m[1].substr(0, 1) != '[')
+			m[1] = '[' + m[1] + ']';
+		m = JSON.parse(m[1]);
+		if(!Array.isArray(m) || m.length != 3)
+			error('Invalid syntax for process input: ' + file);
+		var ret = {
+			name: m[0],
+			size: m[1]|0,
+			stream: function(cmd) {
+				return execOpts(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
+			}.bind(null, m[2])
+		};
+		if(!ret.size)
+			error('Invalid size specified for process input: ' + file);
+		return ret;
+	}
+	return file;
+}), ulOpts, function(err) {
 	if(err) {
 		Nyuu.log.error(err);
 		process.exit(2);

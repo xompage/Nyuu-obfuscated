@@ -155,6 +155,33 @@ Other Options:
   -?,  --help                Display this help screen (flag option)
        --version             Print application version number (flag option)
 
+Input Files:
+
+  Additional arguments are taken as files to be posted. Directories can be
+  specified as well, in which case all files inside are processed according
+  to the `--subdirs` option above.
+  
+  Nyuu also supports piping inputs from a command, however, as yEnc requires
+  knowing exact file sizes in advance, this will need to be specified. The
+  syntax for specifying a process input is as follows:
+  
+    procjson://"[name]",[size_in_bytes],"[command]"
+  
+  After the prefix, this is actually a 3 element JSON encoded array, where the
+  square brackets are optional.
+  [name] refers to the filename that will be used, it is your responsibility
+  to ensure that there are no duplicates. [size_in_bytes] is the exact size of
+  the data to be emitted from [command], in bytes. [command] is the command
+  that will be executed, and its stdout will be uploaded. The stderr of this
+  process is discarded, and nothing will be sent to stdin.
+  Note that quotation marks and some other special characters may need to be
+  escaped with backslashes, as per JSON encoding rules.
+  
+  For example, here's an elaborate way to upload the 6KB image, trollface.jpg
+  as moe_kyun.jpg (note that `cat` is assumed to be the utility to read a file
+  to stdout):
+    nyuu -h 0 'procjson://"moe_kyun.jpg",6144,"cat trollface.jpg"' 
+
 ------------------
 Examples
 
