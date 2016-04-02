@@ -751,8 +751,8 @@ fuploader.once('start', function(files, uploader) {
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
 						'',
-						'Post queue size: ' + uploader.queue.queue.length,
-						'Check queue size: ' + uploader.checkQueue.totalQueueSize(),
+						'Post queue size: ' + uploader.queue.queue.length + (uploader.queue.hasFinished ? ' (finished)' : ''),
+						'Check queue size: ' + uploader.checkQueue.totalQueueSize() + (uploader.checkQueue.hasFinished ? ' (finished)' : ''),
 						'', ''
 					].join('\r\n'));
 					
