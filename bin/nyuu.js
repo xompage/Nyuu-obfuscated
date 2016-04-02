@@ -733,16 +733,10 @@ fuploader.once('start', function(files, uploader) {
 			break;
 			case 'tcp':
 			case 'http':
-				var server = (require(prg.type == 'tcp' ? 'net' : 'http')).createServer(function(req, resp) {
-					var conn = prg.type == 'tcp' ? req : resp;
-					if(conn.writeHead)
-						conn.writeHead(200, {
-							'Content-Type': 'text/plain'
-						});
-					// TODO: JSON output etc
-					
+				var writeState = function(conn) {
 					var now = Date.now();
 					
+					// TODO: JSON output etc
 					conn.write([
 						'Time: ' + (new Date(now)),
 						'Start time: ' + (new Date(startTime)),
@@ -786,9 +780,80 @@ fuploader.once('start', function(files, uploader) {
 						conn.write('===== Check Connections\' Status =====\r\n');
 						dumpConnections(uploader.checkConnections);
 					}
-					
-					conn.end();
-				});
+				};
+				
+				var server;
+				if(prg.type == 'http') {
+					server = require('http').createServer(function(req, resp) {
+						var path = require('url').parse(req.url).pathname.replace(/\/$/, '');
+						var m;
+						if(m = path.match(/^\/(post|check)queue\/?$/)) {
+							// dump post/check queue
+							var isCheckQueue = (m[1] == 'check');
+							resp.writeHead(200, {
+								'Content-Type': 'text/plain'
+							});
+							uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
+								if(isCheckQueue)
+									resp.write('Message-ID: ' + post.messageId + '\r\n');
+								resp.write([
+									'Subject: ' + post.subject,
+									'Body length: ' + post.data.length,
+									'Post attempts: ' + post.postTries,
+									''
+								].join('\r\n'));
+								if(isCheckQueue)
+									resp.write('Check attempts: ' + post.chkFailures + '\r\n');
+								resp.write('\r\n');
+							});
+							resp.end();
+						} else if(m = path.match(/^\/(check)queue\/([^/]+)\/?$/)) {
+							// TODO: need to be able to dump from a deferred posts?
+							
+							// search queue for target post
+							var q = uploader.checkQueue.queue;
+							var post;
+							for(var k in q) {
+								if(q[k].messageId == m[2]) {
+									post = q[k];
+									break;
+								}
+							}
+							if(post) {
+								// dump post from check queue
+								resp.writeHead(200, {
+									'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
+								});
+								resp.write(post.headers.join('\r\n'));
+								resp.write('\r\nMessage-ID: <' + post.messageId + '>\r\n\r\n');
+								resp.write(post.data);
+							} else {
+								resp.writeHead(404, {
+									'Content-Type': 'text/plain'
+								});
+								resp.write('Specified post not found in queue');
+							}
+							resp.end();
+						} else if(!path || path == '/') {
+							// dump overall status
+							resp.writeHead(200, {
+								'Content-Type': 'text/plain'
+							});
+							writeState(resp);
+							resp.end();
+						} else {
+							resp.writeHead(404, {
+								'Content-Type': 'text/plain'
+							});
+							resp.end('Invalid URL');
+						}
+					});
+				} else {
+					server = require('tcp').createServer(function(conn) {
+						writeState(conn);
+						conn.end();
+					});
+				}
 				server.listen(prg.port, prg.host, function() {
 					var addr = server.address();
 					if(addr.family == 'IPv6')
