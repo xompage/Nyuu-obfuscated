@@ -686,6 +686,10 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	} else {
 		writeProgress = null;
 		Nyuu.log.info('Process complete');
+		setTimeout(function() {
+			Nyuu.log.warn('Process did not terminate cleanly');
+			process.exit(0);
+		}, 5000).unref();
 	}
 });
 
