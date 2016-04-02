@@ -37,10 +37,15 @@ NNTPServer.prototype = {
 	},
 	addPost: function(headers, msg) {
 		if(!headers.newsgroups) throw new Error('Post missing groups spec');
-		if(('messageid' in headers) && (headers.messageid in this.postIdMap))
+		var messageId = headers['message-id'];
+		if(messageId) {
+			if(messageId.substr(0, 1) != '<' || messageId.substr(-1, 1) != '>')
+				throw new Error('Received malformed Message-ID: ' + messageId);
+			messageId = messageId.substr(1, messageId.length-2);
+		}
+		if(('message-id' in headers) && (messageId in this.postIdMap))
 			return false;
 		
-		var messageId = headers.messageid;
 		if(!messageId) {
 			do {
 				// 8 random a-z letters
