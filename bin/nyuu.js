@@ -575,13 +575,19 @@ if(argv.progress) {
 	stdErrProgress = true;
 }
 
+var repeatChar = function(c, l) {
+	if(c.repeat) return c.repeat(l);
+	var buf = new Buffer(l);
+	buf.fill(c);
+	return buf.toString();
+};
 var lpad = function(s, l) {
 	if(s.length > l) return s;
-	return ' '.repeat(l-s.length) + s;
+	return repeatChar(' ', l-s.length) + s;
 };
 var rpad = function(s, l) {
 	if(s.length > l) return s;
-	return s + ' '.repeat(l-s.length);
+	return s + repeatChar(' ', l-s.length);
 };
 
 var logger;
@@ -725,7 +731,7 @@ fuploader.once('start', function(files, uploader) {
 				writeProgress = function() {
 					var perc = uploader.articlesChecked / totalPieces;
 					var barSize = Math.floor(perc*50);
-					var line = '='.repeat(barSize) + '-'.repeat(Math.floor(uploader.articlesPosted / totalPieces * 50) - barSize);
+					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(uploader.articlesPosted / totalPieces * 50) - barSize);
 					// TODO: add speed indicator
 					process.stderr.write(' ' + lpad(''+Math.round(perc*10000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
 				};
