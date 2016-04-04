@@ -750,9 +750,6 @@ it('should retry reconnecting if it only fails once', function(done) {
 				assert(server);
 				cb(err, server, client);
 			});
-			client.socket.once('error', function() {
-				emitted = true;
-			});
 			setTimeout(function() {
 				server = new TestServer(function() {
 					server.respond('200 host test server');
@@ -760,7 +757,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 				server.listen(lastServerPort, function() {});
 				currentServer = server;
 				
-				if(!emitted)
+				if(!client.numErrors)
 					client.socket.emit('error', 1); // workaround for systems that take a while to emit the connect fail error
 			}, 150);
 		},
