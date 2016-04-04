@@ -691,6 +691,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		process.exit(2);
 	} else {
 		writeProgress = null;
+		process.emit('finished');
 		Nyuu.log.info('Process complete');
 		setTimeout(function() {
 			Nyuu.log.warn('Process did not terminate cleanly');
@@ -723,11 +724,16 @@ fuploader.once('start', function(files, uploader) {
 	progress.forEach(function(prg) {
 		switch(prg.type) {
 			case 'log':
-				setInterval(function() {
+				var logInterval = setInterval(function() {
 					Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
-				}, prg.interval).unref();
+				}, prg.interval);
+				logInterval.unref();
+				process.on('finished', function() {
+					clearInterval(logInterval);
+				});
 			break;
 			case 'stderr':
+				if(writeProgress) break; // no need to double output =P
 				writeProgress = function() {
 					var perc = uploader.articlesChecked / totalPieces;
 					var barSize = Math.floor(perc*50);
@@ -735,7 +741,11 @@ fuploader.once('start', function(files, uploader) {
 					// TODO: add speed indicator
 					process.stderr.write(' ' + lpad(''+Math.round(perc*10000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
 				};
-				setInterval(writeProgress, 1000).unref();
+				var seInterval = setInterval(writeProgress, 1000);
+				seInterval.unref();
+				process.on('finished', function() {
+					clearInterval(seInterval);
+				});
 			break;
 			case 'tcp':
 			case 'http':
@@ -886,7 +896,9 @@ fuploader.once('start', function(files, uploader) {
 						addr = addr.address + ':' + addr.port;
 					Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
 				});
-				server.unref();
+				process.on('finished', function() {
+					server.close();
+				});
 			break;
 		}
 	});
