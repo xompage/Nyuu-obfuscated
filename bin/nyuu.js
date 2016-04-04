@@ -83,7 +83,8 @@ var optMap = {
 	},
 	'check-connections': {
 		type: 'int',
-		map: 'check/server/connections'
+		map: 'check/server/connections',
+		alias: 'k'
 	},
 	'check-reuse-conn': {
 		type: 'bool',
@@ -99,8 +100,7 @@ var optMap = {
 	},
 	'check-tries': {
 		type: 'int',
-		map: 'check/tries',
-		alias: 'c'
+		map: 'check/tries'
 	},
 	'check-group': {
 		type: 'string',

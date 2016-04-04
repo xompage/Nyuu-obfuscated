@@ -68,7 +68,7 @@ Article/Post Options:
 
 Post Check Options:
 
-       --check-connections   Number of connections to use for post checking
+  -k,  --check-connections   Number of connections to use for post checking
                              (default 0). Set to 1 to enable checking (setting
                              `--check-reuse-conn` will also enable checking).
                              Higher numbers of connections are only useful if
@@ -88,7 +88,7 @@ Post Check Options:
                              `--connections`
                              This flag is experimental and generally shouldn't
                              be used
-  -c,  --check-tries         Maximum number of check attempts to perform.
+       --check-tries         Maximum number of check attempts to perform.
                              A value of 0 disables post checking. (default 3)
        --check-delay         Initial delay after posting before performing
                              first check (default 5s)
@@ -109,7 +109,7 @@ Post Check Options:
                              Posting will stall if the number of articles to be
                              checked exceeds this number. Increase this number
                              to avoid these stalls, at the expense of higher
-                             memory usage (default 50)
+                             memory usage (default `--connections`*8)
 
 NZB Output Options:
 
@@ -133,11 +133,11 @@ NZB Output Options:
 
 Advanced:
 
-       --disk-req-size       Disk read request size (default 750K)
-       --disk-buf-size       Disk read-ahead buffer size (default 1500K)
+       --disk-req-size       Disk read request size (default `--article-size`)
+       --disk-buf-size       Disk read-ahead buffer size (default 0)
                              Set to 0 to disable read-ahead buffering
        --post-queue-size     Max number of buffered articles for posting
-                             (default 10)
+                             (default `--connections`*2)
 
 Other Options:
 

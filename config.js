@@ -41,7 +41,7 @@ module.exports = {
 		ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 		postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 		ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
-		queueBuffer: 50, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
+		queueBuffer: null, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size; default is numConnections*8
 		method: 'stat', // 'stat', 'head' or 'newnews' ; TODO: ?
 	},
 	
@@ -51,9 +51,9 @@ module.exports = {
 	
 	dumpPosts: '', // dump all successfully posted article headers (excluding Message-ID) to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
 	
-	diskReqSize: 768000, // chunk size when reading from disk
-	diskBufferSize: 1536000, // amount of data to buffer; ideally a multiple of articleSize
-	articleQueueBuffer: 10, // number of buffered articles; just leave it alone
+	diskReqSize: null, // chunk size when reading from disk; default = articleSize
+	diskBufferSize: 0, // amount of data to buffer; ideally a multiple of articleSize
+	articleQueueBuffer: null, // number of buffered articles; default is numConnections*2
 	
 	/**
 	 * Folder handling - this can be:
