@@ -735,11 +735,12 @@ fuploader.once('start', function(files, uploader) {
 			case 'stderr':
 				if(writeProgress) break; // no need to double output =P
 				writeProgress = function() {
-					var perc = uploader.articlesChecked / totalPieces;
-					var barSize = Math.floor(perc*50);
-					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(uploader.articlesPosted / totalPieces * 50) - barSize);
+					var chkPerc = uploader.articlesChecked / totalPieces,
+					    pstPerc = uploader.articlesPosted / totalPieces;
+					var barSize = Math.floor(chkPerc*50);
+					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
 					// TODO: add speed indicator
-					process.stderr.write(' ' + lpad(''+Math.round(perc*10000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
+					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
 				};
 				var seInterval = setInterval(writeProgress, 1000);
 				seInterval.unref();
