@@ -71,7 +71,8 @@ All the usual:
 -   Pipe input/output from/to processes instead of files
 
 -   Extensive upload diagnostic details available (via optional TCP/HTTP status
-    server) to help tune settings
+    server) to help tune settings  
+
  
 
 Installation & Requirements
@@ -194,8 +195,8 @@ competition and, ya'know...
 -   [Newsmangler](<https://github.com/madcowfred/newsmangler>): no longer
     maintained tool written in Python. Relatively basic and lacks some features
     I’d like to have (e.g. specifying where NZBs are written to), but otherwise
-    quite capable. Updated forks, which add extra functionality,
-    [do exist](<https://github.com/nicors57/newsmangler>).
+    quite capable. Updated forks, which add extra functionality, [do
+    exist](<https://github.com/nicors57/newsmangler>).
 
 -   [Newspost](<https://github.com/joehillen/newspost>): fairly old unmaintained
     tool written in C. Powerful, but does not generate NZBs and not particularly
@@ -210,11 +211,13 @@ competition and, ya'know...
 -   [Yencee](<https://sourceforge.net/projects/yencee/>): simple tool written in
     Perl. No NZB output.
 
--   [Ypost](<https://sourceforge.net/projects/ypost/>): old tool written in
-    C++. Does not generate NZBs.
+-   [Ypost](<https://sourceforge.net/projects/ypost/>): old tool written in C++.
+    Does not generate NZBs.
 
 (to continue the obvious tradition of using a different language, Nyuu is
 written in Javascript)
+
+[Here's a benchmark comparison](<bench/info.md>) between a few of the above.
 
  
 
