@@ -50,6 +50,7 @@ module.exports = {
 	bytesPerLine: 128, // note: as per yEnc specifications, it's possible to exceed this number
 	
 	dumpPosts: '', // dump all successfully posted article headers (excluding Message-ID) to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
+	useBufferPool: true, // self manage article buffers rather than rely on GC's management
 	
 	diskReqSize: null, // chunk size when reading from disk; default = articleSize
 	diskBufferSize: 0, // amount of data to buffer; ideally a multiple of articleSize

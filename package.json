@@ -20,7 +20,7 @@
   "dependencies" : {
     "async" : "*",
     "minimist": "*",
-    "yencode" : ">=1.0.4"
+    "yencode" : ">=1.0.6"
   },
   "optionalDependencies" : {
     "xz" : "*"
