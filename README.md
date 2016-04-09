@@ -26,19 +26,18 @@ subject, use precaution.
 Features
 ========
 
-All the usual:
+**All the standard stuff:** i.e. Nyuu doesn’t miss out on what you need
 
 -   NNTP SSL support
 
 -   yEnc encoding
 
--   Post checking
-
 -   NZB creation, with minification & compression
 
 -   Sub-directory handling
 
-**Fast & efficient:**
+**Fast & efficient:** Nyuu is amongst the fastest (if not the fastest) usenet
+posters
 
 -   Multiple uploading connections
 
@@ -57,9 +56,19 @@ All the usual:
         just the first 16KB of each file, and may require multiple read passes
         if all recovery blocks cannot fit in memory
 
--   Able to recovery from connection failures
+**Reliable:** Nyuu was designed for automation and its reliability requirements
 
-**Highly configurable:**
+-   Requests are all retryable
+
+-   Able to recover from connection failures/dropouts
+
+-   Timeouts and limits to deal with unexpected server hangs or faults
+
+-   Post checking (aka header checks), with multiple attempts and post retrying
+
+-   Unusual or unexpected events are logged
+
+**Highly configurable:** tuning knobs for everything
 
 -   Lots of connection and SSL options
 
@@ -69,10 +78,12 @@ All the usual:
 
 -   NZB meta tags
 
+**Unique features:** the not so usual stuff
+
 -   Pipe input/output from/to processes instead of files
 
 -   Extensive upload diagnostic details available (via optional TCP/HTTP status
-    server) to help tune settings  
+    server) to help tune settings or find problems
 
  
 
@@ -153,6 +164,15 @@ directory, with the following contents:
 
 (obviously, fix the paths to what they actually are)
 
+Running Tests
+-------------
+
+Tests are run via *mocha*, installable via `npm install -g mocha`, and can be
+run simply by using the `mocha` command inside Nyuu’s root directory.  
+Note that some test cases test functionality of timeouts; to reduce time it
+takes to run these tests, timeouts are set relatively small, which means that a
+slow computer may not be able to service them as expected.
+
  
 
 Usage
@@ -165,15 +185,13 @@ For command line usage, [see here](<help.txt>).
 Planned Features
 ================
 
--   Automatic SFV/MD5 file generation. For SFV, we can use the calculated CRC32
-    values from yEnc so that there’s minimal CPU impact and no impact on disk.
-    MD5 can be taken from the PAR2 generation pass (if enabled, otherwise it
-    will need to be re-calculated, but we can still avoid the disk hit since
-    calculation will be streamed)
-
 -   PAR2 generation support
 
--   automatic 7-Zip wrapping
+-   Automatic 7-Zip wrapping
+
+-   Multi-server support for both posting and checking
+
+-   SOCKS proxy support
 
 Not planned
 -----------
