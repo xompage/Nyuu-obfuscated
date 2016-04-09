@@ -7,7 +7,7 @@ var NNTPServer = require('./_nntpsrv');
 
 function deepMerge(dest, src) {
 	for(var k in src) {
-		if((k in dest) && typeof dest[k] == 'object' && !Array.isArray(dest[k])) {
+		if((k in dest) && typeof dest[k] == 'object' && !Array.isArray(dest[k]) && dest[k] !== null) {
 			deepMerge(dest[k], src[k]);
 		} else {
 			dest[k] = src[k];
@@ -17,7 +17,8 @@ function deepMerge(dest, src) {
 
 var lastServerPort = 0;
 var clientOpts = function(opts) {
-	var o = {
+	var o = require('../config');
+	deepMerge(o, {
 		server: {
 			connect: {
 				host: '127.0.0.1',
@@ -68,7 +69,7 @@ var clientOpts = function(opts) {
 				client: 'Nyuu',
 			},
 		},
-	};
+	});
 	
 	deepMerge(o.check.server, o.server);
 	o.check.server.connections = 0;
@@ -106,6 +107,7 @@ it('basic test', function(done) {
 			tries: 0,
 		}
 	}, function(err, server) {
+		if(err) return done(err);
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);
 		done(err);
@@ -127,6 +129,7 @@ it('complex test', function(done) {
 		},
 		articleSize: 4096
 	}, function(err, server) {
+		if(err) return done(err);
 		// TODO: better checks
 		var numFiles = require('fs').readdirSync('lib/').length +1;
 		assert(Object.keys(server.posts.rifles).length >= numFiles);
@@ -171,6 +174,7 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 			return true; // drop this post
 		};
 	})(function(err, server) {
+		if(err) return done(err);
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);
 		done(err);
@@ -203,6 +207,7 @@ it('should retry post if post check finds first attempt missing', function(done)
 		});
 		server.onPostHook = function(){ return true; }; // drop the first post
 	})(function(err, server) {
+		if(err) return done(err);
 		assert.equal(Object.keys(server.posts.rifles).length, 1);
 		assert.equal(Object.keys(server.postIdMap).length, 1);
 		done(err);
