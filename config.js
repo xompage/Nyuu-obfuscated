@@ -53,7 +53,7 @@ module.exports = {
 	useBufferPool: true, // self manage article buffers rather than rely on GC's management
 	
 	diskReqSize: null, // chunk size when reading from disk; default = articleSize
-	diskBufferSize: 0, // amount of data to buffer; ideally a multiple of articleSize
+	diskBufferSize: null, // amount of data to buffer; ideally a multiple of articleSize; default = diskReqSize
 	articleQueueBuffer: null, // number of buffered articles; default is numConnections*2
 	
 	/**

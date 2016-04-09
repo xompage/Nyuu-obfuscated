@@ -134,9 +134,10 @@ NZB Output Options:
 Advanced:
 
        --disk-req-size       Disk read request size (default `--article-size`)
-       --disk-buf-size       Disk read-ahead buffer size (default 0)
-                             Set to 0 to disable read-ahead buffering,
-                             otherwise set to a multiple of `--disk-req-size`
+       --disk-buf-size       Disk read-ahead buffer size (default
+                             `--disk-req-size`). Set to 0 to disable read-ahead
+                             buffering, otherwise set to a multiple of
+                             `--disk-req-size`
        --post-queue-size     Max number of buffered articles for posting
                              (default `--connections`*2)
 
