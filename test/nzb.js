@@ -7,8 +7,6 @@ describe('NZB Generator', function() {
 	it('should basically work', function() {
 		var data = [];
 		var nzb = new Newbz(
-			'A <Poster>',
-			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
 			{
 				'testing & stuffing around' : 'test value',
 				another_tag : '"hello world"'
@@ -20,10 +18,22 @@ describe('NZB Generator', function() {
 			'utf8'
 		);
 		
-		nzb.file('i_am_insane.jpg', 2, null);
+		nzb.file(
+			'i_am_insane.jpg',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			2,
+			null
+		);
 		nzb.addSegment(123, 'blabla@test.test');
 		nzb.addSegment(111, 'invalid<name>@place');
-		nzb.file('Silly&File', 1, null);
+		nzb.file(
+			'Silly&File',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			1,
+			null
+		);
 		// this file is invalid as it has no segments, but I cbf checking this case
 		nzb.end();
 		

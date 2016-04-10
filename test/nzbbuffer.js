@@ -7,8 +7,6 @@ describe('NZB Buffered Generator', function() {
 	it('should basically work', function(done) {
 		var data = [];
 		var nzb = new Newbz(
-			'A <Poster>',
-			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
 			{
 				'testing & stuffing around' : 'test value',
 				another_tag : '"hello world"'
@@ -20,8 +18,20 @@ describe('NZB Buffered Generator', function() {
 			'utf8'
 		);
 		
-		var file1 = nzb.file('i_am_insane.jpg', 2, null);
-		var file2 = nzb.file('Silly&File', 1, null);
+		var file1 = nzb.file(
+			'i_am_insane.jpg',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			2,
+			null
+		);
+		var file2 = nzb.file(
+			'Silly&File',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			1,
+			null
+		);
 		file1.set(0, 123, 'blabla@test.test');
 		file2.set(0, 222, 'whoa');
 		file1.set(1, 111, 'invalid<name>@place');
@@ -61,8 +71,6 @@ describe('NZB Buffered Generator', function() {
 	it('should throw if not all segments supplied, or given out of bounds segments', function(done) {
 		var data = [];
 		var nzb = new Newbz(
-			'poster',
-			['alt.binaries.test'],
 			{},
 			function(blob, encoding) {
 				data.push(new Buffer(blob, encoding));
@@ -71,7 +79,13 @@ describe('NZB Buffered Generator', function() {
 			'utf8'
 		);
 		
-		var file1 = nzb.file('i_am_insane.jpg', 2, null);
+		var file1 = nzb.file(
+			'i_am_insane.jpg',
+			'poster',
+			['alt.binaries.test'],
+			2,
+			null
+		);
 		assert.throws(function() {
 			file1.set(2, 1, 'hehe');
 		});
