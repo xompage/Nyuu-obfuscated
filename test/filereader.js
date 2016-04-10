@@ -193,8 +193,50 @@ it('test instant read', function(done) {
 		});
 	});
 });
-// close tests?
-// TODO: test error propagation
+
+it('should terminate all read calls on end', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	r.read(10, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), '0123456789');
+		r.read(12, function(err, data) {
+			if(err) throw err;
+			assert.equal(data.toString(), '');
+			done();
+		});
+	});
+	r.read(2, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), '');
+	});
+	r.read(8, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), '');
+	});
+});
+it('should propagate errors to waiting reads', function(done) {
+	var r = new BufferedFileReader('./test/invalid_file.txt', 5, 5);
+	r.read(2, function(err, data) {
+		assert(err);
+	});
+	r.read(12, function(err, data) {
+		assert(err);
+		done();
+	});
+});
+
+it('test close early does not flip out', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	r.read(2, function(err, data) {
+		if(err) throw err;
+		r.close(done);
+	});
+});
+it('test immediate close does not flip out', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	r.close(done);
+});
+
 // TODO: possible to test cases involving slow disk reads?
 
 });
