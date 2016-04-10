@@ -30,8 +30,6 @@ utility](<http://man7.org/linux/man-pages/man1/time.1.html>). CPU speed is 256MB
 divided by the sum of the user and system time. Overall speed is 256MB divided
 by the total process time.
 
- 
-
 Applications Tested
 -------------------
 
@@ -66,8 +64,6 @@ repositories, so may be a bit old.
     -   There is usually a forced 3 second delay for posting, which was removed
         for this benchmark
 
- 
-
 Results
 -------
 
@@ -76,8 +72,6 @@ Results
 ![](<ssl.png>)
 
 ![](<rss.png>)
-
- 
 
 Observations
 ------------
@@ -113,8 +107,6 @@ Observations
 -   Other than Nyuu, I’d recommend (the relatively new) NewsUP from these
     results. It performs well and is still under active development.
 
- 
-
 Running Benchmarks
 ------------------
 
@@ -144,8 +136,6 @@ wget https://raw.githubusercontent.com/animetosho/Nyuu/master/bench/run.sh -O-|s
 
 This will output all the results, which you can save a copy of (if you wish,
 replace `sh` with `sh 2>&1|tee run.log` to log output to a file).
-
- 
 
 Benchmark 2
 ===========
