@@ -21,8 +21,6 @@ Note that Nyuu is currently still under heavy development and many features may
 not work properly or even be implemented. As with any other experimental
 subject, use precaution.
 
- 
-
 Features
 ========
 
@@ -36,8 +34,8 @@ Features
 
 -   Sub-directory handling
 
-**Fast & efficient:** Nyuu is amongst the fastest (if not the fastest) usenet
-posters
+**Fast & efficient:** Nyuu is amongst the fastest (if not [the
+fastest](<bench/info.md#benchmark-2>)) usenet posters
 
 -   Multiple uploading connections
 
@@ -85,8 +83,6 @@ posters
 -   Extensive upload diagnostic details available (via optional TCP/HTTP status
     server) to help tune settings or find problems
 
- 
-
 Installation & Requirements
 ===========================
 
@@ -94,6 +90,8 @@ Nyuu should run on node.js 0.10.x and later. Recent Linux distributions should
 have *nodejs* in their repositories, otherwise, see
 [NodeSource](<https://github.com/nodesource/distributions>). For Windows/OSX
 builds, they [can be found here](<https://nodejs.org/en/download/stable/>).
+Although node.js 0.10.x is supported, newer versions of Node provide greatly
+improved SSL performance.
 
 Dependencies
 ------------
@@ -173,14 +171,10 @@ Note that some test cases test functionality of timeouts; to reduce time it
 takes to run these tests, timeouts are set relatively small, which means that a
 slow computer may not be able to service them as expected.
 
- 
-
 Usage
 =====
 
 For command line usage, [see here](<help.txt>).
-
- 
 
 Planned Features
 ================
@@ -197,8 +191,6 @@ Not planned
 -----------
 
 -   RAR support, since 7-Zip should cover everything  
-
- 
 
 Alternatives
 ============
@@ -237,8 +229,6 @@ competition and, ya'know...
 written in Javascript)
 
 [Here's a benchmark comparison](<bench/info.md>) between a few of the above.
-
- 
 
 License
 =======
