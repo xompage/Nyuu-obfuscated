@@ -4,6 +4,9 @@ Nyuu v0.1.0
 Usage: nyuu -h [server] [options] file1 file2 ...
 
 All options take one parameter, except for those marked as a flag option.
+Options can also be set using a custom config file (see `--config` option), in
+which case, flag options, if set, can be unset by prefixing `no-` to the name,
+for example, `--no-ssl` to explicitly disable SSL.
 
 Upload Server Options:
 
@@ -181,6 +184,8 @@ Other Options:
                                    Start HTTP server on 2001::1 port 1234
                                --progress tcp:localhost
                                    Start TCP server on localhost on random port
+  -C,  --config              Use a custom configuration file, see config.js for
+                             an example
   -?,  --help                Display this help screen (flag option)
        --version             Print application version number (flag option)
 

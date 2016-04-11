@@ -288,17 +288,22 @@ var optMap = {
 	},
 	progress: {
 		type: 'array'
+	},
+	config: {
+		type: 'string',
+		alias: 'C'
 	}
 };
 
 
 // build minimist's option map
-var mOpts = {string: [], boolean: [], alias: {}};
+var mOpts = {string: [], boolean: [], alias: {}, default: {}};
 for(var k in optMap) {
 	var o = optMap[k];
-	if(o.type == 'bool')
+	if(o.type == 'bool') {
 		mOpts.boolean.push(k);
-	else
+		mOpts.default[k] = null; // prevent minimist from setting this as false
+	} else
 		mOpts.string.push(k);
 	
 	if(o.alias) {
@@ -361,6 +366,11 @@ var parseTime = function(s) {
 };
 
 var ulOpts = require('../config.js');
+if(argv.config) {
+	// TODO: allow proc:// or json:// ?
+	var cOpts = require(require('fs').realpathSync(argv.config));
+	require('../lib/util').deepMerge(ulOpts, cOpts);
+}
 
 for(var k in argv) {
 	if(k == '_') continue;
@@ -371,6 +381,7 @@ for(var k in argv) {
 		error('Unknown option `' + k + '`');
 	
 	var o = optMap[k];
+	if(o.type == 'bool' && v === null) continue; // hack to get around minimist forcing unset values to be false
 	if(o.type == 'int')
 		v = v|0;
 	if(o.type == 'size') {
@@ -734,13 +745,20 @@ fuploader.once('start', function(files, uploader) {
 			break;
 			case 'stderr':
 				if(writeProgress) break; // no need to double output =P
+				var postedSamples = [0];
 				writeProgress = function() {
 					var chkPerc = uploader.articlesChecked / totalPieces,
 					    pstPerc = uploader.articlesPosted / totalPieces;
 					var barSize = Math.floor(chkPerc*50);
 					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
-					// TODO: add speed indicator
-					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '% complete  [' + rpad(line, 50) + ']\x1b[0G');
+					
+					// calculate speed over last 10s
+					var speed = (uploader.bytesPosted - postedSamples[0]) / postedSamples.length;
+					postedSamples.push(uploader.bytesPosted);
+					if(postedSamples.length >= 10) // maintain max 10 samples
+						postedSamples.shift();
+					
+					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G');
 				};
 				var seInterval = setInterval(writeProgress, 1000);
 				seInterval.unref();

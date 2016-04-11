@@ -5,19 +5,10 @@ var tl = require('./_testlib');
 var FileUploader = require('../lib/fileuploader');
 var NNTPServer = require('./_nntpsrv');
 
-function deepMerge(dest, src) {
-	for(var k in src) {
-		if((k in dest) && typeof dest[k] == 'object' && !Array.isArray(dest[k]) && dest[k] !== null) {
-			deepMerge(dest[k], src[k]);
-		} else {
-			dest[k] = src[k];
-		}
-	}
-}
-
 var lastServerPort = 0;
 var clientOpts = function(opts) {
 	var o = require('../config');
+	var deepMerge = require('../lib/util').deepMerge;
 	deepMerge(o, {
 		server: {
 			connect: {
