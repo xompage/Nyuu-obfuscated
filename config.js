@@ -8,7 +8,7 @@ module.exports = {
 	// TODO: consider multi-server?
 	server: { // connection settings
 		connect: {
-			host: 'news.example.com',
+			host: 'localhost',
 			port: null,
 			
 			// SSL options

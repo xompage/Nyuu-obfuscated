@@ -509,7 +509,6 @@ if(argv.meta) {
 
 
 // custom validation rules
-if(!argv.host && argv.host !== '0') error('Server host must be supplied');
 if(!argv._.length)                  error('Must supply at least one input file');
 if(argv.subdirs && ['skip','keep'].indexOf(argv.subdirs) < 0)
 	error('Invalid option supplied for `--subdirs`');

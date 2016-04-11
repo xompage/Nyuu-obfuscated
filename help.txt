@@ -10,8 +10,8 @@ for example, `--no-ssl` to explicitly disable SSL.
 
 Upload Server Options:
 
-  -h,  --host                Host/server to upload to (required). Prefix with
-                             `unix:` to specify a Unix socket path.
+  -h,  --host                Host/server to upload to. Prefix with `unix:` to
+                             specify a Unix socket path.
                              SSL with Unix sockets requires NodeJS >= 0.12
   -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
                              is specified)
