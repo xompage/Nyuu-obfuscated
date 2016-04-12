@@ -10,21 +10,21 @@ it('should return queued in order', function(done) {
 	var q = new TimerQueue();
 	var s = Date.now();
 	assert.equal(q.totalQueueSize(), 0);
-	q.add(20, 1);
-	q.add(40, 2);
+	assert(q.add(20, 1));
+	assert(q.add(40, 2));
 	assert.equal(q.totalQueueSize(), 2);
-	q.take(function(n) {
+	assert(!q.take(function(n) {
 		assert(Date.now() - s >= 20);
 		assert.equal(n, 1);
 		assert.equal(q.totalQueueSize(), 1);
-		q.take(function(n) {
+		assert(!q.take(function(n) {
 			assert(Date.now() - s >= 40);
 			assert.equal(n, 2);
 			assert.equal(q.totalQueueSize(), 0);
 			
 			done();
-		});
-	});
+		}));
+	}));
 });
 
 it('should return queued in order (no waiting)', function(done) {
@@ -106,10 +106,10 @@ it('should return empty on finished', function(done) {
 	var q = new TimerQueue();
 	q.finished();
 	assert.equal(q.totalQueueSize(), 0);
-	q.take(function(n) {
+	assert(q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
-	});
+	}));
 	assert.equal(q.takeSync(), undefined);
 });
 
@@ -141,24 +141,24 @@ it('should return empty on finished (with items)', function(done) {
 it('should return empty on finished (with items v2)', function(done) {
 	var q = new TimerQueue(1);
 	var s = Date.now();
-	q.add(20, 1);
-	q.add(40, 2);
-	q.take(function(n) {
+	assert(q.add(20, 1));
+	assert(q.add(40, 2)); // forced add, so should return true
+	assert(!q.take(function(n) {
 		assert(Date.now() - s >= 20);
 		assert.equal(n, 1);
-	});
-	q.take(function(n) {
+	}));
+	assert(!q.take(function(n) {
 		assert(Date.now() - s >= 40);
 		assert.equal(n, 2);
-	});
-	q.take(function(n) {
+	}));
+	assert(!q.take(function(n) {
 		assert(Date.now() - s >= 40);
 		assert.equal(n, undefined);
-	});
-	q.take(function(n) {
+	}));
+	assert(!q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
-	});
+	}));
 	q.finished();
 });
 
@@ -183,22 +183,22 @@ it('should disable add on finished', function(done) {
 it('should wait when queue size exceeded', function(done) {
 	var q = new TimerQueue(2);
 	var addDone = 0;
-	q.add(0, 1, function(err) {
+	assert(q.add(0, 1, function(err) {
 		if(err) throw err;
-		q.add(0, 2, function(err) {
+		assert(q.add(0, 2, function(err) {
 			if(err) throw err;
-			q.add(0, 3, function(err) {
+			assert(!q.add(0, 3, function(err) {
 				if(err) throw err;
 				addDone = 1;
-			});
-			q.add(0, 4, function(err) {
+			}));
+			assert(!q.add(0, 4, function(err) {
 				if(err) throw err;
 				addDone = 2;
-			});
+			}));
 			
 			tl.defer(function() {
 				assert.equal(addDone, 0);
-				q.take(function(n) {
+				assert(q.take(function(n) {
 					assert.equal(n, 1);
 					tl.defer(function() {
 						assert.equal(addDone, 0); // still have 1 too many item in queue, so add(3) shouldn't be done yet
@@ -229,10 +229,10 @@ it('should wait when queue size exceeded', function(done) {
 							});
 						});
 					});
-				});
+				}));
 			});
-		});
-	});
+		}));
+	}));
 });
 
 it('test queue overflow', function(done) {

@@ -10,57 +10,57 @@ describe('Buffered Queue', function() {
 it('should return queued in order', function(done) {
 	// queue up 1,2; it should return 1,2
 	var q = new Queue(10);
-	q.add(1, function(err) {
+	assert(q.add(1, function(err) {
 		if(err) throw err;
-		q.add(2, function(err) {
+		assert(q.add(2, function(err) {
 			if(err) throw err;
-			q.take(function(n) {
+			assert(q.take(function(n) {
 				assert.equal(n, 1);
-				q.take(function(n) {
+				assert(q.take(function(n) {
 					assert.equal(n, 2);
 					done();
-				});
-			});
-		});
-	});
+				}));
+			}));
+		}));
+	}));
 });
 
 it('should return queued in order (no waiting)', function(done) {
 	// queue up 1,2; it should return 1,2
 	var q = new Queue(10);
-	q.add(1, tl.throwErr);
-	q.add(2, tl.throwErr);
-	q.take(function(n) {
+	assert(q.add(1, tl.throwErr));
+	assert(q.add(2, tl.throwErr));
+	assert(q.take(function(n) {
 		assert.equal(n, 1);
-	});
-	q.take(function(n) {
+	}));
+	assert(q.take(function(n) {
 		assert.equal(n, 2);
 		done();
-	});
+	}));
 });
 
 it('should return queued in order (out of order requests)', function(done) {
 	// queue up 1,2; it should return 1,2
 	var q = new Queue(10);
-	q.take(function(n) {
+	assert(!q.take(function(n) {
 		assert.equal(n, 1);
-		q.add(2, tl.throwErr);
-	});
-	q.take(function(n) {
+		assert(q.add(2, tl.throwErr));
+	}));
+	assert(!q.take(function(n) {
 		assert.equal(n, 2);
 		done();
-	});
-	q.add(1, tl.throwErr);
+	}));
+	assert(q.add(1, tl.throwErr));
 });
 
 it('takeSync should work', function(done) {
 	var q = new Queue(1);
 	assert.equal(q.takeSync(), undefined);
-	q.add(1, tl.throwErr);
+	assert(q.add(1, tl.throwErr));
 	assert.equal(q.takeSync(), 1);
 	assert.equal(q.takeSync(), undefined);
-	q.add(2, tl.throwErr);
-	q.add(3, tl.throwErr);
+	assert(q.add(2, tl.throwErr));
+	assert(!q.add(3, tl.throwErr));
 	assert.equal(q.takeSync(), 2);
 	assert.equal(q.takeSync(), 3);
 	assert.equal(q.takeSync(), undefined);
@@ -69,7 +69,7 @@ it('takeSync should work', function(done) {
 
 it('should work with both async/sync takes', function(done) {
 	var q = new Queue(1);
-	q.take(function(n) {
+	!q.take(function(n) {
 		assert.equal(n, 1);
 		q.add(2, tl.throwErr);
 	});
@@ -101,42 +101,42 @@ it('should work with both async/sync takes', function(done) {
 it('should return empty on finished', function(done) {
 	var q = new Queue(10);
 	q.finished();
-	q.take(function(n) {
+	assert(q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
-	});
+	}));
 	assert.equal(q.takeSync(), undefined);
 	assert.equal(q.hasFinished, true);
 });
 
 it('should return empty on finished (with items)', function(done) {
 	var q = new Queue(1);
-	q.add(1, tl.throwErr);
-	q.add(2, tl.throwErr);
-	q.take(function(n) {
+	assert(q.add(1, tl.throwErr));
+	assert(!q.add(2, tl.throwErr));
+	assert(q.take(function(n) {
 		assert.equal(n, 1);
-	});
+	}));
 	q.finished();
 	assert.equal(q.hasFinished, true);
-	q.take(function(n) {
+	assert(q.take(function(n) {
 		assert.equal(n, 2);
-	});
-	q.take(function(n) {
+	}));
+	assert(q.take(function(n) {
 		assert.equal(q.hasFinished, true);
 		assert.equal(n, undefined);
-	});
-	q.take(function(n) {
+	}));
+	assert(q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
-	});
+	}));
 });
 
 it('should return empty on finished (out of order request)', function(done) {
 	var q = new Queue(10);
-	q.take(function(n) {
+	assert(!q.take(function(n) {
 		assert.equal(n, undefined);
 		done();
-	});
+	}));
 	q.finished();
 });
 
