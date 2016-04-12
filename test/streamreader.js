@@ -1,7 +1,7 @@
 "use strict";
 
 var assert = require("assert");
-var BufferedStreamReader = require('../lib/reader');
+var BufferedStreamReader = require('../lib/streamreader');
 
 var tl = require('./_testlib');
 var Readable = require('stream').Readable;
