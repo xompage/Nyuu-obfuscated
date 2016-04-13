@@ -88,7 +88,7 @@ var doTest = function(files, opts, cb) {
 describe('Nyuu', function() {
 
 it('basic test', function(done) {
-	doTest(['index.js'], {
+	doTest(['help.txt'], {
 		server: {
 			connections: 1
 		},
@@ -106,7 +106,7 @@ it('basic test', function(done) {
 });
 
 it('complex test', function(done) {
-	doTest(['lib/', 'index.js'], {
+	doTest(['lib/', 'help.txt'], {
 		server: {
 			connections: 3
 		},
@@ -118,7 +118,9 @@ it('complex test', function(done) {
 			recheckDelay: 10,
 			tries: 1,
 		},
-		articleSize: 4096
+		articleSize: 4096,
+		diskReqSize: 8192,
+		diskBufSize: 8192
 	}, function(err, server) {
 		if(err) return done(err);
 		// TODO: better checks
@@ -130,7 +132,7 @@ it('complex test', function(done) {
 });
 
 it('should retry check if first attempt doesn\'t find it', function(done) {
-	var files = ['index.js'];
+	var files = ['help.txt'];
 	var opts = {
 		server: {
 			connections: 1
@@ -174,7 +176,7 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 
 
 it('should retry post if post check finds first attempt missing', function(done) {
-	var files = ['index.js'];
+	var files = ['help.txt'];
 	var opts = {
 		server: {
 			connections: 1
