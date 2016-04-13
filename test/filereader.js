@@ -226,15 +226,29 @@ it('should propagate errors to waiting reads', function(done) {
 });
 
 it('test close early does not flip out', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
 	r.read(2, function(err, data) {
 		if(err) throw err;
+		assert.equal(data.toString(), '01');
 		r.close(done);
 	});
 });
 it('test immediate close does not flip out', function(done) {
 	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
 	r.close(done);
+});
+it('test read after close', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
+	r.read(4, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), '0123');
+		r.close();
+		r.read(2, function(err, data) {
+			if(err) throw err;
+			assert.equal(data.length, 0);
+			done();
+		});
+	});
 });
 
 // TODO: possible to test cases involving slow disk reads?
