@@ -250,6 +250,27 @@ it('test read after close', function(done) {
 		});
 	});
 });
+it('test read after close (2)', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 10, 10);
+	r.read(4, function(err, data) {
+		if(err) throw err;
+		assert.equal(data.toString(), '0123');
+		r.close();
+		r.read(6, function(err, data) {
+			if(err) throw err;
+			assert.equal(data.toString(), '');
+			r.read(2, function(err, data) {
+				if(err) throw err;
+				assert.equal(data.length, 0);
+				process.nextTick(done);
+			});
+		});
+		r.read(2, function(err, data) {
+			if(err) throw err;
+			assert.equal(data.length, 0);
+		});
+	});
+});
 
 // TODO: possible to test cases involving slow disk reads?
 
