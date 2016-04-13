@@ -450,11 +450,11 @@ if(argv.subject) {
 }
 
 var connOptMap = {
-	'ignore-cert': function(o) {
-		o.rejectUnauthorized = false;
+	'ignore-cert': function(o, v) {
+		o.rejectUnauthorized = !v;
 	},
-	ipv6: function(o) {
-		o.family = 6;
+	ipv6: function(o, v) {
+		o.family = v ? 6 : undefined;
 	},
 	host: function(o, v) {
 		if(v.match(/^unix:/i))
@@ -464,9 +464,9 @@ var connOptMap = {
 	}
 };
 for(var k in connOptMap) {
-	if(argv[k])
+	if(argv[k] !== null && argv[k] !== undefined)
 		connOptMap[k](ulOpts.server.connect, argv[k]);
-	if(argv['check-'+k])
+	if(argv['check-'+k] !== null && argv['check-'+k] !== undefined)
 		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
 }
 
