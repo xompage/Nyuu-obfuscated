@@ -237,6 +237,10 @@ var optMap = {
 		type: 'string',
 		map: 'nzb/writeOpts/encoding'
 	},
+	overwrite: {
+		type: 'bool',
+		alias: 'O'
+	},
 	meta: {
 		type: 'map',
 		alias: 'M'
@@ -486,6 +490,8 @@ if(argv.out) {
 		}.bind(null, argv.out.substr(7));
 	}
 }
+if(argv.overwrite !== null)
+	ulOpts.nzb.writeOpts.flags = argv.overwrite ? 'w' : 'wx';
 
 // map custom headers
 if(argv.headers) {

@@ -52,6 +52,7 @@ var clientOpts = function(opts) {
 			writeTo: 'output.nzb', // TODO: filename, output stream (eg stdout) etc
 			writeOpts: {
 				//mode: 0666,
+				flags: 'w',
 				encoding: 'utf8',
 			},
 			minify: false,

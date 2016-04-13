@@ -116,6 +116,8 @@ NZB Output Options:
                              example: `-o 'proc://cat>out.nzb'`, which is the
                              same as using `-o- | cat>out.nzb`. The stdout and
                              stderr of the process is discarded.
+  -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
+                             (flag option)
        --minify              Minify outputted XML (flag option)
        --nzb-compress        Compress outputted NZB. Can be gzip, zlib or
                              deflate. If node-xz is installed, xz is also
