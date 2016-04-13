@@ -101,7 +101,7 @@ command (executed inside the Nyuu directory) is all you need to set up the
 dependencies:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install
+npm install --no-optional
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don’t want to use NPM, you can use your package manager instead if it has
@@ -162,6 +162,16 @@ directory, with the following contents:
 
 (obviously, fix the paths to what they actually are)
 
+Optional Modules
+----------------
+
+You may have noticed the `--no-optional` flag for NPM above. You can remove that
+flag when doing `npm install` to enable additional features, if you need them.
+The following modules have been marked optional:
+
+-   [xz](<https://www.npmjs.com/package/xz>): enables NZBs to be compressed
+    using xz via the `--nzb-compress xz` option
+
 Running Tests
 -------------
 
@@ -176,16 +186,29 @@ Usage
 
 For command line usage, [see here](<help.txt>).
 
+As an example, if you’re interested in the exact command used by the Anime Tosho
+usenet bot, here it is: (note, this may not be optimal for you)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/bin/nodejs bin/nyuu --user [user] --password [pass] --host [host] --from "Anime Tosho <usenet.bot@animetosho.org>" --connections 8 --minify --log-time --group-files --check-ignore-fail --check-tries 4 --check-post-tries 2 --check-connections 1 --progress http:localhost --subdirs keep --disk-req-size 30000K --disk-buf-size 30000K -H "Organization=Anime Tosho" [folder] --comment [torrentname] -M "title=[torrentname]" -M "x-info-url=https://animetosho.org/view/[id]" --groups alt.binaries.multimedia.anime.highspeed -o "proc:///usr/bin/7z a -tgzip -bd -mx=9 -si [nzb]" 2>>[logfile]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Planned Features
 ================
 
--   PAR2 generation support
+-   Integrate [ParPar](<https://animetosho.org/app/parpar>) for streaming PAR2
+    creation
 
--   Automatic 7-Zip wrapping
+-   Streaming 7-Zip creation
 
 -   Multi-server support for both posting and checking
 
+-   Repost missing articles from NZB, and/or some sort of resumption support
+
 -   SOCKS proxy support
+
+-   A web (HTTP) interface would be nice as an alternative to the command line
+    interface; not sure if it will be done however
 
 Not planned
 -----------
