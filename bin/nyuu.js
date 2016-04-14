@@ -730,7 +730,7 @@ var friendlySize = function(s) {
 	return (Math.round(s *100)/100) + ' ' + units[i];
 };
 var retArg = function(_) { return _; };
-fuploader.once('start', function(files, uploader) {
+fuploader.once('start', function(files, _uploader) {
 	var totalSize = 0, totalPieces = 0, totalFiles = 0;
 	for(var filename in files) {
 		var sz = files[filename].size;
@@ -740,6 +740,7 @@ fuploader.once('start', function(files, uploader) {
 	}
 	Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
 	
+	var uploader = _uploader.uploader;
 	var startTime = Date.now();
 	progress.forEach(function(prg) {
 		switch(prg.type) {
@@ -930,9 +931,6 @@ fuploader.once('start', function(files, uploader) {
 			break;
 		}
 	});
-});
-fuploader.once('error', function(err) {
-	throw err; // TODO: something better
 });
 fuploader.on('processing_file', function(file) {
 	Nyuu.log.info('Reading file ' + file.name + '...');
