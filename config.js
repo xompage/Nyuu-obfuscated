@@ -32,6 +32,7 @@ server: {
 	requestRetries: 5, // how many times to retry an interrupted request
 	postRetries: 1, // how many times to retry if server returns 441 response to posted article
 	connections: 3, // number of connections
+	keepAlive: false, // always reconnect on error, even if not needed
 },
 
 /** Post Check Options **/
@@ -52,6 +53,8 @@ check: {
 	ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
 	queueBuffer: null, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size; default is numConnections*8
 },
+
+useLazyConnect: false, // if true, will only create connections when needed, rather than pre-emptively doing so
 
 /** Post/Article Options **/
 articleSize: 768000, // in bytes, must be a multiple of 2

@@ -35,6 +35,8 @@ Upload Server Options:
        --reconnect-delay     Delay connection retries (default 5s)
        --request-retries     Number of request retry attempts (default 5)
        --post-retries        Number of post retry attempts (default 1)
+       --keep-alive          Try to always keep connection alive even if not
+                             needed (flag option).
 
 Article/Post Options:
 
@@ -104,6 +106,11 @@ Post Check Options:
                              checked exceeds this number. Increase this number
                              to avoid these stalls, at the expense of higher
                              memory usage (default `--connections`*8)
+
+Other Upload Options:
+
+       --use-lazy-connect    Only create connections when necessary and prefer
+                             using as few as possible (flag option).
 
 NZB Output Options:
 

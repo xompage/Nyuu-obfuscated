@@ -81,6 +81,10 @@ var optMap = {
 		type: 'int',
 		map: 'server/postRetries'
 	},
+	'keep-alive': {
+		type: 'bool',
+		map: 'server/keepAlive'
+	},
 	'check-connections': {
 		type: 'int',
 		map: 'check/server/connections',
@@ -174,6 +178,10 @@ var optMap = {
 	'check-request-retries': {
 		type: 'int',
 		map: 'check/server/requestRetries'
+	},
+	'check-keep-alive': {
+		type: 'bool',
+		map: 'check/server/keepAlive'
 	},
 	'article-size': {
 		type: 'size',
@@ -269,6 +277,10 @@ var optMap = {
 	'use-buffer-pool': {
 		type: 'bool',
 		map: 'useBufferPool'
+	},
+	'use-lazy-connect': {
+		type: 'bool',
+		map: 'useLazyConnect'
 	},
 	
 	help: {
