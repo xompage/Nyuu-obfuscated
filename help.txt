@@ -97,10 +97,6 @@ Post Check Options:
                              Some servers seem to want one set, otherwise
                              checking fails. If you set one, use a valid group
                              that you're not posting to, such as "bit.test"
-       --check-ignore-fail   If post checking fails to find the posted article,
-                             even after re-posting, continue on assuming the
-                             last post attempt succeeded. If this is not set,
-                             Nyuu will error out instead (flag option)
        --check-queue-size    Max number of articles queued for checking.
                              Posting will stall if the number of articles to be
                              checked exceeds this number. Increase this number
@@ -109,6 +105,25 @@ Post Check Options:
 
 Other Upload Options:
 
+       --skip-errors         Continue processing regardless of specified
+                             errors. By default, Nyuu stops on all errors. You
+                             can specify `--skip-errors all` to skip all
+                             skippable errors, otherwise a comma separated list
+                             of the following should be specified:
+                                 post-timeout: post request timed out; if set,
+                                               assumes post was successful
+                                 post-reject: server rejects sent post; if set,
+                                              assume post was successful
+                                 post-fail: posting failed for any reason; if
+                                            set, post is skipped
+                                 check-timeout: check request timed out; if set
+                                                assume check was successful
+                                 check-missing: post checking fails to find the
+                                                posted article; assume success
+                                 check-fail: check failed for any reason; if
+                                             set, assume success
+                             Note that for requests that are retried (posting),
+                             only the last result is considered.
        --use-lazy-connect    Only create connections when necessary and prefer
                              using as few as possible (flag option).
 

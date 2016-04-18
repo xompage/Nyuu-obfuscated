@@ -50,10 +50,10 @@ check: {
 	group: '', // if set, will switch checking connections to this group; some servers seem to want one when STATing posts, otherwise they fail to show them; if set, should be a valid group you never post to, eg "bit.test"
 	ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 	postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
-	ignoreFailure: false, // what to do once all post retry attempts have been exhausted; either error and halt the process (true) or ignore, print a warning, and assume the last post attempt succeeded (false)
 	queueBuffer: null, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size; default is numConnections*8
 },
 
+skipErrors: [], // list of errors to skip; can be set to true to imply all errors; valid options are 
 useLazyConnect: false, // if true, will only create connections when needed, rather than pre-emptively doing so
 
 /** Post/Article Options **/

@@ -33,7 +33,6 @@ var clientOpts = function(opts) {
 			tries: 0,
 			ulConnReuse: false,
 			postRetries: 1,
-			ignoreFailure: false,
 			maxBuffer: 50,
 		},
 		articleSize: 768000,

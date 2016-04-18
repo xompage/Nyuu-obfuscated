@@ -114,10 +114,6 @@ var optMap = {
 		type: 'int',
 		map: 'check/postRetries'
 	},
-	'check-ignore-fail': {
-		type: 'bool',
-		map: 'check/ignoreFailure'
-	},
 	'check-host': {
 		type: 'string'
 	},
@@ -281,6 +277,10 @@ var optMap = {
 	'use-lazy-connect': {
 		type: 'bool',
 		map: 'useLazyConnect'
+	},
+	'skip-errors': {
+		type: 'string',
+		alias: 'e'
 	},
 	
 	help: {
@@ -459,6 +459,15 @@ if(argv.subject) {
 			}
 		});
 	};
+}
+
+if(argv['skip-errors']) {
+	if(argv['skip-errors'].toLowerCase() == 'all')
+		ulOpts.skipErrors = true;
+	else
+		ulOpts.skipErrors = argv['skip-errors'].split(',').map(function(s) {
+			return s.trim().toLowerCase();
+		});
 }
 
 var connOptMap = {
