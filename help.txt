@@ -1,4 +1,4 @@
-Nyuu v0.1.0
+Nyuu
 -----------
 
 Usage: nyuu -h [server] [options] file1 file2 ...

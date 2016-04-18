@@ -336,7 +336,7 @@ var argv = require('minimist')(process.argv.slice(2), mOpts);
 
 
 if(argv.help) {
-	console.error(require('fs').readFileSync(__dirname + '/../help.txt').toString());
+	console.error(require('fs').readFileSync(__dirname + '/../help.txt').toString().replace(/^Nyuu\n/, 'Nyuu v' + require('../package.json').version + '\n'));
 	process.exit(0);
 }
 if(argv.version) {
