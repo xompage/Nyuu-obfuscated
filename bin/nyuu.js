@@ -347,7 +347,7 @@ if(argv.version) {
 var error = function(msg) {
 	console.error(msg);
 	console.error('Enter `nyuu --help` for usage information');
-	process.exit(1);
+	process.exit(7);
 };
 var parseSize = function(s) {
 	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s);
@@ -631,7 +631,7 @@ var rpad = function(s, l) {
 	return s + repeatChar(' ', l-s.length);
 };
 
-var logger;
+var logger, errorCount = 0;
 var writeProgress = null;
 if(process.stderr.isTTY) {
 	var padLen = stdErrProgress ? 80 : 0;
@@ -664,6 +664,7 @@ if(process.stderr.isTTY) {
 			process.stderr.write(rpad(msg, padLen));
 			process.stderr.write('\x1B[39m\r\n');
 			if(writeProgress) writeProgress();
+			errorCount++;
 		}
 	};
 } else {
@@ -688,6 +689,7 @@ if(process.stderr.isTTY) {
 			logTimestamp();
 			process.stderr.write('[ERR]  ');
 			console.error(rpad(msg, padLen));
+			errorCount++;
 		}
 	};
 }
@@ -696,7 +698,7 @@ if(verbosity < 4) logger.debug = function(){};
 if(verbosity < 3) logger.info = function(){};
 if(verbosity < 2) logger.warn = function(){};
 if(verbosity < 1) {
-	logger.error = function(){};
+	logger.error = function(){errorCount++;};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
 		process.exit(8);
@@ -733,7 +735,12 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	} else {
 		writeProgress = null;
 		process.emit('finished');
-		Nyuu.log.info('Process complete');
+		if(errorCount) {
+			Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
+			process.exit(1);
+		} else {
+			Nyuu.log.info('Process complete');
+		}
 		setTimeout(function() {
 			Nyuu.log.warn('Process did not terminate cleanly');
 			process.exit(0);
