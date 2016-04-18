@@ -112,6 +112,7 @@ subdirs: 'skip', // can be 'skip' or 'keep'
 // if above setting is 'keep', filenames will be transformed according to this setting
 // the default is to keep the filename component only, which essentially flattens all files into a single directory
 // this is similar to how other clients handle folders
+// you can also return false from this function to skip specific files
 subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; },
 // another example: include path, seperated by dashes (e.g. "MyFolder - SubFolder - SomeFile.txt")
 // subdirNameTransform: function(fileName, pathName, fullPath) { return pathName.replace(/\//g, ' - ') + fileName; },
