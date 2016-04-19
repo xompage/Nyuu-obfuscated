@@ -95,6 +95,11 @@ builds, they [can be found here](<https://nodejs.org/en/download/stable/>).
 Although node.js 0.10.x is supported, newer versions of Node provide greatly
 improved SSL performance.
 
+Nyuu download packages can be found on [the releases
+page](<https://github.com/animetosho/Nyuu/releases>). Pre-packaged Windows
+builds with Node 4.4.3 may also exist there if I can be bothered to provide
+them.
+
 Dependencies
 ------------
 
