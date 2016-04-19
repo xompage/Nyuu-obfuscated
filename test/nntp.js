@@ -50,6 +50,10 @@ function TestServer(onConn) {
 		this._conn = c;
 		this.connectedTime = Date.now();
 		c.on('data', this.onData.bind(this));
+		c.on('error', function(err) {
+			// we do expect errors - log them for now?
+			console.log('Test-server error: ', err);
+		});
 		c.once('close', function() {
 			this._conn = null;
 		}.bind(this));
@@ -61,6 +65,7 @@ TestServer.prototype = {
 	_expect: null,
 	_expectAction: null,
 	_conn: null,
+	_closed: false,
 	
 	onData: function(chunk) {
 		if(!this._expect) throw new Error('Unexpected data received: ' + chunk.toString());
@@ -92,13 +97,18 @@ TestServer.prototype = {
 		if(DEBUG) console.log('>> ' + msg.toString());
 	},
 	close: function(cb) {
-		this.server.close(cb);
+		if(!this._closed)
+			this.server.close(cb);
+		else
+			process.nextTick(cb);
+		this._closed = true;
 	},
 	drop: function() {
 		this._conn.destroy();
 		this._conn = null;
 	},
 	listen: function(port, cb) {
+		this._closed = false;
 		this.server.listen(port, 'localhost', function() {
 			lastServerPort = this.server.address().port;
 			cb();
@@ -144,7 +154,8 @@ function setupTest(o, cb) {
 	nntpLastLog = {warn: null, info: null, debug: null};
 	
 	if(currentServer) { // previous test failed?
-		killServer(setupTest.bind(null, cb));
+		killServer(setupTest.bind(null, o, cb));
+		return;
 	}
 	
 	if(!cb) {
@@ -175,14 +186,19 @@ function setupAuth(client, server, cb) {
 }
 
 function closeTest(client, server, cb) {
-	server.expect('QUIT\r\n', '205 Connection closing');
-	client.end();
-	assert.equal(client.state, 'closing');
-	tl.defer(function() {
-		assert.equal(client.state, 'disconnected');
+	if(client.state == 'disconnected' || client.state == 'inactive') {
 		server.close(cb);
 		currentServer = null;
-	});
+	} else {
+		server.expect('QUIT\r\n', '205 Connection closing');
+		client.end();
+		assert.equal(client.state, 'closing');
+		tl.defer(function() {
+			assert.equal(client.state, 'disconnected');
+			server.close(cb);
+			currentServer = null;
+		});
+	}
 	
 }
 
@@ -255,6 +271,25 @@ it('should handle basic tasks', function(done) {
 			cb();
 		},
 		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+it('should auto-connect on request', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			server.expect('DATE\r\n', '111 20110204060810');
+			client.date(cb);
+		},
+		function(date, cb) {
+			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			assert.equal(client.state, 'connected');
+			
 			closeTest(client, server, cb);
 		}
 	], done);
@@ -453,6 +488,78 @@ it('should attempt to rejoin a group if connection is lost (keepalive=1)', funct
 		}
 	], done);
 });
+it('should attempt to reconnect if connection is lost after new request (keepalive=0)', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			setupAuth(client, server);
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			server.drop();
+			tl.defer(function() {
+				assert.equal(client.state, 'inactive');
+				client.stat(1, cb);
+				setupAuth(client, server, function() {
+					server.expect('STAT 1\r\n', '223 1 <some-post> article retrieved');
+				});
+			});
+		},
+		function(a, cb) {
+			assert.equal(client.state, 'connected');
+			assert.equal(a[0], 1);
+			assert.equal(a[1], 'some-post');
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should attempt to rejoin a group if connection is lost after new request (keepalive=0)', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			setupAuth(client, server);
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			server.expect('GROUP some-group\r\n', '211 2 1 2 some-group');
+			client.group('some-group', cb);
+		},
+		function(cb) {
+			assert.equal(client.currentGroup, 'some-group');
+			
+			server.drop();
+			tl.defer(function() {
+				assert.equal(client.state, 'inactive');
+				client.stat(1, cb);
+				setupAuth(client, server, function() {
+					server.expect('GROUP some-group\r\n', function() {
+						server.expect('STAT 1\r\n', '223 1 <some-post> article retrieved');
+						this.respond('211 2 1 2 some-group');
+					});
+				});
+			});
+		},
+		function(a, cb) {
+			assert.equal(client.state, 'connected');
+			assert.equal(a[0], 1);
+			assert.equal(a[1], 'some-post');
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+
 it('should clear receive buffer on connection dropout');
 it('should disconnect if response received exceeds 4KB in size');
 
@@ -886,10 +993,10 @@ it('should deal with unexpected 200 messages by reconnecting (keepalive=1)', fun
 		}
 	], done);
 });
-it('should deal with 200 responses by reconnecting (keepalive=1)', function(done) {
+it('should deal with 200 responses by reconnecting', function(done) {
 	var server, client, ct;
 	async.waterfall([
-		setupTest.bind(null, {keepAlive: true}),
+		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -909,6 +1016,32 @@ it('should deal with 200 responses by reconnecting (keepalive=1)', function(done
 			assert.equal(client.state, 'connected');
 			assert.equal(a[0], 1);
 			assert.notEqual(server.connectedTime, ct);
+			
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should deal with unexpected 200 messages by disconnecting (keepalive=0)', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			server.expect('STAT 1\r\n', '223 1 <some-post> article retrieved');
+			tl.defer(function() {
+				client.stat(1, cb);
+			});
+		},
+		function(a, cb) {
+			server.respond('200 Welcome');
+			// client should now disconnect
+			tl.defer(cb);
+		}, function(cb) {
+			assert.equal(client.state, 'inactive');
 			
 			closeTest(client, server, cb);
 		}
