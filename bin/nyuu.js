@@ -634,7 +634,7 @@ var rpad = function(s, l) {
 var logger, errorCount = 0;
 var writeProgress = null;
 if(process.stderr.isTTY) {
-	var padLen = stdErrProgress ? 80 : 0;
+	var padLen = stdErrProgress ? 79 : 0;
 	// assume colours are supported
 	logger = {
 		debug: function(msg) {
