@@ -101,7 +101,7 @@ Post Check Options:
                              Posting will stall if the number of articles to be
                              checked exceeds this number. Increase this number
                              to avoid these stalls, at the expense of higher
-                             memory usage (default `--connections`*8)
+                             memory usage (default min(`--connections`*8, 100))
 
 Other Upload Options:
 
