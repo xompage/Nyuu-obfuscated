@@ -106,11 +106,12 @@ TestServer.prototype = {
 	}
 };
 
+var deepMerge = require('../lib/util').deepMerge;
 
 var currentServer;
 var lastServerPort = 0;
-var newNNTP = function() { // TODO: add options
-	return new NNTP({ // connection settings
+var newNNTP = function(opts) {
+	var o = { // connection settings
 		connect: {
 			host: 'localhost',
 			port: lastServerPort,
@@ -124,7 +125,10 @@ var newNNTP = function() { // TODO: add options
 		connectRetries: 1,
 		requestRetries: 5,
 		postRetries: 1,
-	});
+		keepAlive: true
+	};
+	deepMerge(o, opts);
+	return new NNTP(o);
 };
 function killServer(cb) {
 	if(!currentServer) return cb();
@@ -136,18 +140,23 @@ function killServer(cb) {
 		return;
 	} catch(x) { cb(); } // failed to close, just continue...
 }
-function setupTest(cb) {
+function setupTest(o, cb) {
 	nntpLastLog = {warn: null, info: null, debug: null};
 	
 	if(currentServer) { // previous test failed?
 		killServer(setupTest.bind(null, cb));
 	}
 	
+	if(!cb) {
+		cb = o;
+		o = null;
+	}
+	
 	var server = new TestServer(function() {
 		server.respond('200 host test server');
 	});
 	server.listen(0, function() {
-		cb(null, server, newNNTP());
+		cb(null, server, newNNTP(o));
 	});
 	currentServer = server;
 }
@@ -679,7 +688,8 @@ it('should return error if reconnect completely fails during a request', functio
 		}
 	], done);
 });
-it('should return error if requesting whilst disconnected without pending connect', function(done) {
+
+it('should work if requesting whilst disconnected without pending connect', function(done) {
 	var server, client;
 	async.waterfall([
 		setupTest,
@@ -696,10 +706,13 @@ it('should return error if requesting whilst disconnected without pending connec
 			// wait after all reconnect attempts have been tried
 			setTimeout(function() {
 				assert.equal(client.state, 'inactive');
-				client.date(function(err, date) {
-					assert(!date);
-					assert.equal(err.code, 'not_connected');
-					cb();
+				server.listen(lastServerPort, function() {
+					server.expect('DATE\r\n', '111 20110204060810');
+					client.date(function(err, date) {
+						assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+						assert.equal(client.state, 'connected');
+						closeTest(client, server, cb);
+					});
 				});
 			}, 1500);
 		}
@@ -925,7 +938,7 @@ it('should give up after max request retries hit', function(done) {
 			});
 			client.stat(1, function(err) {
 				assert(allDone);
-				assert.equal(err.code, 'request_failed');
+				assert.equal(err.code, 'timeout');
 				cb();
 			});
 		}, function(cb) {
@@ -956,7 +969,7 @@ it('should give up after max request retries hit (post timeout)', function(done)
 				allDone = true;
 			});
 			client.post(headers, new Buffer(msg), function(err) {
-				assert.equal(err.code, 'request_failed');
+				assert.equal(err.code, 'timeout');
 				assert(allDone);
 				cb();
 			});
