@@ -125,7 +125,7 @@ var newNNTP = function(opts) {
 		connectRetries: 1,
 		requestRetries: 5,
 		postRetries: 1,
-		keepAlive: true
+		keepAlive: false
 	};
 	deepMerge(o, opts);
 	return new NNTP(o);
@@ -359,7 +359,7 @@ it('should not honor half-open destroy request', function(done) {
 				assert.equal(err.code, 'closed');
 			});
 			client.destroy();
-			assert.equal(client.state, 'disconnected');
+			assert.equal(client.state, 'inactive');
 			tl.defer(function() {
 				server.close(cb);
 				currentServer = null;
@@ -394,10 +394,10 @@ it('should handle connection drop just before request', function(done) {
 it('should deal with error responses');
 it('should deal with invalid responses'); // including onconnect
 
-it('should attempt to reconnect if connection is lost', function(done) {
+it('should attempt to reconnect if connection is lost (keepalive=1)', function(done) {
 	var server, client;
 	async.waterfall([
-		setupTest,
+		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -420,10 +420,10 @@ it('should attempt to reconnect if connection is lost', function(done) {
 	], done);
 	
 });
-it('should attempt to rejoin a group if connection is lost', function(done) {
+it('should attempt to rejoin a group if connection is lost (keepalive=1)', function(done) {
 	var server, client;
 	async.waterfall([
-		setupTest,
+		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -692,7 +692,7 @@ it('should return error if reconnect completely fails during a request', functio
 it('should work if requesting whilst disconnected without pending connect', function(done) {
 	var server, client;
 	async.waterfall([
-		setupTest,
+		setupTest.bind(null, {connTimeout: 20, connectRetries: 1, reconnectDelay: 10}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -714,7 +714,7 @@ it('should work if requesting whilst disconnected without pending connect', func
 						closeTest(client, server, cb);
 					});
 				});
-			}, 1500);
+			}, 100);
 		}
 	], done);
 });
@@ -859,10 +859,10 @@ it('should throw error if selected group fails on connect');
 it('should retry on a single auth failure');
 
 it('should warn on unexpected spurious data received');
-it('should deal with unexpected 200 messages by reconnecting', function(done) {
+it('should deal with unexpected 200 messages by reconnecting (keepalive=1)', function(done) {
 	var server, client, ct;
 	async.waterfall([
-		setupTest,
+		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -886,10 +886,10 @@ it('should deal with unexpected 200 messages by reconnecting', function(done) {
 		}
 	], done);
 });
-it('should deal with 200 responses by reconnecting', function(done) {
+it('should deal with 200 responses by reconnecting (keepalive=1)', function(done) {
 	var server, client, ct;
 	async.waterfall([
-		setupTest,
+		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
