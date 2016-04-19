@@ -105,7 +105,7 @@ useBufferPool: true, // self manage article buffers rather than rely on GC's man
 
 diskReqSize: null, // chunk size when reading from disk; default = articleSize
 diskBufferSize: null, // amount of data to buffer; ideally a multiple of articleSize; default = diskReqSize
-articleQueueBuffer: null, // number of buffered articles; default is numConnections*2
+articleQueueBuffer: null, // number of buffered articles; default is numConnections
 
 /** Other Options **/
 subdirs: 'skip', // can be 'skip' or 'keep'
