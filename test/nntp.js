@@ -1101,8 +1101,9 @@ it('should give up after max request retries hit (post timeout)', function(done)
 				if(err) throw err;
 				allDone = true;
 			});
-			client.post(headers, new Buffer(msg), function(err) {
+			client.post(headers, new Buffer(msg), function(err, messageId) {
 				assert.equal(err.code, 'timeout');
+				assert(messageId); // should still return the message-id because we accepted the POST request
 				assert(allDone);
 				cb();
 			});

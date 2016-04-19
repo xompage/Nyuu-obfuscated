@@ -96,4 +96,41 @@ describe('NZB Buffered Generator', function() {
 		done();
 	});
 	
+	it('should not write skipped segments', function(done) {
+		var data = [];
+		var nzb = new Newbz(
+			{},
+			function(blob, encoding) {
+				data.push(new Buffer(blob, encoding));
+			},
+			true,
+			'utf8'
+		);
+		
+		var file1 = nzb.file(
+			'i_am_insane.jpg',
+			'poster',
+			['alt.binaries.test'],
+			2,
+			null
+		);
+		file1.set(0, 123, 'blabla@test.test');
+		file1.skip(1);
+		nzb.end();
+		
+		data = Buffer.concat(data).toString();
+		
+		if(!data.indexOf('<nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">'))
+			throw new Error('Missing NZB tag');
+		if(!data.indexOf('subject="blabla@test.test (1/2)"'))
+			throw new Error('Missing subject attrib');
+		if(data.indexOf(' number="2"') >= 0)
+			throw new Error('2nd segment exists');
+		if(!data.indexOf('</nzb>'))
+			throw new Error('Missing NZB close tag');
+		
+		
+		done();
+	});
+
 });

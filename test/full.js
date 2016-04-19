@@ -118,6 +118,7 @@ it('complex test', function(done) {
 			recheckDelay: 10,
 			tries: 1,
 		},
+		useLazyConnect: true,
 		articleSize: 4096,
 		diskReqSize: 8192,
 		diskBufSize: 8192
