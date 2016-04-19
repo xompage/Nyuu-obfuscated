@@ -208,5 +208,97 @@ it('should retry post if post check finds first attempt missing', function(done)
 	});
 });
 
+it('should skip check-missing error if requested to do so', function(done) {
+	var files = ['help.txt'];
+	var opts = {
+		server: {
+			connections: 1
+		},
+		check: {
+			server: {
+				connections: 1
+			},
+			delay: 10,
+			recheckDelay: 10,
+			tries: 1,
+			postRetries: 0
+		},
+		skipErrors: ['check-missing']
+	};
+	
+	(function(cb) {
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
+			});
+		});
+		server.onPostHook = function(){ return true; }; // drop the first post
+	})(function(err, server) {
+		if(err) return done(err);
+		assert(!server.posts.rifles);
+		assert.equal(Object.keys(server.postIdMap).length, 0);
+		done(err);
+	});
+});
+it('should skip post-reject error if requested to do so', function(done) {
+	var files = ['help.txt'];
+	var opts = {
+		server: {
+			connections: 1,
+			postRetries: 0
+		},
+		skipErrors: ['post-reject']
+	};
+	
+	(function(cb) {
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
+			});
+		});
+		server.onPostHook = function(post){ post.messageId = false; }; // reject the first post
+	})(function(err, server) {
+		if(err) return done(err);
+		assert(!server.posts.rifles);
+		assert.equal(Object.keys(server.postIdMap).length, 0);
+		done(err);
+	});
+});
+it('should skip check-timeout error if requested to do so', function(done) {
+	var files = ['help.txt'];
+	var opts = {
+		server: {
+			connections: 1
+		},
+		check: {
+			server: {
+				connections: 1
+			},
+			delay: 10,
+			tries: 1
+		},
+		skipErrors: ['check-timeout']
+	};
+	
+	(function(cb) {
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
+			});
+		});
+		var post;
+		server.onRequest(function(req, data) {
+			if(req == 'STAT') return true; // drop all STAT responses
+		});
+	})(function(err, server) {
+		if(err) return done(err);
+		assert.equal(Object.keys(server.posts.rifles).length, 1);
+		assert.equal(Object.keys(server.postIdMap).length, 1);
+		done(err);
+	});
+});
 
 });

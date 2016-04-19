@@ -5,13 +5,14 @@ function NNTPServer(opts) {
 	// set denyPost
 	// set auth user/pass
 	opts = opts || {};
+	this.opts = opts;
 	
 	this.posts = {};
 	this.postIdMap = {};
 	this.groups = ['limbs', 'rifles', 'bloodbath']; // list of available groups
 	
-	this.server = require(opts.ssl ? 'tls' : 'net').createServer(function(c) {
-		new NNTPConnection(opts, this, c);
+	this.server = require(this.opts.ssl ? 'tls' : 'net').createServer(function(c) {
+		new NNTPConnection(this.opts, this, c);
 	}.bind(this));
 }
 NNTPServer.prototype = {
@@ -70,10 +71,10 @@ NNTPServer.prototype = {
 			dropPost = f(post);
 		}
 		
-		if(!dropPost)
+		if(!dropPost && post.messageId)
 			if(!this.insertPost(post))
 				return false;
-		return messageId;
+		return post.messageId;
 	},
 	insertPost: function(post) {
 		// add post to specified groups
@@ -101,6 +102,9 @@ NNTPServer.prototype = {
 	},
 	close: function(cb) {
 		this.server.close(cb);
+	},
+	onRequest: function(f) {
+		this.opts.requestHook = f;
 	}
 };
 
@@ -112,6 +116,9 @@ function NNTPConnection(opts, server, conn) {
 	this._respond(opts.denyPost ? 201 : 200, 'host test server');
 	
 	conn.on('data', this.onData.bind(this));
+	conn.on('error', function(err) {
+		console.log('Test server error:', err);
+	});
 }
 NNTPConnection.prototype = {
 	authReq: false,
@@ -161,6 +168,10 @@ NNTPConnection.prototype = {
 		
 	},
 	onRequest: function(req, data) {
+		if(this.opts.requestHook) {
+			if(this.opts.requestHook.call(this, req, data))
+				return;
+		}
 		// TODO: handle special responses (i.e. timeout, junk, disconnect)
 		if(this.authReq && req != 'AUTHINFO' && !this.authed) {
 			this._respond(480, 'Authentication required');
