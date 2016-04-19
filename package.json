@@ -22,6 +22,9 @@
     "minimist": "*",
     "yencode" : ">=1.0.6"
   },
+  "devDependencies" : {
+    "mocha" : "*"
+  },
   "optionalDependencies" : {
     "xz" : "*"
   },
