@@ -747,8 +747,13 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	}
 	(function(cb) {
 		if(processes.running) {
-			Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
-			processes.onEnd(cb);
+			var procWarnTO = setTimeout(function() {
+				Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
+			}, 1000).unref();
+			processes.onEnd(function() {
+				clearTimeout(procWarnTO);
+				cb();
+			});
 		} else cb();
 	})(function() {
 		if(isNode010 && process.exitCode) process.exit(process.exitCode);
