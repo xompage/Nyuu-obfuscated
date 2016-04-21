@@ -491,22 +491,14 @@ for(var k in connOptMap) {
 		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
 }
 
-var execOpts = function(cmd, opts) {
-	var spawn = require('child_process').spawn;
-	if(process.platform === 'win32') {
-		opts.windowsVerbatimArguments = true;
-		return spawn(process.env.comspec || 'cmd.exe', ['/s', '/c', '"' + cmd + '"'], opts);
-	} else {
-		return spawn('/bin/sh', ['-c', cmd], opts);
-	}
-};
+var processes = new (require('../lib/procman'))();
 
 if(argv.out) {
 	if(argv.out === '-')
 		ulOpts.nzb.writeTo = process.stdout;
 	else if(argv.out.match(/^proc:\/\//i)) {
 		ulOpts.nzb.writeTo = function(cmd) {
-			return execOpts(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
+			return processes.start(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
 			// if process exits early, the write stream should break and throw an error
 		}.bind(null, argv.out.substr(7));
 	}
@@ -694,6 +686,8 @@ if(process.stderr.isTTY) {
 	};
 }
 
+var isNode010 = process.version.match(/^v0\.10\./);
+
 if(verbosity < 4) logger.debug = function(){};
 if(verbosity < 3) logger.info = function(){};
 if(verbosity < 2) logger.warn = function(){};
@@ -701,7 +695,7 @@ if(verbosity < 1) {
 	logger.error = function(){errorCount++;};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
-		process.exit(process.version.match(/^v0\.10\./) ? 8 : 1);
+		process.exit(isNode010 ? 8 : 1);
 	});
 }
 
@@ -720,7 +714,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			name: m[0],
 			size: m[1]|0,
 			stream: function(cmd) {
-				return execOpts(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
+				return processes.start(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
 			}.bind(null, m[2])
 		};
 		if(!ret.size)
@@ -730,7 +724,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	return file;
 }), ulOpts, function(err) {
 	var setRtnCode = function(code) {
-		if(process.version.match(/^v0\.10\./)) // .exitCode not available in node 0.10.x
+		if(isNode010 && !processes.running) // .exitCode not available in node 0.10.x
 			process.exit(code);
 		else
 			process.exitCode = code;
@@ -745,12 +739,23 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		setRtnCode(32);
 	} else {
 		Nyuu.log.info('Process complete');
+		process.exitCode = 0;
 	}
-	// external processes may hold this up
-	setTimeout(function() {
-		Nyuu.log.warn('Process did not terminate cleanly');
-		process.exit();
-	}, 5000).unref();
+	(function(cb) {
+		if(processes.running) {
+			Nyuu.log.info(processes.running + ' external process(es) are still running, waiting for these to finish...');
+			processes.onEnd(function() {
+				Nyuu.log.info('All external processes ended');
+				cb();
+			});
+		} else cb();
+	})(function() {
+		if(isNode010 && process.exitCode) process.exit(process.exitCode);
+		setTimeout(function() {
+			Nyuu.log.warn('Process did not terminate cleanly');
+			process.exit();
+		}, 5000).unref();
+	});
 });
 
 // display some stats
