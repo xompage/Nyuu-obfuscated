@@ -124,7 +124,7 @@ Other Upload Options:
                                              set, assume success
                              Note that for requests that are retried (posting),
                              only the last result is considered.
-                             Also note: Nyuu will exit with return code 1
+                             Also note: Nyuu will exit with return code 32
                              instead of 0 if the process completes and errors
                              were skipped.
        --use-lazy-connect    Only create connections when necessary and prefer

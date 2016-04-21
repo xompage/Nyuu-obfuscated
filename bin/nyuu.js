@@ -347,7 +347,7 @@ if(argv.version) {
 var error = function(msg) {
 	console.error(msg);
 	console.error('Enter `nyuu --help` for usage information');
-	process.exit(7);
+	process.exit(1);
 };
 var parseSize = function(s) {
 	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s);
@@ -701,7 +701,7 @@ if(verbosity < 1) {
 	logger.error = function(){errorCount++;};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
-		process.exit(8);
+		process.exit(process.version.match(/^v0\.10\./) ? 8 : 1);
 	});
 }
 
@@ -729,23 +729,28 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	}
 	return file;
 }), ulOpts, function(err) {
+	var setRtnCode = function(code) {
+		if(process.version.match(/^v0\.10\./)) // .exitCode not available in node 0.10.x
+			process.exit(code);
+		else
+			process.exitCode = code;
+	};
+	writeProgress = null;
+	process.emit('finished');
 	if(err) {
 		Nyuu.log.error(err);
-		process.exit(2);
+		setRtnCode(33);
+	} else if(errorCount) {
+		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
+		setRtnCode(32);
 	} else {
-		writeProgress = null;
-		process.emit('finished');
-		if(errorCount) {
-			Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
-			process.exit(1);
-		} else {
-			Nyuu.log.info('Process complete');
-		}
-		setTimeout(function() {
-			Nyuu.log.warn('Process did not terminate cleanly');
-			process.exit(0);
-		}, 5000).unref();
+		Nyuu.log.info('Process complete');
 	}
+	// external processes may hold this up
+	setTimeout(function() {
+		Nyuu.log.warn('Process did not terminate cleanly');
+		process.exit();
+	}, 5000).unref();
 });
 
 // display some stats
