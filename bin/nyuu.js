@@ -818,6 +818,7 @@ fuploader.once('start', function(files, _uploader) {
 						'Articles read: ' + uploader.articlesRead,
 						'Articles posted: ' + uploader.articlesPosted,
 						'Articles checked: ' + uploader.articlesChecked,
+						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
 						'',
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
