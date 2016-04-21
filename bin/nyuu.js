@@ -747,11 +747,8 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	}
 	(function(cb) {
 		if(processes.running) {
-			Nyuu.log.info(processes.running + ' external process(es) are still running, waiting for these to finish...');
-			processes.onEnd(function() {
-				Nyuu.log.info('All external processes ended');
-				cb();
-			});
+			Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
+			processes.onEnd(cb);
 		} else cb();
 	})(function() {
 		if(isNode010 && process.exitCode) process.exit(process.exitCode);
@@ -955,7 +952,7 @@ fuploader.once('start', function(files, _uploader) {
 						}
 					});
 				} else {
-					server = require('tcp').createServer(function(conn) {
+					server = require('net').createServer(function(conn) {
 						writeState(conn);
 						conn.end();
 					});
