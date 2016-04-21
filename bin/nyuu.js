@@ -81,6 +81,10 @@ var optMap = {
 		type: 'int',
 		map: 'server/postRetries'
 	},
+	'ignore-post-timeout': {
+		type: 'bool',
+		map: 'server/ignorePostTimeout'
+	},
 	'keep-alive': {
 		type: 'bool',
 		map: 'server/keepAlive'

@@ -34,7 +34,13 @@ Upload Server Options:
        --connect-retries     Number of connection retry attempts (default 1)
        --reconnect-delay     Delay connection retries (default 5s)
        --request-retries     Number of request retry attempts (default 5)
-       --post-retries        Number of post retry attempts (default 1)
+       --post-retries        Number of post retry attempts in response to 441
+                             errors (default 1)
+       --ignore-post-timeout Assume post succeeds when response times out (flag
+                             option). If not set, will retry posting, up to
+                             `--request-retries` attempts and then fail. If
+                             set, timeout errors are ignored; note that
+                             `--skip-errors post-timeout` will have no effect.
        --keep-alive          Try to always keep connection alive even if not
                              needed (flag option).
 
@@ -82,8 +88,9 @@ Post Check Options:
                              to override that behaviour on these checking
                              connections, for example `--check-host` makes
                              Nyuu perform post checking on a different host.
-                             `--check-post-retries` is unavailable as no
-                             posting is performed on these connections.
+                             `--check-post-retries` and
+                             `--check-ignore-post-timeout` are unavailable as
+                             no posting is performed on these connections.
        --check-tries         Maximum number of check attempts to perform.
                              A value of 0 disables post checking. (default 3)
        --check-delay         Initial delay after posting before performing

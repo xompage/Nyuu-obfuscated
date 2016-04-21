@@ -769,6 +769,37 @@ it('should retry on posting timeout', function(done) {
 	], done);
 });
 
+it('should ignore posting timeout if requested', function(done) {
+	var server, client;
+	async.waterfall([
+		setupTest.bind(null, {ignorePostTimeout: true}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			useMsgId = 'fallacious-post';
+			var headers = ['My-Secret: not telling'];
+			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this.expect(expectedPost(headers, msg), function() {
+					// never give a response...
+				});
+				this.respond('340  Send article');
+			});
+			client.post(headers, new Buffer(msg), cb);
+		},
+		function(a, cb) {
+			useMsgId = null;
+			assert.equal(a, 'fallacious-post');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
 it('should return error if reconnect completely fails during a request', function(done) {
 	var server, client;
 	async.waterfall([

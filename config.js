@@ -33,6 +33,7 @@ server: {
 	postRetries: 1, // how many times to retry if server returns 441 response to posted article
 	connections: 3, // number of connections
 	keepAlive: false, // always reconnect on error, even if not needed
+	ignorePostTimeout: false, // skip past posting timeout errors, assuming post succeeded if no response received
 },
 
 /** Post Check Options **/
