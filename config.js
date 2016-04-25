@@ -34,6 +34,7 @@ server: {
 	connections: 3, // number of connections
 	keepAlive: false, // always reconnect on error, even if not needed
 	ignorePostTimeout: false, // skip past posting timeout errors, assuming post succeeded if no response received
+	tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
 },
 
 /** Post Check Options **/

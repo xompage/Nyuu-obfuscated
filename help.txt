@@ -18,6 +18,8 @@ Upload Server Options:
   -6,  --ipv6                Connect over IPv6 (flag option)
                              Requires NodeJS >= 0.12
        --bind-host           Local address to bind to
+       --tcp-keep-alive      If set, enables TCP keep-alive with the probe
+                             interval set the number specified.
   -S,  --ssl                 Connect over SSL (flag option)
        --ignore-cert         Ignore SSL certificate problems
        --sni-host            SNI host name to send if connecting over SSL

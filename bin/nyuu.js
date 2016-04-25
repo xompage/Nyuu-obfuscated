@@ -18,6 +18,10 @@ var optMap = {
 		type: 'string',
 		map: 'server/connect/localAddress'
 	},
+	'tcp-keep-alive': {
+		type: 'time',
+		map: 'server/tcpKeepAlive'
+	},
 	ipv6: {
 		type: 'bool',
 		alias: '6'
