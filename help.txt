@@ -1,7 +1,7 @@
 Nyuu
 -----------
 
-Usage: nyuu -h [server] [options] file1 file2 ...
+Usage: nyuu [options] file1 file2 ...
 
 All options take one parameter, except for those marked as a flag option.
 Options can also be set using a custom config file (see `--config` option), in
@@ -30,7 +30,7 @@ Upload Server Options:
                              https://nodejs.org/api/tls.html
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
-  -n,  --connections         Number of connections to use (default 1)
+  -n,  --connections         Number of connections to use (default 3)
        --timeout             Timeout on server responses (default 60s)
        --connect-timeout     Connect timeout (default 30s)
        --connect-retries     Number of connection retry attempts (default 1)
