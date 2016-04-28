@@ -241,7 +241,10 @@ competition and, ya'know...
 
 -   [Newspost](<https://github.com/joehillen/newspost>): fairly old unmaintained
     tool written in C. Powerful, but does not generate NZBs and not particularly
-    efficient.
+    efficient. [bytesbacon](<https://www.reddit.com/user/bytesbacon>) has also
+    pointed out that a [threaded fork
+    exists](<https://github.com/PietjeBell88/newspost>), which greatly improves
+    its efficiency.
 
 -   [NewsUP](<https://github.com/demanuel/NewsUP/>): flexible tool written in
     Perl. Still quite actively maintained.

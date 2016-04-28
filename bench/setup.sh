@@ -180,6 +180,19 @@ echo "port = 563" >>sanguinews-ssl.conf
 echo "ssl = no" >>sanguinews-nossl.conf
 echo "port = 119" >>sanguinews-nossl.conf
 
+# Newspost threaded fork
+git clone https://github.com/PietjeBell88/newspost.git
+mv newspost newspost-thread
+cd newspost-thread
+# remove the forced 3 second wait time
+sed "s/ + post_delay;/;/" ui/ui.c >ui/ui2.c
+unlink ui/ui.c
+mv ui/ui2.c ui/ui.c
+# for some reason, I need to add these or compilation fails
+sed -i "s/^\(OPT_FLAGS\|OPT_LIBS\) = /\0-pthread /" Makefile
+make -j2
+cd ..
+
 # Newspost
 git clone https://github.com/joehillen/newspost.git
 cd newspost

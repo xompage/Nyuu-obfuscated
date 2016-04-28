@@ -88,3 +88,10 @@ WARM newspost
 # newspost always has a 3 second delay :/ ?
 BENCH newspost -i 0 -u test -p test2 -n test -f a@a -s subj -y -l 17000 -T 0 "$ULFILE"
 
+echo
+echo "****************************************"
+cd newspost-thread
+echo "Newspost - threaded fork"
+WARM ./newspost-thread
+BENCH ./newspost -i 0 -u test -p test2 -n test -f a@a -s subj -l 6000 -T 0 -N 4 "$ULFILE"
+cd ..
