@@ -622,13 +622,13 @@ var repeatChar = function(c, l) {
 	buf.fill(c);
 	return buf.toString();
 };
-var lpad = function(s, l) {
+var lpad = function(s, l, c) {
 	if(s.length > l) return s;
-	return repeatChar(' ', l-s.length) + s;
+	return repeatChar((c || ' '), l-s.length) + s;
 };
-var rpad = function(s, l) {
+var rpad = function(s, l, c) {
 	if(s.length > l) return s;
-	return s + repeatChar(' ', l-s.length);
+	return s + repeatChar((c || ' '), l-s.length);
 };
 
 var logger, errorCount = 0;
@@ -707,6 +707,13 @@ if(verbosity < 1) {
 	});
 }
 
+var displayCompleteMessage = function() {
+	if(errorCount)
+		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
+	else
+		Nyuu.log.info('Process complete');
+};
+
 var Nyuu = require('../');
 Nyuu.setLogger(logger);
 var fuploader = Nyuu.upload(argv._.map(function(file) {
@@ -742,12 +749,12 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	if(err) {
 		Nyuu.log.error(err);
 		setRtnCode(33);
-	} else if(errorCount) {
-		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
-		setRtnCode(32);
 	} else {
-		Nyuu.log.info('Process complete');
-		process.exitCode = 0;
+		displayCompleteMessage();
+		if(errorCount)
+			setRtnCode(32);
+		else
+			process.exitCode = 0;
 	}
 	(function(cb) {
 		if(processes.running) {
@@ -776,6 +783,17 @@ var friendlySize = function(s) {
 		s /= 1024;
 	}
 	return (Math.round(s *100)/100) + ' ' + units[i];
+};
+var decimalPoint = ('' + 1.1).replace(/1/g, '');
+var friendlyTime = function(t) {
+	var days = (t / 86400000) | 0;
+	t %= 86400000;
+	var seg = [];
+	[3600000, 60000, 1000].forEach(function(s) {
+		seg.push(lpad('' + ((t / s) | 0), 2, '0'));
+		t %= s;
+	});
+	return (days ? days + 'd,' : '') + seg.join(':') + decimalPoint + lpad(t + '', 3, '0');
 };
 var retArg = function(_) { return _; };
 fuploader.once('start', function(files, _uploader) {
@@ -982,6 +1000,16 @@ fuploader.once('start', function(files, _uploader) {
 			break;
 		}
 	});
+	
+	displayCompleteMessage = function() {
+		var msg = 'Process complete';
+		if(errorCount)
+			msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+		
+		var time = Date.now() - startTime;
+		Nyuu.log.info(msg + '. Uploaded ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)');
+		
+	};
 });
 fuploader.on('processing_file', function(file) {
 	Nyuu.log.info('Reading file ' + file.name + '...');
