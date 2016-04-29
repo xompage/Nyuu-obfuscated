@@ -811,7 +811,7 @@ fuploader.once('start', function(files, _uploader) {
 					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
 					
 					// calculate speed over last 10s
-					var speed = (uploader.bytesPosted - postedSamples[0]) / postedSamples.length;
+					var speed = ((postedSamples[postedSamples.length-1] || uploader.bytesPosted) - postedSamples[0]) / postedSamples.length;
 					
 					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G');
 				};
