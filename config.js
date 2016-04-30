@@ -116,7 +116,7 @@ dumpPosts: '', // dump all successfully posted article headers (excluding Messag
 useBufferPool: true, // self manage article buffers rather than rely on GC's management
 
 diskReqSize: null, // chunk size when reading from disk; default = articleSize
-diskBufferSize: null, // amount of data to buffer; ideally a multiple of articleSize; default = diskReqSize
+diskBufferSize: 1, // number of chunks to buffer
 articleQueueBuffer: null, // number of buffered articles; default is numConnections
 
 /** Other Options **/

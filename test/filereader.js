@@ -8,7 +8,7 @@ var tl = require('./_testlib');
 describe('Buffered File Reader', function() {
 
 it('test req size = whole file', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 10, 10);
+	var r = new BufferedFileReader('./test/10bytes.txt', 10, 1);
 	r.read(10, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '0123456789');
@@ -35,7 +35,7 @@ it('test req size > whole file', function(done) {
 	});
 });
 it('test req size < whole file with readahead > whole file', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 5, 10);
+	var r = new BufferedFileReader('./test/10bytes.txt', 5, 2);
 	r.read(12, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '0123456789');
@@ -48,7 +48,7 @@ it('test req size < whole file with readahead > whole file', function(done) {
 	});
 });
 it('test mix of too small and too large reqs', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 4, 4);
+	var r = new BufferedFileReader('./test/10bytes.txt', 4, 1);
 	r.read(2, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '01');
@@ -68,7 +68,7 @@ it('test mix of too small and too large reqs', function(done) {
 	});
 });
 it('test mix of too small and too large reqs (2)', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 2);
 	r.read(2, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '01');
@@ -88,7 +88,7 @@ it('test mix of too small and too large reqs (2)', function(done) {
 	});
 });
 it('test mix of too small and too large reqs (3)', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 2);
 	r.read(6, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '012345');
@@ -122,7 +122,7 @@ it('test large read req spanning multiple reqs', function(done) {
 });
 
 it('test small read reqs within a single buffer', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 1);
 	r.read(2, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '01');
@@ -171,7 +171,7 @@ it('test read requests exceeding request size', function(done) {
 
 
 it('test instant read', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 5, 5);
+	var r = new BufferedFileReader('./test/10bytes.txt', 5, 1);
 	tl.defer(function() { // allow read buffers to fill
 		r.read(5, function(err, data) {
 			if(err) throw err;
@@ -195,7 +195,7 @@ it('test instant read', function(done) {
 });
 
 it('should terminate all read calls on end', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 1);
 	r.read(10, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '0123456789');
@@ -215,7 +215,7 @@ it('should terminate all read calls on end', function(done) {
 	});
 });
 it('should propagate errors to waiting reads', function(done) {
-	var r = new BufferedFileReader('./test/invalid_file.txt', 5, 5);
+	var r = new BufferedFileReader('./test/invalid_file.txt', 5, 1);
 	r.read(2, function(err, data) {
 		assert(err);
 	});
@@ -226,7 +226,7 @@ it('should propagate errors to waiting reads', function(done) {
 });
 
 it('test close early does not flip out', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 2);
 	r.read(2, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '01');
@@ -234,11 +234,11 @@ it('test close early does not flip out', function(done) {
 	});
 });
 it('test immediate close does not flip out', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 6, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 6, 1);
 	r.close(done);
 });
 it('test read after close', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 3, 6);
+	var r = new BufferedFileReader('./test/10bytes.txt', 3, 2);
 	r.read(4, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '0123');
@@ -251,7 +251,7 @@ it('test read after close', function(done) {
 	});
 });
 it('test read after close (2)', function(done) {
-	var r = new BufferedFileReader('./test/10bytes.txt', 10, 10);
+	var r = new BufferedFileReader('./test/10bytes.txt', 10, 1);
 	r.read(4, function(err, data) {
 		if(err) throw err;
 		assert.equal(data.toString(), '0123');

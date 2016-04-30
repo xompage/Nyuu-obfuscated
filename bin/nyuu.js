@@ -267,7 +267,7 @@ var optMap = {
 		map: 'diskReqSize'
 	},
 	'disk-buf-size': {
-		type: 'size',
+		type: 'int',
 		map: 'diskBufferSize'
 	},
 	'post-queue-size': {
