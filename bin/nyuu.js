@@ -918,7 +918,7 @@ fuploader.once('start', function(files, _uploader) {
 								if(isCheckQueue)
 									resp.write('Message-ID: ' + post.messageId + '\r\n');
 								resp.write([
-									'Subject: ' + post.subject,
+									'Subject: ' + post.headers.subject,
 									'Body length: ' + post.data.length,
 									'Post attempts: ' + post.postTries,
 									''

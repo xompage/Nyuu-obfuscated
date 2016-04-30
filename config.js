@@ -94,6 +94,15 @@ nzb: {
 		defaultEncoding: 'utf-8',
 		encoding: 'utf-8',
 	},
+	overrides: {
+		// here you can override values for NZB <file> entries
+		// if unset, will use the NNTP header values from the first segment of the file
+		// can be set to a function, which will be called with args(header_value, filenum, filenumtotal, filename, size, parts)
+		subject: null, // Subject header
+		poster: null, // From header
+		date: null, // Date header (note: will be interpreted as a Javascript date)
+		groups: null // Newsgroups header
+	},
 	minify: false,
 	compression: '', // can be 'gzip', 'zlib', 'deflate', 'xz' or '' (none)
 	compressOpts: {}, // options for zlib, see https://nodejs.org/api/zlib.html#zlib_class_options
