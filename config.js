@@ -66,13 +66,10 @@ comment: '', // subject pre-comment
 comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 
-// if any of the following are functions, they'll be called with args(filename, size, part, parts, chunkSize)
+// if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts, chunkSize)
 postHeaders: {
 	// required headers; do NOT set Message-ID as this is auto-generated
-	// the subject header is treated a bit specially
-	// - if null, will use default behaviour
-	// - if set to a function, will be called with args(filenum, filenumtotal, filename, size, part, parts, chunkSize)
-	Subject: null,
+	Subject: null, // if null, a default Subject is used
 	From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + (process.env.USER || process.env.USERNAME || 'user').replace(/[" (),:;<>@]/g, '') + '@' + require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '') + '>', // 'A Poster <a.poster@example.com>'
 	Newsgroups: 'alt.binaries.test', // comma seperated list
 	Date: function() { return (new Date()).toUTCString(); },
