@@ -22,7 +22,6 @@ describe('NZB Generator', function() {
 			'i_am_insane.jpg',
 			'A <Poster>',
 			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
-			2,
 			null
 		);
 		nzb.addSegment(123, 'blabla@test.test');
@@ -31,7 +30,6 @@ describe('NZB Generator', function() {
 			'Silly&File',
 			'A <Poster>',
 			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
-			1,
 			null
 		);
 		// this file is invalid as it has no segments, but I cbf checking this case
