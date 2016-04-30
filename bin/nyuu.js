@@ -633,6 +633,9 @@ var rpad = function(s, l, c) {
 
 var logger, errorCount = 0;
 var writeProgress = null;
+var writeNewline = function() {
+	process.stderr.write('\n');
+};
 if(process.stderr.isTTY) {
 	var padLen = stdErrProgress ? 79 : 0;
 	// assume colours are supported
@@ -744,6 +747,8 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		else
 			process.exitCode = code;
 	};
+	if(writeProgress)
+		process.removeListener('exit', writeNewline);
 	writeProgress = null;
 	process.emit('finished');
 	if(err) {
@@ -828,7 +833,7 @@ fuploader.once('start', function(files, _uploader) {
 					var barSize = Math.floor(chkPerc*50);
 					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
 					
-					// calculate speed over last 10s
+					// calculate speed over last 4s
 					var speed = ((postedSamples[postedSamples.length-1] || uploader.bytesPosted) - postedSamples[0]) / postedSamples.length;
 					
 					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G');
@@ -836,13 +841,15 @@ fuploader.once('start', function(files, _uploader) {
 				var seInterval = setInterval(function() {
 					writeProgress();
 					postedSamples.push(uploader.bytesPosted);
-					if(postedSamples.length >= 10) // maintain max 10 samples
+					if(postedSamples.length >= 4) // maintain max 4 samples
 						postedSamples.shift();
 				}, 1000);
 				seInterval.unref();
 				process.on('finished', function() {
 					clearInterval(seInterval);
 				});
+				// if unexpected exit, force a newline to prevent some possible terminal corruption
+				process.on('exit', writeNewline);
 			break;
 			case 'tcp':
 			case 'http':
