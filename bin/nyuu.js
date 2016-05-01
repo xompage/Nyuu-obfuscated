@@ -499,14 +499,18 @@ for(var k in connOptMap) {
 		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
 }
 
-var processes = new (require('../lib/procman'))();
+var processes;
+var processStart = function() {
+	if(!processes) processes = new (require('../lib/procman'))();
+	return processes.start.apply(processes, arguments);
+};
 
 if(argv.out) {
 	if(argv.out === '-')
 		ulOpts.nzb.writeTo = process.stdout;
 	else if(argv.out.match(/^proc:\/\//i)) {
 		ulOpts.nzb.writeTo = function(cmd) {
-			return processes.start(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
+			return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
 			// if process exits early, the write stream should break and throw an error
 		}.bind(null, argv.out.substr(7));
 	}
@@ -732,7 +736,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			name: m[0],
 			size: m[1]|0,
 			stream: function(cmd) {
-				return processes.start(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
+				return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
 			}.bind(null, m[2])
 		};
 		if(!ret.size)
@@ -742,7 +746,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	return file;
 }), ulOpts, function(err) {
 	var setRtnCode = function(code) {
-		if(isNode010 && !processes.running) // .exitCode not available in node 0.10.x
+		if(isNode010 && (!processes || !processes.running)) // .exitCode not available in node 0.10.x
 			process.exit(code);
 		else
 			process.exitCode = code;
@@ -762,7 +766,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			process.exitCode = 0;
 	}
 	(function(cb) {
-		if(processes.running) {
+		if(processes && processes.running) {
 			var procWarnTO = setTimeout(function() {
 				Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
 			}, 1000).unref();
@@ -905,8 +909,9 @@ fuploader.once('start', function(files, _uploader) {
 				
 				var server;
 				if(prg.type == 'http') {
+					var url = require('url');
 					server = require('http').createServer(function(req, resp) {
-						var path = require('url').parse(req.url).pathname.replace(/\/$/, '');
+						var path = url.parse(req.url).pathname.replace(/\/$/, '');
 						var m;
 						if(m = path.match(/^\/(post|check)queue\/?$/)) {
 							// dump post/check queue
