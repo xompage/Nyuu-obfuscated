@@ -881,7 +881,7 @@ fuploader.once('start', function(files, _uploader) {
 							conn.write('Connection #' + (++i) + '\r\n');
 							if(c) {
 								conn.write([
-									'  State: ' + c.getCurrentActivity() + ' for ' + ((now - c.lastActivity)/1000) + 's',
+									'  State: ' + c.getCurrentActivity() + (c.lastActivity ? ' for ' + ((now - c.lastActivity)/1000) + 's' : ''),
 									'  Transfer: ' + friendlySize(c.bytesRecv) + ' down / ' + friendlySize(c.bytesSent) + ' up',
 									'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
 									'  Reconnects: ' + (c.numConnects-1),
