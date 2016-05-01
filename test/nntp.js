@@ -12,7 +12,7 @@ NNTP._makeMsgId = function() {
 };
 // the post format that NNTP sends - needs to be the same as in lib/nntp.js
 var expectedPost = function(headers, msg) {
-	return headers + '\r\nMessage-ID: <' + NNTP._makeMsgId() + '>\r\n\r\n' + msg;
+	return headers + 'Message-ID: <' + NNTP._makeMsgId() + '>\r\n\r\n' + msg;
 };
 
 var newFakeConn = function() {
@@ -257,7 +257,7 @@ it('should handle basic tasks', function(done) {
 			assert.equal(a[1], 'a-random-post');
 			
 			// test posting
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
 				this.expect(expectedPost(headers, msg), '240 <new-article> Article received ok');
@@ -609,7 +609,7 @@ it('should reattempt to post if connection drops out', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			var fMsg = expectedPost(headers, msg);
 			server.expect('POST\r\n', function() {
@@ -648,7 +648,7 @@ it('should reattempt to post if first time fails', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			var fMsg = expectedPost(headers, msg);
 			server.expect('POST\r\n', function() {
@@ -747,7 +747,7 @@ it('should retry on posting timeout', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
 				this.expect(expectedPost(headers, msg), function() {
@@ -782,7 +782,7 @@ it('should ignore posting timeout if requested', function(done) {
 			assert.equal(client.state, 'connected');
 			
 			useMsgId = 'fallacious-post';
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
 				this.expect(expectedPost(headers, msg), function() {
@@ -1121,7 +1121,7 @@ it('should give up after max request retries hit (post timeout)', function(done)
 		},
 		function(cb) {
 			var allDone = false;
-			var headers = 'My-Secret: not telling';
+			var headers = 'My-Secret: not telling\r\n';
 			var msg = 'Nyuu breaks free again!\r\n.\r\n';
 			async.timesSeries(6, function(n, cb) {
 				server.expect('POST\r\n', function() {
