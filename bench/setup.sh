@@ -4,10 +4,14 @@ BASEDIR=~/newsposttest
 mkdir -p "$BASEDIR"
 cd "$BASEDIR"
 
+# since we're on 15.10, and don't really have time to upgrade to 16.04, just pull some packages and make a hybrid system
+echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" >>/etc/apt/sources.list
+apt-get update
+
 # APT deps
 apt-get update # may be needed to refresh stuff
-#apt-get install -y perl python
-apt-get install -y ruby rubygems ruby-dev build-essential git golang python-dev nodejs nodejs-legacy time cpanminus
+apt-get install -y perl python
+apt-get install -y ruby rubygems ruby-dev build-essential git golang python-dev nodejs time cpanminus
 
 # Python yEnc
 wget "https://bitbucket.org/dual75/yenc/get/tip.tar.gz"

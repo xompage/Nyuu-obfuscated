@@ -5,10 +5,11 @@ a rough idea of where Nyuu stands amongst the rest. But if anyone has the time
 to do better benchmarks, please do submit a pull request!
 
 Test was done on a Scaleway trial VPS with 2x Atom C2750 CPU cores, 2GB RAM,
-50GB SSD, running Ubuntu 15.10 amd64. To avoid variations caused by the network,
-uploading was done to a local install of cyrus-nntpd on the same machine. The
-news folder was mounted on a RAM disk to get rid of disk bottlenecks on the
-server. See details below on how to replicate these benchmarks.
+50GB SSD, running Ubuntu 15.10 amd64 (with 16.04 packages). To avoid variations
+caused by the network, uploading was done to a local install of cyrus-nntpd on
+the same machine. The news folder was mounted on a RAM disk to get rid of disk
+bottlenecks on the server. See details below on how to replicate these
+benchmarks.
 
 Only a single 256MB file was uploaded, containing random data. Disk buffers were
 flushed before each test.
@@ -34,26 +35,26 @@ Applications Tested
 -------------------
 
 At time of writing, these are the latest versions of the respective
-applications. Note that interpreters/runtimes were installed from the system’s
-repositories, so may be a bit old.
+applications, along with interpreters/runtimes available in the Ubuntu 16.04
+repositories.
 
--   GoPostStuff, engine9tm’s fork (git 2016-04-02) on Go 1.5.1
+-   GoPostStuff, engine9tm’s fork (git 2016-04-02) on Go 1.6.1
 
     -   The fork was used as the original no longer builds (dependency reference
         issue) without modification
 
--   Newsmangler (git 2014-01-01) on Python 2.7.10 + yenc-vanilla
+-   Newsmangler (git 2014-01-01) on Python 2.7.11 + yenc-vanilla
 
     -   This original version doesn’t support SSL (the fork below does)
 
--   Newsmangler, nicors57's fork (git 2016-03-25) on Python 2.7.10 +
+-   Newsmangler, nicors57's fork (git 2016-03-25) on Python 2.7.11 +
     yenc-vanilla
 
--   NewsUP (git 2016-03-15) on Perl 5.20.2
+-   NewsUP (git 2016-04-27) on Perl 5.22.1
 
--   Nyuu (git 2016-04-10) on NodeJS 0.10.25
+-   Nyuu (git 2016-05-01) on NodeJS 4.2.6
 
--   Sanguinews 0.80.1 on Ruby 2.1.5
+-   Sanguinews 0.80.1 on Ruby 2.3.0
 
 -   Newspost 2.1.1
 
@@ -63,6 +64,10 @@ repositories, so may be a bit old.
 
     -   There is usually a forced 3 second delay for posting, which was removed
         for this benchmark
+
+-   Newspost, PietjeBell88’s fork (git 2010-05-10)
+
+    -   Like the original Newpost, but with threading
 
 Results
 -------
@@ -77,10 +82,11 @@ Observations
 ------------
 
 -   The old Newspost doesn't support multiple connections, so (performance wise)
-    generally falls behind the more modern clients that do. It’s memory
-    footprint is miniscule compared to what we have today, though the difference
-    may not matter so much nowadays. As this was mostly for reference purposes,
-    the following points won't discuss this client.
+    generally falls behind the more modern clients that do. However, the
+    threaded fork makes up for this. It’s memory footprint is miniscule compared
+    to what we have today, though the difference may not matter so much
+    nowadays. As this was mostly for reference purposes, the following points
+    won't discuss this client.
 
 -   Results for Sanguinews seems unusually slow. I don’t know what the reason
     for this is, but if anyone knows, please do tell. Regardless, the following
@@ -100,9 +106,7 @@ Observations
     change away from the default cipher.
 
 -   Nyuu's CPU usage is the lowest, thanks to the highly optimized yEnc and CRC
-    implementation on x86, however SSL performance is quite poor (high CPU and
-    memory usage). Nyuu defers all SSL activity to NodeJS, so a newer version of
-    NodeJS should improve things (see below).
+    implementation on x86.
 
 -   Other than Nyuu, I’d recommend (the relatively new) NewsUP from these
     results. It performs well and is still under active development.
@@ -112,8 +116,9 @@ Running Benchmarks
 
 These benchmarks have been run on a free trial VPS from Scaleway. You can get a
 [20 minute trial here](<http://instantcloud.io/>). Or you can use some other
-Debian/Ubuntu server if you don’t mind having random things installed, and don’t
-mind potentially needing to edit the script for it to work.
+Debian/Ubuntu server if you don’t mind having random things installed (i.e. your
+system broken), and don’t mind potentially needing to edit the script for it to
+work.
 
 Once you have a shell on a test server (make sure you’re root), installing
 everything can be done by:
@@ -136,36 +141,3 @@ wget https://raw.githubusercontent.com/animetosho/Nyuu/master/bench/run.sh -O-|s
 
 This will output all the results, which you can save a copy of (if you wish,
 replace `sh` with `sh 2>&1|tee run.log` to log output to a file).
-
-Benchmark 2
-===========
-
-This is the same test as above, but run on Ubuntu 16.04 with the latest versions
-of the interpreters/runtimes, to see if there’s any improvement:
-
--   GoPostStuff on Go 1.6
-
--   Newsmangler Python 2.7.11
-
--   NewsUP on Perl 5.22.1
-
--   Nyuu on NodeJS 5.10.1
-
--   Sanguinews on Ruby 2.3.0
-
-    -   Only the no SSL scenario was tested to see if performance improves from
-        Ruby 2.1.5
-
-![](<no-ssl2.png>)
-
-![](<ssl2.png>)
-
-![](<rss2.png>)
-
-As expected, most results are similar to the first benchmark. Main differences
-noted:
-
--   NodeJS’ SSL/TLS performance has been greatly improved, and this reflects in
-    Nyuu’s SSL result
-
--   GoPostStuff seems to be a bit faster with the newer Go runtime
