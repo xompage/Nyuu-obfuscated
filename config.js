@@ -3,7 +3,6 @@
 // You can customize these options to avoid having to specify them on the command line, however it is recommended that you not edit this file
 // Instead, copy this file elsewhere and use the `--config` option to get Nyuu to use this copy. Missing options there will sourced from this file
 
-var appVer = require('./package.json').version;
 module.exports = {
 
 
@@ -77,7 +76,7 @@ postHeaders: {
 	
 	// optional headers
 	//Organization: '',
-	'User-Agent': 'Nyuu/' + appVer,
+	'User-Agent': 'Nyuu/' + require('./package.json').version,
 	// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm
 },
 // postHeaders can also, itself, be a function, in which case, it is called with (name, size, num, numTotal) as arguments, and must return an object like the above
@@ -104,7 +103,8 @@ nzb: {
 	compression: '', // can be 'gzip', 'zlib', 'deflate', 'xz' or '' (none)
 	compressOpts: {}, // options for zlib, see https://nodejs.org/api/zlib.html#zlib_class_options
 	metaData: {
-		'x-generator': 'Nyuu v' + appVer + ' [https://animetosho.org/app/nyuu]',
+		// eg:
+		// password: 'mysecret',
 	},
 },
 
