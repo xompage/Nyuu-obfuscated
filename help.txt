@@ -168,8 +168,10 @@ Advanced Tuning Options:
                              to 0 to disable read-ahead buffering.
        --post-queue-size     Max number of buffered articles for posting
                              (default `--connections`)
-       --use-post-pool       Use a buffer pool to improve memory management. If
-                             not enabled, will rely on V8's GC to clean up
+       --use-post-pool       Use a buffer pool to improve memory management.
+                             Buffers are pre-allocated, which can also improve
+                             performance, but can increase memory usage.
+                             If not enabled, will rely on V8's GC to clean up
                              buffers. Default is enabled, and is a flag option.
                              Use `--no-use-post-pool` to disable the buffer
                              pool.

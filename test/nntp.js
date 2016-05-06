@@ -5,15 +5,13 @@ var async = require('async');
 var NNTP = require('../lib/nntp');
 var net = require('net');
 
-// hijack Message-ID generator for testing purposes
-var useMsgId = null;
-NNTP._makeMsgId = function() {
-	return useMsgId || 'xxxx@xxx';
-};
-// the post format that NNTP sends - needs to be the same as in lib/nntp.js
-var expectedPost = function(headers, msg) {
-	return headers + 'Message-ID: <' + NNTP._makeMsgId() + '>\r\n\r\n' + msg;
-};
+// mimick Post object as far as the NNTP module requires it
+function DummyPost(data) {
+	this.data = new Buffer(data);
+	this.randomizeMessageID = function() {
+		return 'xxxx';
+	};
+}
 
 var newFakeConn = function() {
 	var fakeConn = new (require('stream').Writable)();
@@ -27,6 +25,10 @@ var DEBUG = false;
 
 var nntpLastLog = {warn: null, info: null, debug: null};
 NNTP.log = {
+	error: function(msg) {
+		if(DEBUG) console.log('[ERROR] ' + msg);
+		nntpLastLog.error = msg;
+	},
 	warn: function(msg) {
 		if(DEBUG) console.log('[WARN] ' + msg);
 		nntpLastLog.warn = msg;
@@ -257,13 +259,12 @@ it('should handle basic tasks', function(done) {
 			assert.equal(a[1], 'a-random-post');
 			
 			// test posting
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(expectedPost(headers, msg), '240 <new-article> Article received ok');
+				this.expect(msg, '240 <new-article> Article received ok');
 				this.respond('340  Send article');
 			});
-			client.post(headers, new Buffer(msg), cb);
+			client.post(new DummyPost(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
@@ -609,13 +610,11 @@ it('should reattempt to post if connection drops out', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
-			var fMsg = expectedPost(headers, msg);
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(fMsg, function() {
+				this.expect(msg, function() {
 					this.expect('POST\r\n', function() {
-						this.expect(fMsg, '240 <new-article> Article received ok');
+						this.expect(msg, '240 <new-article> Article received ok');
 						this.respond('340  Send article');
 					});
 					// we'll hijack this test case to check that the input buffer gets cleared on reconnect, by sending some junk data
@@ -626,7 +625,7 @@ it('should reattempt to post if connection drops out', function(done) {
 				});
 				this.respond('340  Send article');
 			});
-			client.post(headers, new Buffer(msg), cb);
+			client.post(new DummyPost(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
@@ -648,27 +647,22 @@ it('should reattempt to post if first time fails', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
-			var fMsg = expectedPost(headers, msg);
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(fMsg, function() {
-					useMsgId = 'new-message-id';
-					fMsg = expectedPost(headers, msg);
+				this.expect(msg, function() {
 					this.expect('POST\r\n', function() {
-						this.expect(fMsg, '240 <new-article> Article received ok');
+						this.expect(msg, '240 <new-article> Article received ok');
 						this.respond('340 Send article');
 					});
 					this.respond('441 posting failed');
 				});
 				this.respond('340 Send article');
 			});
-			client.post(headers, new Buffer(msg), cb);
+			client.post(new DummyPost(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
 			
-			useMsgId = null;
 			closeTest(client, server, cb);
 		}
 	], done);
@@ -747,20 +741,19 @@ it('should retry on posting timeout', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(expectedPost(headers, msg), function() {
+				this.expect(msg, function() {
 					// never give a response...
 					// give one on second try
 					this.expect('POST\r\n', function() {
-						this.expect(expectedPost(headers, msg), '240 <new-article> Article received ok');
+						this.expect(msg, '240 <new-article> Article received ok');
 						this.respond('340  Send article');
 					});
 				});
 				this.respond('340  Send article');
 			});
-			client.post(headers, new Buffer(msg), cb);
+			client.post(new DummyPost(msg), cb);
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
@@ -781,20 +774,17 @@ it('should ignore posting timeout if requested', function(done) {
 		function(cb) {
 			assert.equal(client.state, 'connected');
 			
-			useMsgId = 'fallacious-post';
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(expectedPost(headers, msg), function() {
+				this.expect(msg, function() {
 					// never give a response...
 				});
 				this.respond('340  Send article');
 			});
-			client.post(headers, new Buffer(msg), cb);
+			client.post(new DummyPost(msg), cb);
 		},
 		function(a, cb) {
-			useMsgId = null;
-			assert.equal(a, 'fallacious-post');
+			assert.equal(a, 'xxxx');
 			closeTest(client, server, cb);
 		}
 	], done);
@@ -1121,18 +1111,17 @@ it('should give up after max request retries hit (post timeout)', function(done)
 		},
 		function(cb) {
 			var allDone = false;
-			var headers = 'My-Secret: not telling\r\n';
-			var msg = 'Nyuu breaks free again!\r\n.\r\n';
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 			async.timesSeries(6, function(n, cb) {
 				server.expect('POST\r\n', function() {
-					this.expect(expectedPost(headers, msg), cb);
+					this.expect(msg, cb);
 					this.respond('340  Send article');
 				});
 			}, function(err) {
 				if(err) throw err;
 				allDone = true;
 			});
-			client.post(headers, new Buffer(msg), function(err, messageId) {
+			client.post(new DummyPost(msg), function(err, messageId) {
 				assert.equal(err.code, 'timeout');
 				assert(messageId); // should still return the message-id because we accepted the POST request
 				assert(allDone);

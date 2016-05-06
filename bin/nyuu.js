@@ -920,11 +920,10 @@ fuploader.once('start', function(files, _uploader) {
 								'Content-Type': 'text/plain'
 							});
 							var dumpPost = function(post) {
-								if(isCheckQueue)
-									resp.write('Message-ID: ' + post.messageId + '\r\n');
 								resp.write([
+									'Message-ID: ' + post.messageId,
 									'Subject: ' + post.headers.subject,
-									'Body length: ' + post.data.length,
+									'Body length: ' + post.postLen,
 									'Post attempts: ' + post.postTries,
 									''
 								].join('\r\n'));
@@ -968,8 +967,6 @@ fuploader.once('start', function(files, _uploader) {
 								resp.writeHead(200, {
 									'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
 								});
-								resp.write(post.headers.join('\r\n'));
-								resp.write('\r\nMessage-ID: <' + post.messageId + '>\r\n\r\n');
 								resp.write(post.data);
 							} else {
 								resp.writeHead(404, {
