@@ -566,11 +566,10 @@ var logTimestamp;
 if(argv['log-time']) {
 	var tzOffset = (new Date()).getTimezoneOffset() * 60000;
 	logTimestamp = function(addSpace) {
-		process.stderr.write('[' + (new Date(Date.now() - tzOffset)).toISOString().replace('T', ' ').replace('Z', '') + ']');
-		if(addSpace) process.stderr.write(' ');
+		return '[' + (new Date(Date.now() - tzOffset)).toISOString().replace('T', ' ').replace('Z', '') + ']';
 	};
 } else {
-	logTimestamp = function(){};
+	logTimestamp = function(){ return ''; };
 }
 
 var progress = [];
@@ -636,66 +635,51 @@ var rpad = function(s, l, c) {
 };
 
 var logger, errorCount = 0;
-var writeProgress = null;
+var getProcessIndicator = null;
 var writeNewline = function() {
 	process.stderr.write('\n');
 };
 if(process.stderr.isTTY) {
-	var padLen = stdErrProgress ? 79 : 0;
+	var writeLog = function(col, msg) {
+		process.stderr.write(
+			'\x1B['+col+'m' + logTimestamp() + ' ' + rpad(msg, stdErrProgress ? 79 : 0) + '\x1B[39m\n'
+			+ (getProcessIndicator ? getProcessIndicator() : '')
+		);
+	};
 	// assume colours are supported
 	logger = {
 		debug: function(msg) {
-			process.stderr.write('\x1B[36m');
-			logTimestamp(1);
-			process.stderr.write(rpad(msg, padLen));
-			process.stderr.write('\x1B[39m\r\n');
-			if(writeProgress) writeProgress();
+			writeLog('36', msg);
 		},
 		info: function(msg) {
-			process.stderr.write('\x1B[32m');
-			logTimestamp(1);
-			process.stderr.write(rpad(msg, padLen));
-			process.stderr.write('\x1B[39m\r\n');
-			if(writeProgress) writeProgress();
+			writeLog('32', msg);
 		},
 		warn: function(msg) {
-			process.stderr.write('\x1B[33m');
-			logTimestamp(1);
-			process.stderr.write(rpad(msg, padLen));
-			process.stderr.write('\x1B[39m\r\n');
-			if(writeProgress) writeProgress();
+			writeLog('33', msg);
 		},
 		error: function(msg) {
-			process.stderr.write('\x1B[31m');
-			logTimestamp(1);
-			process.stderr.write(rpad(msg, padLen));
-			process.stderr.write('\x1B[39m\r\n');
-			if(writeProgress) writeProgress();
+			writeLog('31', msg);
 			errorCount++;
 		}
 	};
 } else {
-	var padLen = stdErrProgress ? 73 : 0;
+	var writeLog = function(type, msg) {
+		process.stderr.write(
+			logTimestamp() + type + ' ' + rpad(msg, stdErrProgress ? 73 : 0) + '\n'
+		);
+	};
 	logger = {
 		debug: function(msg) {
-			logTimestamp();
-			process.stderr.write('[DBG]  ');
-			console.error(rpad(msg, padLen));
+			writeLog('[DBG] ', msg);
 		},
 		info: function(msg) {
-			logTimestamp();
-			process.stderr.write('[INFO] ');
-			console.error(rpad(msg, padLen));
+			writeLog('[INFO]', msg);
 		},
 		warn: function(msg) {
-			logTimestamp();
-			process.stderr.write('[WARN] ');
-			console.error(rpad(msg, padLen));
+			writeLog('[WARN]', msg);
 		},
 		error: function(msg) {
-			logTimestamp();
-			process.stderr.write('[ERR]  ');
-			console.error(rpad(msg, padLen));
+			writeLog('[ERR] ', msg);
 			errorCount++;
 		}
 	};
@@ -751,9 +735,9 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		else
 			process.exitCode = code;
 	};
-	if(writeProgress)
+	if(getProcessIndicator)
 		process.removeListener('exit', writeNewline);
-	writeProgress = null;
+	getProcessIndicator = null;
 	process.emit('finished');
 	if(err) {
 		Nyuu.log.error(err);
@@ -829,9 +813,9 @@ fuploader.once('start', function(files, _uploader) {
 				});
 			break;
 			case 'stderr':
-				if(writeProgress) break; // no need to double output =P
+				if(getProcessIndicator) break; // no need to double output =P
 				var postedSamples = [0];
-				writeProgress = function() {
+				getProcessIndicator = function() {
 					var chkPerc = uploader.articlesChecked / totalPieces,
 					    pstPerc = uploader.articlesPosted / totalPieces;
 					var barSize = Math.floor(chkPerc*50);
@@ -840,10 +824,10 @@ fuploader.once('start', function(files, _uploader) {
 					// calculate speed over last 4s
 					var speed = ((postedSamples[postedSamples.length-1] || uploader.bytesPosted) - postedSamples[0]) / postedSamples.length;
 					
-					process.stderr.write(' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G');
+					return ' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G';
 				};
 				var seInterval = setInterval(function() {
-					writeProgress();
+					process.stderr.write(getProcessIndicator());
 					postedSamples.push(uploader.bytesPosted);
 					if(postedSamples.length >= 4) // maintain max 4 samples
 						postedSamples.shift();
