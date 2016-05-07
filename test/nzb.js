@@ -59,5 +59,45 @@ describe('NZB Generator', function() {
 			throw new Error('Missing NZB close tag');
 		
 		// doesn't seem to be any problems otherwise...
+		
+		
+		// test wholeFile
+		// this is a copy/paste from above
+		var data2 = [];
+		nzb = new Newbz(
+			{
+				'testing & stuffing around' : 'test value',
+				another_tag : '"hello world"'
+			},
+			function(blob, encoding) {
+				data2.push(new Buffer(blob, encoding));
+			},
+			true,
+			'utf8'
+		);
+		
+		nzb.wholeFile(
+			'i_am_insane.jpg',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			null,
+			[
+				[123, 'blabla@test.test'],
+				[111, 'invalid<name>@place']
+			]
+		);
+		nzb.wholeFile(
+			'Silly&File',
+			'A <Poster>',
+			['alt.binaries.test', 'tildes suck&&&&', '"made up group"'],
+			null,
+			[]
+		);
+		// this file is invalid as it has no segments, but I cbf checking this case
+		nzb.end();
+		
+		data2 = Buffer.concat(data2).toString();
+		
+		assert.equal(data, data2);
 	});
 });
