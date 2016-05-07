@@ -647,10 +647,11 @@ var getProcessIndicator = null;
 var writeNewline = function() {
 	process.stderr.write('\n');
 };
+var clrRow = stdErrProgress ? '\x1b[0G\x1B[0K' : '';
 if(process.stderr.isTTY) {
 	var writeLog = function(col, msg) {
 		process.stderr.write(
-			'\x1B['+col+'m' + logTimestamp(' ') + rpad(msg.toString(), stdErrProgress ? 79 : 0) + '\x1B[39m\n'
+			clrRow + '\x1B['+col+'m' + logTimestamp(' ') + msg.toString() + '\x1B[39m\n'
 			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
@@ -673,7 +674,7 @@ if(process.stderr.isTTY) {
 } else {
 	var writeLog = function(type, msg) {
 		process.stderr.write(
-			logTimestamp() + type + ' ' + rpad(msg.toString(), stdErrProgress ? 73 : 0) + '\n'
+			clrRow + logTimestamp() + type + ' ' + msg.toString() + '\n'
 		);
 	};
 	logger = {
@@ -835,7 +836,7 @@ fuploader.once('start', function(files, _uploader) {
 						speed = (postedSamples[postedSamples.length-1] - postedSamples[0]) / (postedSamples.length-1);
 					}
 					
-					return ' ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + rpad(friendlySize(speed) + '/s', 14) + '\x1b[0G';
+					return '\x1b[0G\x1B[0K ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + friendlySize(speed) + '/s';
 				};
 				var seInterval = setInterval(function() {
 					process.stderr.write(getProcessIndicator());
