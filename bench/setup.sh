@@ -11,7 +11,8 @@ apt-get update
 # APT deps
 apt-get update # may be needed to refresh stuff
 apt-get install -y perl python
-apt-get install -y ruby rubygems ruby-dev build-essential git golang python-dev nodejs time cpanminus
+apt-get install -y python-openssl
+apt-get install -y ruby rubygems ruby-dev build-essential git golang python-dev nodejs npm time cpanminus
 
 # Python yEnc
 wget "https://bitbucket.org/dual75/yenc/get/tip.tar.gz"
