@@ -650,7 +650,7 @@ var writeNewline = function() {
 if(process.stderr.isTTY) {
 	var writeLog = function(col, msg) {
 		process.stderr.write(
-			'\x1B['+col+'m' + logTimestamp(' ') + rpad(msg, stdErrProgress ? 79 : 0) + '\x1B[39m\n'
+			'\x1B['+col+'m' + logTimestamp(' ') + rpad(msg.toString(), stdErrProgress ? 79 : 0) + '\x1B[39m\n'
 			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
@@ -673,7 +673,7 @@ if(process.stderr.isTTY) {
 } else {
 	var writeLog = function(type, msg) {
 		process.stderr.write(
-			logTimestamp() + type + ' ' + rpad(msg, stdErrProgress ? 73 : 0) + '\n'
+			logTimestamp() + type + ' ' + rpad(msg.toString(), stdErrProgress ? 73 : 0) + '\n'
 		);
 	};
 	logger = {
