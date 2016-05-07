@@ -1069,7 +1069,62 @@ it('should deal with unexpected 200 messages by disconnecting (keepalive=0)', fu
 	], done);
 });
 
-it('should give up after max reconnect retries hit'); // also test that this counter is reset after a successful connect
+it('should give up after max reconnect retries hit', function(done) {
+	var server, client;
+	var connectAttempts = 0;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			server = new TestServer(function() {
+				connectAttempts++;
+				// don't respond, will timeout
+			});
+			server.listen(0, function() {
+				client = newNNTP();
+				cb(null);
+			});
+			currentServer = server;
+		},
+		function(cb) {
+			client.connect(function(err) {
+				tl.defer(function() {
+					assert.equal(err.code, 'connect_fail');
+					assert.equal(connectAttempts, 2);
+					closeTest(client, server, cb);
+				});
+			});
+		}
+	], done);
+});
+it('should give up after max reconnect retries hit (lazy connect)', function(done) {
+	var server, client;
+	var connectAttempts = 0;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			server = new TestServer(function() {
+				connectAttempts++;
+				// don't respond, will timeout
+			});
+			server.listen(0, function() {
+				client = newNNTP();
+				cb(null);
+			});
+			currentServer = server;
+		},
+		function(cb) {
+			client.date(function(err) {
+				tl.defer(function() {
+					assert.equal(err.code, 'connect_fail');
+					assert.equal(connectAttempts, 2);
+					closeTest(client, server, cb);
+				});
+			});
+		}
+	], done);
+});
+// TODO: ^ also test that this reconnect counter is reset after a successful connect
+
 it('should give up after max request retries hit', function(done) {
 	var server, client;
 	async.waterfall([
