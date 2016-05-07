@@ -71,7 +71,7 @@ postHeaders: {
 	Subject: null, // if null, a default Subject is used
 	From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + (process.env.USER || process.env.USERNAME || 'user').replace(/[" (),:;<>@]/g, '') + '@' + require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '') + '>', // 'A Poster <a.poster@example.com>'
 	Newsgroups: 'alt.binaries.test', // comma seperated list
-	Date: function() { return (new Date()).toUTCString(); },
+	Date: null, // if null, value is auto-generated from when post is first generated
 	Path: '',
 	
 	// optional headers
@@ -96,7 +96,7 @@ nzb: {
 		// can be set to a function, which will be called with args(header_value, filenum, filenumtotal, filename, size, parts)
 		subject: null, // Subject header
 		poster: null, // From header
-		date: null, // Date header (note: will be interpreted as a Javascript date)
+		date: null, // timestamp when post was generated (note: will be interpreted as a Javascript date)
 		groups: null // Newsgroups header
 	},
 	minify: false,
