@@ -282,9 +282,12 @@ var optMap = {
 		type: 'int',
 		map: 'check/queueBuffer'
 	},
-	'use-buffer-pool': {
+	'use-post-pool': {
 		type: 'bool',
 		map: 'useBufferPool'
+	},
+	'preload-modules': {
+		type: 'bool'
 	},
 	'use-lazy-connect': {
 		type: 'bool',
@@ -549,6 +552,13 @@ if(argv.meta) {
 		ulOpts.nzb.metaData[k] = argv.meta[k];
 }
 
+if(argv['preload-modules']) {
+	if(ulOpts.server.secure || ulOpts.check.server.secure)
+		require('tls'); // will require('net') as well
+	else
+		require('net');
+	// we won't consider modules loaded by the UploadManager constructor (zlib/xz, nzbbuffer, bufferpool, procman) as 'too late', since it occurs before the 'start' event is fired, hence won't bother preloading these here
+}
 
 
 // custom validation rules
@@ -613,6 +623,15 @@ if(argv.progress) {
 					o.host = arg;
 				}
 				progress.push(o);
+				
+				if(argv['preload-modules']) {
+					if(type == 'http') {
+						require('http');
+						require('url');
+					} else {
+						require('net');
+					}
+				}
 			break;
 			case 'none':
 				// bypass
@@ -734,7 +753,14 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 		};
 		if(!ret.size)
 			error('Invalid size specified for process input: ' + file);
+		if(argv['preload-modules']) {
+			require('../lib/procman');
+			require('../lib/streamreader');
+		}
 		return ret;
+	} else {
+		if(argv['preload-modules'])
+			require('../lib/filereader');
 	}
 	return file;
 }), ulOpts, function(err) {

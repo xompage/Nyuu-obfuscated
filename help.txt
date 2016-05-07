@@ -184,6 +184,12 @@ Advanced Tuning Options:
                              buffers. Default is enabled, and is a flag option.
                              Use `--no-use-post-pool` to disable the buffer
                              pool.
+       --preload-modules     Preload modules into Node's module cache before
+                             starting (flag option). This is mostly a
+                             workaround to Node's shortcomming of not being
+                             able to load modules asynchronously. Usually is
+                             slower, but may be useful if the CPU or disk is
+                             overloaded.
 
 Other Options:
 
