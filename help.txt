@@ -72,6 +72,15 @@ Article/Post Options:
   -g,  --groups              Shortcut for `-H Newsgroups=...`
                              Separate multiple groups with commas.
                              Defaults to alt.binaries.test
+       --date                Override the Date header, Message-ID timestamp,
+                             and timestamps for generated NZBs, with specified
+                             date. This can be useful if you wish to expose
+                             less timing information (or obfuscate your
+                             timezone). Can use the special value 'now' to
+                             refer Nyuu's start time. If unset (default), will
+                             use the time at which each post is encoded. This
+                             differs from 'now' in that it is not a fixed
+                             timestamp across the whole run.
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue

@@ -205,6 +205,10 @@ var optMap = {
 		type: 'string',
 		map: 'comment2'
 	},
+	date: {
+		type: 'string',
+		map: 'postDate'
+	},
 	'group-files': {
 		type: 'bool',
 		alias: 'F',
@@ -476,6 +480,10 @@ if(argv['skip-errors']) {
 		ulOpts.skipErrors = argv['skip-errors'].split(',').map(function(s) {
 			return s.trim().toLowerCase();
 		});
+}
+
+if((typeof argv.date == 'string') && argv.date.toLowerCase() == 'now') {
+	ulOpts.postDate = Date.now();
 }
 
 var connOptMap = {

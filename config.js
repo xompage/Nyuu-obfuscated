@@ -61,6 +61,7 @@ useLazyConnect: false, // if true, will only create connections when needed, rat
 articleSize: 768000, // in bytes, must be a multiple of 2
 bytesPerLine: 128, // in bytes, note: as per yEnc specifications, it's possible to exceed this number
 
+postDate: null, // if set, override timestamps used for Message-ID header, Date header and NZB timestamps
 comment: '', // subject pre-comment
 comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
