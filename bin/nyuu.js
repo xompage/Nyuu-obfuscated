@@ -574,7 +574,7 @@ var logTimestamp;
 if(argv['log-time']) {
 	var tzOffset = (new Date()).getTimezoneOffset() * 60000;
 	logTimestamp = function(addSpace) {
-		return '[' + (new Date(Date.now() - tzOffset)).toISOString().replace('T', ' ').replace('Z', '') + ']';
+		return '[' + (new Date(Date.now() - tzOffset)).toISOString().replace('T', ' ').replace('Z', '') + ']' + addSpace;
 	};
 } else {
 	logTimestamp = function(){ return ''; };
@@ -650,7 +650,7 @@ var writeNewline = function() {
 if(process.stderr.isTTY) {
 	var writeLog = function(col, msg) {
 		process.stderr.write(
-			'\x1B['+col+'m' + logTimestamp() + ' ' + rpad(msg, stdErrProgress ? 79 : 0) + '\x1B[39m\n'
+			'\x1B['+col+'m' + logTimestamp(' ') + rpad(msg, stdErrProgress ? 79 : 0) + '\x1B[39m\n'
 			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
