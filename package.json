@@ -1,7 +1,7 @@
 {
   "name": "Nyuu",
-  "version": "0.2.3",
-  "description": "Usenet binary poster",
+  "version": "0.2.4",
+  "description": "Flexible usenet binary poster",
   "keywords": [
     "usenet",
     "nntp"
