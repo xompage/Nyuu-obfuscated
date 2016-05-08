@@ -693,7 +693,7 @@ if(process.stderr.isTTY) {
 } else {
 	var writeLog = function(type, msg) {
 		process.stderr.write(
-			clrRow + logTimestamp() + type + ' ' + msg.toString() + '\n'
+			clrRow + logTimestamp('') + type + ' ' + msg.toString() + '\n'
 		);
 	};
 	logger = {
