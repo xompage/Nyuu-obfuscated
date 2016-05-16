@@ -62,11 +62,11 @@ var optMap = {
 		map: 'server/connections'
 	},
 	timeout: {
-		type: 'int',
+		type: 'time',
 		map: 'server/timeout'
 	},
 	'connect-timeout': {
-		type: 'int',
+		type: 'time',
 		map: 'server/connTimeout'
 	},
 	'reconnect-delay': {
@@ -164,11 +164,11 @@ var optMap = {
 		map: 'check/server/password'
 	},
 	'check-timeout': {
-		type: 'int',
+		type: 'time',
 		map: 'check/server/timeout'
 	},
 	'check-connect-timeout': {
-		type: 'int',
+		type: 'time',
 		map: 'check/server/connTimeout'
 	},
 	'check-reconnect-delay': {
