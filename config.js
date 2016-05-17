@@ -110,7 +110,6 @@ nzb: {
 },
 
 /** Tuning Options **/
-dumpPosts: '', // dump all successfully posted article headers (excluding Message-ID) to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
 useBufferPool: true, // self manage article buffers rather than rely on GC's management; also improves performance of writing to buffers
 headerAllocSize: 4096, // amount of buffer space to allocate for post headers, only used if useBufferPool is true
 
@@ -129,6 +128,7 @@ subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; }
 // subdirNameTransform: function(fileName, pathName, fullPath) { return pathName.replace(/\//g, ' - ') + fileName; },
 
 
+dumpPostLoc: '', // dump all failed articles to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
 
 
 

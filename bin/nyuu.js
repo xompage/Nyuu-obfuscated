@@ -297,6 +297,10 @@ var optMap = {
 		type: 'string',
 		alias: 'e'
 	},
+	'dump-failed-posts': {
+		type: 'string',
+		map: 'dumpPostLoc'
+	},
 	
 	help: {
 		type: 'bool',
@@ -483,6 +487,17 @@ if(argv['skip-errors']) {
 		ulOpts.skipErrors = argv['skip-errors'].split(',').map(function(s) {
 			return s.trim().toLowerCase();
 		});
+}
+
+if(argv['dump-failed-posts']) {
+	try {
+		if(require('fs').statSync(argv['dump-failed-posts']).isDirectory()) {
+			// if supplied a folder, append a directory separator if not supplied
+			var sep = require('path').sep;
+			if(ulOpts.dumpPostLoc.substr(-1) != sep)
+				ulOpts.dumpPostLoc += sep;
+		}
+	} catch(x) {}
 }
 
 if((typeof argv.date == 'string') && argv.date.toLowerCase() == 'now') {

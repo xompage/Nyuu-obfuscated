@@ -196,6 +196,10 @@ Other Options:
   -r,  --subdirs             How sub-directories should be handled, can be:
                                  skip: ignore nested files (default)
                                  keep: upload all files in sub-directories
+       --dump-failed-posts   Write out articles that fail to post to this
+                             location. Message-ID will be appended to this to
+                             get the file name. This is a debugging feature
+                             and should not be used unless needed.
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
                                  1: only show fatal errors
