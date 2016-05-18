@@ -58,11 +58,11 @@ cd Nyuu
 echo "Nyuu git-$(git log --max-count=1 --format=%ad --date=short) on NodeJS $(nodejs -v)"
 echo "[No SSL]"
 WARM nodejs bin/nyuu
-BENCH nodejs bin/nyuu -h0 -u test -p test -n4 -g test "$ULFILE"
+BENCH nodejs bin/nyuu -h0 -u test -p test -n4 -a 750K -g test "$ULFILE"
 echo
 echo "[SSL]"
 WARM nodejs bin/nyuu
-BENCH nodejs bin/nyuu -S -h0 --ignore-cert -u test -p test -n4 -g test "$ULFILE"
+BENCH nodejs bin/nyuu -S -h0 --ignore-cert -u test -p test -n4 -a 750K -g test "$ULFILE"
 cd ..
 
 echo

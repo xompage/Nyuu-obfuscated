@@ -48,7 +48,7 @@ Upload Server Options:
 
 Article/Post Options:
 
-  -a,  --article-size        Target size of each news post (default 750K). Note
+  -a,  --article-size        Target size of each news post (default 700K). Note
                              that yEnc makes the actual size larger.
        --article-line-size   Max bytes per line (default 128)
   -t,  --comment             Comment to insert before post subject

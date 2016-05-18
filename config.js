@@ -58,7 +58,7 @@ skipErrors: [], // list of errors to skip; can be set to true to imply all error
 useLazyConnect: false, // if true, will only create connections when needed, rather than pre-emptively doing so
 
 /** Post/Article Options **/
-articleSize: 768000, // in bytes, must be a multiple of 2
+articleSize: 716800, // in bytes, must be a multiple of 2
 bytesPerLine: 128, // in bytes, note: as per yEnc specifications, it's possible to exceed this number
 
 postDate: null, // if set, override timestamps used for Message-ID header, Date header and NZB timestamps
