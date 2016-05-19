@@ -741,8 +741,10 @@ if(verbosity < 1) {
 	});
 }
 
-var displayCompleteMessage = function() {
-	if(errorCount)
+var displayCompleteMessage = function(err) {
+	if(err)
+		Nyuu.log.error(err);
+	else if(errorCount)
 		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
 	else
 		Nyuu.log.info('Process complete');
@@ -790,7 +792,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	getProcessIndicator = null;
 	process.emit('finished');
 	if(err) {
-		Nyuu.log.error(err);
+		displayCompleteMessage(err);
 		setRtnCode(33);
 	} else {
 		displayCompleteMessage();
@@ -907,7 +909,7 @@ fuploader.once('start', function(files, _uploader) {
 						'Articles posted: ' + uploader.articlesPosted,
 						'Articles checked: ' + uploader.articlesChecked,
 						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-						'Network Posting Speed: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
+						'Raw Posting Upload Rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
 						'',
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
@@ -1048,14 +1050,24 @@ fuploader.once('start', function(files, _uploader) {
 		}
 	});
 	
-	displayCompleteMessage = function() {
+	displayCompleteMessage = function(err) {
 		var msg = '';
-		if(errorCount)
-			msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
-		
 		var time = Date.now() - startTime;
-		Nyuu.log.info('Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)' + msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
+		if(err) {
+			Nyuu.log.error(err);
+			msg = 'Posted ' + uploader.articlesPosted + ' article(s)';
+			var unchecked = uploader.articlesPosted - uploader.articlesChecked;
+			if(unchecked)
+				msg += ' (' + unchecked + ' unchecked)';
+			msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
+		} else {
+			msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
+			
+			if(errorCount)
+				msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+		}
 		
+		Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
 	};
 });
 fuploader.on('processing_file', function(file) {
