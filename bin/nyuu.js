@@ -907,6 +907,7 @@ fuploader.once('start', function(files, _uploader) {
 						'Articles posted: ' + uploader.articlesPosted,
 						'Articles checked: ' + uploader.articlesChecked,
 						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
+						'Network Posting Speed: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
 						'',
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
@@ -1048,12 +1049,12 @@ fuploader.once('start', function(files, _uploader) {
 	});
 	
 	displayCompleteMessage = function() {
-		var msg = 'Process complete';
+		var msg = '';
 		if(errorCount)
 			msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
 		
 		var time = Date.now() - startTime;
-		Nyuu.log.info(msg + '. Uploaded ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)');
+		Nyuu.log.info('Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)' + msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
 		
 	};
 });
