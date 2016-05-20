@@ -55,6 +55,7 @@ check: {
 },
 
 skipErrors: [], // list of errors to skip; can be set to true to imply all errors; valid options are 
+maxPostErrors: 0, // if > 0, maximum number of failed articles to allow before aborting
 useLazyConnect: false, // if true, will only create connections when needed, rather than pre-emptively doing so
 
 /** Post/Article Options **/

@@ -297,6 +297,10 @@ var optMap = {
 		type: 'string',
 		alias: 'e'
 	},
+	'post-error-limit': {
+		type: 'int',
+		map: 'maxPostErrors'
+	},
 	'dump-failed-posts': {
 		type: 'string',
 		map: 'dumpPostLoc'

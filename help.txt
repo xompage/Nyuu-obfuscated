@@ -145,6 +145,10 @@ Other Upload Options:
                              Also note: Nyuu will exit with return code 32
                              instead of 0 if the process completes and errors
                              were skipped.
+       --post-error-limit    If specified, and errors are being skipped with
+                             `--skip-errors`, will limit the number of post
+                             errors that are tolerated before aborting the post
+                             process.
        --use-lazy-connect    Only create connections when necessary and prefer
                              using as few as possible (flag option).
 
