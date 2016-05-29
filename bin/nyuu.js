@@ -85,9 +85,8 @@ var optMap = {
 		type: 'int',
 		map: 'server/postRetries'
 	},
-	'ignore-post-timeout': {
-		type: 'bool',
-		map: 'server/ignorePostTimeout'
+	'on-post-timeout': {
+		type: 'string'
 	},
 	'keep-alive': {
 		type: 'bool',
@@ -491,6 +490,15 @@ if(argv['skip-errors']) {
 		ulOpts.skipErrors = argv['skip-errors'].split(',').map(function(s) {
 			return s.trim().toLowerCase();
 		});
+}
+
+if(argv['on-post-timeout']) {
+	ulOpts.server.onPostTimeout = argv['on-post-timeout'].split(',').map(function(s) {
+		var v = s.trim().toLowerCase();
+		if(v != 'retry' && v != 'ignore' && !v.match(/^strip-hdr=./))
+			error('Unknown value for `--on-post-timeout`: ' + s);
+		return v;
+	});
 }
 
 if(argv['dump-failed-posts']) {

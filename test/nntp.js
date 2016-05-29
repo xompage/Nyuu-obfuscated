@@ -392,7 +392,7 @@ it('should not honor half-open destroy request', function(done) {
 				});
 			});
 			client.date(function(err) {
-				assert.equal(err.code, 'closed');
+				assert.equal(err.code, 'cancelled');
 			});
 			client.destroy();
 			assert.equal(client.state, 'inactive');
@@ -765,7 +765,7 @@ it('should retry on posting timeout', function(done) {
 it('should ignore posting timeout if requested', function(done) {
 	var server, client;
 	async.waterfall([
-		setupTest.bind(null, {ignorePostTimeout: true}),
+		setupTest.bind(null, {onPostTimeout: ['ignore']}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -1197,5 +1197,7 @@ it('should deal with a socket error during connect');
 // TODO: connect() callback shouldn't be called on first error?
 
 // TODO: consider testing recoverability after an error occurrence?
+
+// TODO: test onPostTimeout hacks
 
 });

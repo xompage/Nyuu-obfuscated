@@ -32,7 +32,7 @@ server: {
 	postRetries: 1, // how many times to retry if server returns 441 response to posted article
 	connections: 3, // number of connections
 	keepAlive: false, // always reconnect on error, even if not needed
-	ignorePostTimeout: false, // skip past posting timeout errors, assuming post succeeded if no response received
+	onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
 	tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
 },
 

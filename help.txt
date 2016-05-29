@@ -38,11 +38,6 @@ Upload Server Options:
        --request-retries     Number of request retry attempts (default 5)
        --post-retries        Number of post retry attempts in response to 441
                              errors (default 1)
-       --ignore-post-timeout Assume post succeeds when response times out (flag
-                             option). If not set, will retry posting, up to
-                             `--request-retries` attempts and then fail. If
-                             set, timeout errors are ignored; note that
-                             `--skip-errors post-timeout` will have no effect.
        --keep-alive          Try to always keep connection alive even if not
                              needed (flag option).
 
@@ -111,17 +106,13 @@ Post Check Options:
        --check-post-tries    Maximum number of attempts to re-post articles
                              that the post check could not find. Set to 0 to
                              disable re-posting articles (default 1)
-       --check-group         Checking connections will be set to this group.
-                             Some servers seem to want one set, otherwise
-                             checking fails. If you set one, use a valid group
-                             that you're not posting to, such as "bit.test"
        --check-queue-size    Max number of articles queued for checking.
                              Posting will stall if the number of articles to be
                              checked exceeds this number. Increase this number
                              to avoid these stalls, at the expense of higher
                              memory usage (default min(`--connections`*8, 100))
 
-Other Upload Options:
+Other Upload/Check Options:
 
        --skip-errors         Continue processing regardless of specified
                              errors. By default, Nyuu stops on all errors. You
@@ -151,6 +142,35 @@ Other Upload Options:
                              process.
        --use-lazy-connect    Only create connections when necessary and prefer
                              using as few as possible (flag option).
+       --on-post-timeout     A list of actions to take in response to a post
+                             request timing out. Available actions are:
+                                 retry: re-send the post (default
+                                        `--request-retries` times)
+                                 strip-hdr=X: remove the header "X" and retry
+                                 ignore: assume post is successful and continue
+                                         - no further actions will be tried.
+                                         Note that `--skip-errors post-timeout`
+                                         will have no effect if this is set
+                             List is comma separated; after all actions have
+                             been tried, the post will fail. If this option is
+                             supplied, `--request-retries` will not be used for
+                             posts. Example usages:
+                               --on-post-timeout retry,retry,ignore
+                                   Retry the post up to two times on timeout,
+                                   then just assume success
+                               --on-post-timeout retry,strip-hdr=User-Agent,retry
+                                   1st timeout: retry post
+                                   2nd timeout: remove the User-Agent header,
+                                   then retry
+                                   3rd timeout: retry post (header still
+                                   removed)
+                                   4th timeout: give up and throw error
+                             Note: removed headers stay removed, even when the
+                             post is re-posted due to a check failure.
+       --check-group         Checking connections will be set to this group.
+                             Some servers seem to want one set, otherwise
+                             checking fails. If you set one, use a valid group
+                             that you're not posting to, such as "bit.test"
 
 NZB Output Options:
 
@@ -165,7 +185,7 @@ NZB Output Options:
                              stderr of the process is discarded.
   -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
                              (flag option)
-       --minify              Minify outputted XML (flag option)
+       --minify              Minify outputted NZB (flag option)
        --nzb-compress        Compress outputted NZB. Can be gzip, zlib or
                              deflate. If node-xz is installed, xz is also
                              available.
