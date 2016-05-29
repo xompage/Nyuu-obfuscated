@@ -14,11 +14,11 @@ it('should return queued in order', function(done) {
 	assert(q.add(40, 2));
 	assert.equal(q.totalQueueSize(), 2);
 	assert(!q.take(function(n) {
-		assert(Date.now() - s >= 20);
+		assert(Date.now() - s >= 19);
 		assert.equal(n, 1);
 		assert.equal(q.totalQueueSize(), 1);
 		assert(!q.take(function(n) {
-			assert(Date.now() - s >= 40);
+			assert(Date.now() - s >= 39);
 			assert.equal(n, 2);
 			assert.equal(q.totalQueueSize(), 0);
 			
@@ -32,12 +32,12 @@ it('should return queued in order (no waiting)', function(done) {
 	var s = Date.now();
 	q.add(40, 2);
 	q.take(function(n) {
-		assert(Date.now() - s >= 20);
+		assert(Date.now() - s >= 19);
 		assert.equal(n, 1);
 	});
 	q.add(20, 1);
 	q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, 2);
 		
 		done();
@@ -48,12 +48,12 @@ it('should return queued in order (out of order requests)', function(done) {
 	var q = new TimerQueue();
 	var s = Date.now();
 	q.take(function(n) {
-		assert(Date.now() - s >= 20);
+		assert(Date.now() - s >= 19);
 		assert.equal(n, 1);
 		q.add(20, 2);
 	});
 	q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, 2);
 		
 		done();
@@ -119,17 +119,17 @@ it('should return empty on finished (with items)', function(done) {
 	q.add(20, 1);
 	q.add(40, 2);
 	q.take(function(n) {
-		assert(Date.now() - s >= 20);
+		assert(Date.now() - s >= 19);
 		assert.equal(n, 1);
 	});
 	q.finished();
 	assert.equal(q.totalQueueSize(), 2);
 	q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, 2);
 	});
 	q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, undefined);
 	});
 	q.take(function(n) {
@@ -144,15 +144,15 @@ it('should return empty on finished (with items v2)', function(done) {
 	assert(q.add(20, 1));
 	assert(q.add(40, 2)); // forced add, so should return true
 	assert(!q.take(function(n) {
-		assert(Date.now() - s >= 20);
+		assert(Date.now() - s >= 19);
 		assert.equal(n, 1);
 	}));
 	assert(!q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, 2);
 	}));
 	assert(!q.take(function(n) {
-		assert(Date.now() - s >= 40);
+		assert(Date.now() - s >= 39);
 		assert.equal(n, undefined);
 	}));
 	assert(!q.take(function(n) {
