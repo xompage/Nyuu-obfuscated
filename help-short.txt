@@ -8,7 +8,7 @@ Options can also be set using a custom config file (see `--config` option), in
 which case, flag options, if set, can be unset by prefixing `no-` to the name,
 for example, `--no-ssl` to explicitly disable SSL.
 
-This is a summarized version. Use `--help-full` to see a full list of options.
+This is a summarized list. Use `--help-full` to see a full list of options.
 
 Upload Server Options:
 
@@ -20,42 +20,18 @@ Upload Server Options:
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 3)
-       --timeout             Timeout on server responses (default 60s)
-       --connect-retries     Number of connection retry attempts (default 1)
-       --reconnect-delay     Delay connection retries (default 5s)
-       --request-retries     Number of request retry attempts (default 5)
 
 Article/Post Options:
 
-  -a,  --article-size        Target size of each news post (default 700K). Note
-                             that yEnc makes the actual size larger.
   -t,  --comment             Comment to insert before post subject
-       --comment2            Comment to append after post subject
-  -F,  --group-files         Group files by filename, similar to how indexers
-                             would see them. This only affects the file counter
-                             placed in the subject (flag option)
-  -s,  --subject             Subject to use for posts. The following
-                             placeholders are available:
-                                 {filenum}   Current file number in collection
-                                 {files}     Number of files in collection
-                                 {filename}  File's name
-                                 {filesize}  File's size in bytes
-                                 {part}      Article part number
-                                 {parts}     Number of articles for the file
-                                 {size}      File chunk size (before yEnc)
-                             Default is similar to the following:
-                                 {comment} [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
-  -f,  --from                Shortcut for `-H From=...`
+  -f,  --from                Name and email of uploader.
                              Defaults to 'username <username@host>'
-  -g,  --groups              Shortcut for `-H Newsgroups=...`
-                             Separate multiple groups with commas.
+  -g,  --groups              Comma separated list of groups to post to.
                              Defaults to alt.binaries.test
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
-                             This option can be specified multiple times. Note
-                             that specifying the same header more than once is
-                             currently not supported.
+                             This option can be specified multiple times.
 
 Post Check Options:
 
@@ -87,7 +63,7 @@ Other Options:
 
        --subdirs=keep        Upload all files in sub-directories, otherwise
                              sub-directories are completely ignored.
-  -q,  --quiet               Only show warnings. Alias for `-l2` (flag option)
+  -q,  --quiet               Only show warnings/errors. (flag option)
   -C,  --config              Use a custom configuration file, see config.js for
                              an example
   -?,  --help                Display this help screen (flag option)

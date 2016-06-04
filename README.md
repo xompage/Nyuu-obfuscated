@@ -191,7 +191,8 @@ slow computer may not be able to service them as expected.
 Usage
 =====
 
-For command line usage, [see here](<help.txt>).
+For command line usage, [see here](<help.txt>), [or here](<help-short.txt>) for
+a summarized list of options.
 
 As an example, if you’re interested in the exact command used by the Anime Tosho
 usenet bot, here it is: (note, this may not be optimal for you)
