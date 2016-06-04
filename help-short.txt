@@ -1,0 +1,111 @@
+Nyuu
+-----------
+
+Usage: nyuu [options] file1 file2 ...
+
+All options take one parameter, except for those marked as a flag option.
+Options can also be set using a custom config file (see `--config` option), in
+which case, flag options, if set, can be unset by prefixing `no-` to the name,
+for example, `--no-ssl` to explicitly disable SSL.
+
+This is a summarized version. Use `--help-full` to see a full list of options.
+
+Upload Server Options:
+
+  -h,  --host                Host/server to upload to.
+  -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
+                             is specified)
+  -S,  --ssl                 Connect over SSL (flag option)
+       --ignore-cert         Ignore SSL certificate problems
+  -u,  --user                Username to authenticate with
+  -p,  --password            Password to authenticate with
+  -n,  --connections         Number of connections to use (default 3)
+       --timeout             Timeout on server responses (default 60s)
+       --connect-retries     Number of connection retry attempts (default 1)
+       --reconnect-delay     Delay connection retries (default 5s)
+       --request-retries     Number of request retry attempts (default 5)
+
+Article/Post Options:
+
+  -a,  --article-size        Target size of each news post (default 700K). Note
+                             that yEnc makes the actual size larger.
+  -t,  --comment             Comment to insert before post subject
+       --comment2            Comment to append after post subject
+  -F,  --group-files         Group files by filename, similar to how indexers
+                             would see them. This only affects the file counter
+                             placed in the subject (flag option)
+  -s,  --subject             Subject to use for posts. The following
+                             placeholders are available:
+                                 {filenum}   Current file number in collection
+                                 {files}     Number of files in collection
+                                 {filename}  File's name
+                                 {filesize}  File's size in bytes
+                                 {part}      Article part number
+                                 {parts}     Number of articles for the file
+                                 {size}      File chunk size (before yEnc)
+                             Default is similar to the following:
+                                 {comment} [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
+  -f,  --from                Shortcut for `-H From=...`
+                             Defaults to 'username <username@host>'
+  -g,  --groups              Shortcut for `-H Newsgroups=...`
+                             Separate multiple groups with commas.
+                             Defaults to alt.binaries.test
+  -H,  --header              Specify an NNTP header in either of these forms:
+                                 -H "MyHeader: MyValue"
+                                 -H MyHeader=MyValue
+                             This option can be specified multiple times. Note
+                             that specifying the same header more than once is
+                             currently not supported.
+
+Post Check Options:
+
+  -k1, --check-connections=1 Enable post checking (flag option)
+       --check-tries         Maximum number of check attempts to perform.
+                             A value of 0 disables post checking. (default 3)
+       --check-delay         Initial delay after posting before performing
+                             first check (default 5s)
+       --check-retry-delay   Delay for check retries, if a check fails
+                             (default 30s). Not used if `--check-tries` < 2
+       --check-post-tries    Maximum number of attempts to re-post articles
+                             that the post check could not find. Set to 0 to
+                             disable re-posting articles (default 1)
+
+Other Upload/Check Options:
+
+       --skip-errors=all     Continue processing regardless of errors.
+                             By default, Nyuu stops on all errors.
+
+NZB Output Options:
+
+  -o,  --out                 If supplied, will write NZB to this file
+  -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
+                             (flag option)
+  -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
+                             above for syntax details.
+
+Other Options:
+
+       --subdirs=keep        Upload all files in sub-directories, otherwise
+                             sub-directories are completely ignored.
+  -q,  --quiet               Only show warnings. Alias for `-l2` (flag option)
+  -C,  --config              Use a custom configuration file, see config.js for
+                             an example
+  -?,  --help                Display this help screen (flag option)
+       --help-full           Display full help screen (flag option)
+
+Input Files:
+
+  Additional arguments are taken as files to be posted. Directories can be
+  specified as well, in which case all files inside are processed according
+  to the `--subdirs` option above.
+
+------------------
+Examples
+
+  nyuu -h example.com some_file
+      Uploads some_file to the NNTP server at example.com
+
+  nyuu -h news.example.com -S -u cat -p nyahaha -n3 -f 'Cat <eager-poster@computer>' -g alt.binaries.multimedia -o my_cat.nzb my_cat.mp4
+      Uploads my_cat.mp4 to NNTPS server at news.example.com in group
+      alt.binaries.multimedia. Upload is performed using 3 connections. 
+      The from username is specified, and Nyuu will output an NZB, my_cat.nzb.

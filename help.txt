@@ -8,6 +8,8 @@ Options can also be set using a custom config file (see `--config` option), in
 which case, flag options, if set, can be unset by prefixing `no-` to the name,
 for example, `--no-ssl` to explicitly disable SSL.
 
+This is a full list of options. Use `--help` to see a summarized version.
+
 Upload Server Options:
 
   -h,  --host                Host/server to upload to. Prefix with `unix:` to
@@ -261,7 +263,8 @@ Other Options:
                                    Start TCP server on localhost on random port
   -C,  --config              Use a custom configuration file, see config.js for
                              an example
-  -?,  --help                Display this help screen (flag option)
+  -?,  --help                Display a summarized list of options (flag option)
+       --help-full           Display this help screen (flag option)
        --version             Print application version number (flag option)
 
 Input Files:
