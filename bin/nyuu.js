@@ -361,11 +361,11 @@ var argv = require('minimist')(process.argv.slice(2), mOpts);
 
 
 if(argv.help) {
-	console.error(require('fs').readFileSync(__dirname + '/../help-short.txt').toString().replace(/^Nyuu\r?\n/, 'Nyuu v' + require('../package.json').version + '\n'));
+	console.error(require('fs').readFileSync(__dirname + '/../help-short.txt').toString().replace(/^Nyuu(\r?\n)/, 'Nyuu v' + require('../package.json').version + '$1'));
 	process.exit(0);
 }
 if(argv['help-full']) {
-	console.error(require('fs').readFileSync(__dirname + '/../help.txt').toString().replace(/^Nyuu\r?\n/, 'Nyuu v' + require('../package.json').version + '\n'));
+	console.error(require('fs').readFileSync(__dirname + '/../help.txt').toString().replace(/^Nyuu(\r?\n)/, 'Nyuu v' + require('../package.json').version + '$1'));
 	process.exit(0);
 }
 if(argv.version) {
