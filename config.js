@@ -110,6 +110,16 @@ nzb: {
 	},
 },
 
+/** Input Stream Copy/Tee Options **/
+inputCopy: null, // a writable stream to copy the input to, or a function (see example below)
+/* this example excludes PAR2 files from being copied
+inputCopy: function(filename, filesize) {
+	if(!filename.match(/\.par2$/i))
+		return fs.createWriteStream(filename + '.pipe');
+}
+*/
+copyQueueBuffer: 4, // number of article-sized chunks to buffer to copied streams
+
 /** Tuning Options **/
 useBufferPool: true, // self manage article buffers rather than rely on GC's management; also improves performance of writing to buffers
 headerAllocSize: 4096, // amount of buffer space to allocate for post headers, only used if useBufferPool is true

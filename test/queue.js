@@ -203,4 +203,26 @@ it('should wait when queue size exceeded', function(done) {
 	});
 });
 
+it('should flush add requests when asked to', function(done) {
+	var q = new Queue(2);
+	assert(q.add(1, tl.throwErr));
+	assert(q.add(2, tl.throwErr));
+	
+	// this shouldn't add, since we cancel it
+	var add3 = false, add4 = false;
+	q.add(3, function(a, b) {
+		add3 = true;
+		assert.equal(a, 'end');
+		assert.equal(b, 'ing');
+	});
+	q.add(4, function(a, b) {
+		add4 = true;
+		assert.equal(a, 'end');
+		assert.equal(b, 'ing');
+	});
+	q.flushAdds('end','ing');
+	assert(add3 && add4);
+	done();
+});
+
 });
