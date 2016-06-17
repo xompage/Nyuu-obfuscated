@@ -334,6 +334,34 @@ it('should authenticate', function(done) {
 });
 
 it('should end when requested'); // also test .destroy() method
+it('should not connect if destroyed straight after', function(done) {
+	var server, client;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			var _server = new TestServer(function() {
+				throw new Error('Client connected');
+			});
+			_server.listen(0, function() {
+				cb(null, _server, newNNTP());
+			});
+			currentServer = _server;
+		},
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(function(err) {
+				assert(err.code, 'cancelled');
+				cb();
+			});
+			client.destroy();
+		},
+		function(cb) {
+			assert.equal(client.state, 'inactive');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 // TODO: test both of the above with an active request
 
 
