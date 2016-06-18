@@ -89,18 +89,16 @@ Article/Post Options:
 
 Post Check Options:
 
+  You can prefix any of the options from the above "Upload Server Options"
+  section, with `--check-` to override that behaviour on these checking
+  connections. For example, `--check-host` overrides the `--host` parameter,
+  making Nyuu perform post checking on a different host. `--check-post-retries`
+  is unavailable as no posting is performed on these connections.
+
   -k,  --check-connections   Number of connections to use for post checking
                              (default 0). Set to 1 to enable checking. Higher
                              numbers of connections are only useful if post
-                             checking is bottlenecking the rest of the proces.
-                             You can prefix any of the options above, in the
-                             "Upload Server Options" section, with `--check-`
-                             to override that behaviour on these checking
-                             connections, for example `--check-host` makes
-                             Nyuu perform post checking on a different host.
-                             `--check-post-retries` and
-                             `--check-ignore-post-timeout` are unavailable as
-                             no posting is performed on these connections.
+                             checking is bottlenecking the rest of the process.
        --check-tries         Maximum number of check attempts to perform.
                              A value of 0 disables post checking. (default 3)
        --check-delay         Initial delay after posting before performing
