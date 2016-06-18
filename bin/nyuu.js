@@ -641,7 +641,8 @@ if(argv.progress) {
 				progress.push({type: 'log', interval: parseTime(arg) || 60});
 			break;
 			case 'stderr':
-				progress.push({type: 'stderr'});
+			case 'stderrx':
+				progress.push({type: type});
 				stdErrProgress = true;
 			break;
 			case 'tcp':
@@ -853,15 +854,21 @@ var friendlySize = function(s) {
 	return (Math.round(s *100)/100) + ' ' + units[i];
 };
 var decimalPoint = ('' + 1.1).replace(/1/g, '');
-var friendlyTime = function(t) {
+var friendlyTime = function(t, compact) {
 	var days = (t / 86400000) | 0;
 	t %= 86400000;
 	var seg = [];
-	[3600000, 60000, 1000].forEach(function(s) {
+	var sect = [3600000, 60000, 1000];
+	if(compact && t < 3600000)
+		sect.shift();
+	sect.forEach(function(s) {
 		seg.push(lpad('' + ((t / s) | 0), 2, '0'));
 		t %= s;
 	});
-	return (days ? days + 'd,' : '') + seg.join(':') + decimalPoint + lpad(t + '', 3, '0');
+	var ret = (days ? days + 'd,' : '') + seg.join(':');
+	if(!compact)
+		ret += decimalPoint + lpad(t + '', 3, '0');
+	return ret;
 };
 var retArg = function(_) { return _; };
 fuploader.once('start', function(files, _uploader) {
@@ -888,25 +895,45 @@ fuploader.once('start', function(files, _uploader) {
 				});
 			break;
 			case 'stderr':
+			case 'stderrx':
 				if(getProcessIndicator) break; // no need to double output =P
-				var postedSamples = [0];
+				var postedSamples = [[0,0]];
 				getProcessIndicator = function() {
 					var chkPerc = uploader.articlesChecked / totalPieces,
-					    pstPerc = uploader.articlesPosted / totalPieces;
-					var barSize = Math.floor(chkPerc*50);
-					var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
+					    pstPerc = uploader.articlesPosted / totalPieces,
+					    totPerc = Math.round((chkPerc+pstPerc)*5000)/100;
 					
 					// calculate speed over last 4s
 					var speed = uploader.bytesPosted; // for first sample, just use current overall progress
+					var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
+					var advancement = completed;
 					if(postedSamples.length >= 2) {
-						speed = (postedSamples[postedSamples.length-1] - postedSamples[0]) / (postedSamples.length-1);
+						var lastSample = postedSamples[postedSamples.length-1];
+						speed = (lastSample[0] - postedSamples[0][0]) / (postedSamples.length-1);
+						advancement = (lastSample[1] - postedSamples[0][1]) / (postedSamples.length-1);
 					}
 					
-					return '\x1b[0G\x1B[0K ' + lpad(''+Math.round((chkPerc+pstPerc)*5000)/100, 6) + '%  [' + rpad(line, 50) + '] ' + friendlySize(speed) + '/s';
+					if(prg.type == 'stderr') {
+						var barSize = Math.floor(chkPerc*50);
+						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
+						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, 50) + '] ' + friendlySize(speed) + '/s';
+					} else {
+						// extended display
+						var posted = '' + uploader.articlesChecked;
+						if(uploader.articlesChecked != uploader.articlesPosted)
+							posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
+						var eta = (totalPieces - completed) / advancement;
+						eta = Math.round(eta)*1000;
+						if(!isNaN(eta) && isFinite(eta) && eta > 0)
+							eta = friendlyTime(eta, true);
+						else
+							eta = '-';
+						return '\x1b[0G\x1B[0K' + 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) at ' + friendlySize(speed) + '/s, ETA ' + eta;
+					}
 				};
 				var seInterval = setInterval(function() {
 					process.stderr.write(getProcessIndicator());
-					postedSamples.push(uploader.bytesPosted);
+					postedSamples.push([uploader.bytesPosted, (uploader.articlesChecked + uploader.articlesPosted)/2]);
 					if(postedSamples.length >= 4) // maintain max 4 samples
 						postedSamples.shift();
 				}, 1000);

@@ -239,6 +239,8 @@ Other Options:
                              needed, they are appended onto the end, separated
                              by a colon
                                  stderr: output a progress indicator to stderr
+                                 stderrx: as above, but alternative format with
+                                          more information
                                  log: output log entries every 60s showing
                                       progress. Interval can be changed via the
                                       parameter
