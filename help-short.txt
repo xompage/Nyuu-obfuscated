@@ -61,8 +61,6 @@ NZB Output Options:
 
 Other Options:
 
-       --subdirs=keep        Upload all files in sub-directories, otherwise
-                             sub-directories are completely ignored.
   -q,  --quiet               Only show warnings/errors. (flag option)
   -C,  --config              Use a custom configuration file, see config.js for
                              an example
@@ -73,7 +71,10 @@ Input Files:
 
   Additional arguments are taken as files to be posted. Directories can be
   specified as well, in which case all files inside are processed according
-  to the `--subdirs` option above.
+  to the following option:
+
+       --subdirs=keep        Upload all files in sub-directories, otherwise
+                             sub-directories are completely ignored.
 
 ------------------
 Examples

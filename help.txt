@@ -219,9 +219,6 @@ Advanced Tuning Options:
 
 Other Options:
 
-  -r,  --subdirs             How sub-directories should be handled, can be:
-                                 skip: ignore nested files (default)
-                                 keep: upload all files in sub-directories
        --dump-failed-posts   Write out articles that fail to post to this
                              location. Message-ID will be appended to this to
                              get the file name. This is a debugging feature
@@ -271,8 +268,12 @@ Input Files:
 
   Additional arguments are taken as files to be posted. Directories can be
   specified as well, in which case all files inside are processed according
-  to the `--subdirs` option above.
-  
+  to the following option:
+
+  -r,  --subdirs             How sub-directories should be handled, can be:
+                                 skip: ignore nested files (default)
+                                 keep: upload all files in sub-directories
+
   Nyuu also supports piping inputs from a command, however, as yEnc requires
   knowing exact file sizes in advance, this will need to be specified. The
   syntax for specifying a process input is as follows:
