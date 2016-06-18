@@ -284,6 +284,7 @@ it('test queue overflow', function(done) {
 	});
 });
 
+// TODO: test flushPending
 // TODO: need more test cases
 
 });
