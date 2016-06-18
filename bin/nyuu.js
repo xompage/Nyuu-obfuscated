@@ -913,22 +913,28 @@ fuploader.once('start', function(files, _uploader) {
 						advancement = (lastSample[1] - postedSamples[0][1]) / (postedSamples.length-1);
 					}
 					
+					var eta = (totalPieces - completed) / advancement;
+					eta = Math.round(eta)*1000;
+					if(!isNaN(eta) && isFinite(eta) && eta > 0)
+						eta = friendlyTime(eta, true);
+					else
+						eta = '-';
+					
 					if(prg.type == 'stderr') {
-						var barSize = Math.floor(chkPerc*50);
-						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * 50) - barSize);
-						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, 50) + '] ' + friendlySize(speed) + '/s';
+						var LINE_WIDTH = 35;
+						var barSize = Math.floor(chkPerc*LINE_WIDTH);
+						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
+						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, LINE_WIDTH) + '] ' + friendlySize(speed) + '/s, ETA ' + eta;
 					} else {
 						// extended display
 						var posted = '' + uploader.articlesChecked;
 						if(uploader.articlesChecked != uploader.articlesPosted)
 							posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-						var eta = (totalPieces - completed) / advancement;
-						eta = Math.round(eta)*1000;
-						if(!isNaN(eta) && isFinite(eta) && eta > 0)
-							eta = friendlyTime(eta, true);
-						else
-							eta = '-';
-						return '\x1b[0G\x1B[0K' + 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) at ' + friendlySize(speed) + '/s, ETA ' + eta;
+						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
+						if(ret.length > 80)
+							// if too long, strip the raw post speed
+							ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+						return '\x1b[0G\x1B[0K' + ret;
 					}
 				};
 				var seInterval = setInterval(function() {
