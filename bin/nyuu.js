@@ -208,6 +208,10 @@ var optMap = {
 		type: 'string',
 		map: 'postDate'
 	},
+	'keep-message-id': {
+		type: 'bool',
+		map: 'keepMessageId'
+	},
 	'group-files': {
 		type: 'bool',
 		alias: 'F',

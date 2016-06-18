@@ -78,6 +78,8 @@ Article/Post Options:
                              use the time at which each post is encoded. This
                              differs from 'now' in that it is not a fixed
                              timestamp across the whole run.
+       --keep-message-id     Don't randomize Message-ID every time the post is
+                             submitted. (flag option)
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
