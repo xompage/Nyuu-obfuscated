@@ -223,6 +223,13 @@ Other Options:
                              location. Message-ID will be appended to this to
                              get the file name. This is a debugging feature
                              and should not be used unless needed.
+       --input-raw-posts     Treat input files as raw posts to be uploaded
+                             (flag option). All options for Articles/Posts, NZB
+                             output and Input will be ignored, as well as
+                             `--disk-*` options. `--keep-message-id` option is
+                             also implied.
+                             This is the counterpart to `--dump-failed-posts`
+                             as it can be used to re-post these failed posts.
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
                                  1: only show fatal errors

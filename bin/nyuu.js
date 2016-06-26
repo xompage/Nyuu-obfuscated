@@ -308,6 +308,9 @@ var optMap = {
 		type: 'string',
 		map: 'dumpPostLoc'
 	},
+	'input-raw-posts': {
+		type: 'bool'
+	},
 	
 	help: {
 		type: 'bool',
@@ -774,7 +777,7 @@ var displayCompleteMessage = function(err) {
 		Nyuu.log.info('Process complete');
 };
 
-var Nyuu = require('../');
+var Nyuu = argv['input-raw-posts'] ? require('../lib/postuploader') : require('../');
 Nyuu.setLogger(logger);
 var fuploader = Nyuu.upload(argv._.map(function(file) {
 	// TODO: consider supporting deferred filesize gathering?
