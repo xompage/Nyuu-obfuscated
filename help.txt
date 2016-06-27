@@ -227,9 +227,13 @@ Other Options:
                              (flag option). All options for Articles/Posts, NZB
                              output and Input will be ignored, as well as
                              `--disk-*` options. `--keep-message-id` option is
-                             also implied.
+                             also implied (use `--no-keep-message-id` to
+                             disable).
                              This is the counterpart to `--dump-failed-posts`
                              as it can be used to re-post these failed posts.
+       --delete-raw-posts    Delete successfully posted raw articles (flag
+                             option). This only has any effect if the
+                             `--input-raw-posts` flag is specified.
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
                                  1: only show fatal errors

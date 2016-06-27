@@ -311,6 +311,10 @@ var optMap = {
 	'input-raw-posts': {
 		type: 'bool'
 	},
+	'delete-raw-posts': {
+		type: 'bool',
+		map: 'deleteRawPosts'
+	},
 	
 	help: {
 		type: 'bool',
@@ -601,6 +605,9 @@ if(argv['preload-modules']) {
 	// we won't consider modules loaded by the UploadManager constructor (zlib/xz, nzbbuffer, bufferpool, procman) as 'too late', since it occurs before the 'start' event is fired, hence won't bother preloading these here
 }
 
+// if doing raw posts, default keepMessageId to true
+if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
+	ulOpts.keepMessageId = true;
 
 // custom validation rules
 if(!argv._.length)                  error('Must supply at least one input file');
