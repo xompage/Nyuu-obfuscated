@@ -68,6 +68,8 @@ fastest](<bench/info.md#benchmark-2>)) usenet posters
 
 -   Unusual or unexpected events are logged
 
+-   Includes some optional workarounds for server bugs
+
 **Highly configurable:** tuning knobs for everything
 
 -   Lots of connection and SSL options
@@ -89,11 +91,12 @@ Installation & Requirements
 ===========================
 
 Nyuu should run on node.js 0.10.x and later. Recent Linux distributions should
-have *nodejs* in their repositories, otherwise, see
+have *nodejs* in their repositories, otherwise, see [installing via package
+manager](<https://nodejs.org/en/download/package-manager/>) or
 [NodeSource](<https://github.com/nodesource/distributions>). For Windows/OSX
 builds, they [can be found here](<https://nodejs.org/en/download/stable/>).
-Although node.js 0.10.x is supported, newer versions of Node provide greatly
-improved SSL performance.
+Although node.js 0.10.x is supported, newer versions of Node (\>=4 recommended)
+provide greatly improved SSL performance.
 
 Nyuu download packages can be found on [the releases
 page](<https://github.com/animetosho/Nyuu/releases>). Pre-packaged Windows
@@ -103,9 +106,10 @@ them.
 Dependencies
 ------------
 
-If you have NPM installed (may come with your install of NodeJS), the following
-command (executed inside the Nyuu directory) is all you need to set up the
-dependencies:
+If you have NPM installed (may come with your install of NodeJS, or you may need
+to install it like you did with NodeJS if your package system doesn’t include
+them together), the following command (executed inside the Nyuu directory) is
+all you need to set up the dependencies:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 npm install --no-optional --production
