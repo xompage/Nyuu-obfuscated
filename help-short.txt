@@ -73,8 +73,8 @@ Input Files:
   specified as well, in which case all files inside are processed according
   to the following option:
 
-       --subdirs=keep        Upload all files in sub-directories, otherwise
-                             sub-directories are completely ignored.
+       --subdirs=keep        Upload all files in directories, otherwise
+                             directories are completely ignored.
 
 ------------------
 Examples

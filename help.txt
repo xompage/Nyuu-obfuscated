@@ -283,7 +283,7 @@ Input Files:
   specified as well, in which case all files inside are processed according
   to the following option:
 
-  -r,  --subdirs             How sub-directories should be handled, can be:
+  -r,  --subdirs             How directories should be handled, can be:
                                  skip: ignore nested files (default)
                                  keep: upload all files in sub-directories
 
