@@ -70,7 +70,7 @@ var optMap = {
 		map: 'server/connTimeout'
 	},
 	'reconnect-delay': {
-		type: 'int',
+		type: 'time',
 		map: 'server/reconnectDelay'
 	},
 	'connect-retries': {
@@ -171,7 +171,7 @@ var optMap = {
 		map: 'check/server/connTimeout'
 	},
 	'check-reconnect-delay': {
-		type: 'int',
+		type: 'time',
 		map: 'check/server/reconnectDelay'
 	},
 	'check-connect-retries': {
