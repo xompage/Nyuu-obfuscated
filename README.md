@@ -3,8 +3,7 @@ Nyuu
 
 >   *A powerful beast hidden by a deceptively cute exterior*
 
-Nyuu is a **command-line [usenet
-binary](<https://en.wikipedia.org/wiki/Usenet#Binary_content>) posting tool**.
+Nyuu is a **command-line [binary usenet poster](<https://en.wikipedia.org/wiki/Usenet#Binary_content>)**.
 
 Nyuu is designed primarily to be fast, efficient and customizable, exposing all
 the interesting bits and pieces.
