@@ -308,6 +308,37 @@ Input Files:
   to stdout):
     nyuu -h 0 'procjson://"moe_kyun.jpg",6144,"cat trollface.jpg"' 
 
+  Nyuu also supports copying input files to a file or process. The purpose of
+  this feature is to send the data to somewhere else without incurring the cost
+  of an additional disk read. This feature is currently EXPERIMENTAL.
+  The following options are available for copying input:
+  
+  -I,  --copy-input          Copy each input into specified file or stdin of
+                             specified process. See `--out` for syntax.
+                             Special placeholders which can be used:
+                                 {filename}: upload name of the file (no path)
+                                 {size}: size of file in bytes
+                             For example, the following can be used to
+                             generate a list of MD5 hashes of the input files,
+                             on Linux, without re-reading files off disk:
+                               `--I "proc://echo `md5sum|sed s/-//` {filename} >>md5list`
+                             WARNING: {filename} isn't sanitized in any way, so
+                             take care when using it, especially when using it
+                             in a command!
+       --copy-include        Regular expression filter of which files to copy.
+                             Only file names which match this filter will be
+                             copied. Default ".*" (include all files).
+       --copy-exclude        Regular expression exclusion filter over files to
+                             copy. File names matching this expression won't
+                             be copied. Default ".^" (no excluded files).
+       --copy-queue-size     Maximum unconsumed buffer size for copied inputs.
+                             If this buffer fills up, processing will slow down
+                             until the other process consumes its piped data.
+                             This value applies individually  to each input
+                             copied. Set to 0 for no limit. (default 4)
+                             Note that this is somewhat connected to
+                             `--post-queue-size`
+
 ------------------
 Examples
 

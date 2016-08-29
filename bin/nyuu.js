@@ -3,6 +3,7 @@
 "use strict";
 process.title = 'Nyuu';
 
+var fs;
 
 var optMap = {
 	host: {
@@ -315,6 +316,19 @@ var optMap = {
 		type: 'bool',
 		map: 'deleteRawPosts'
 	},
+	'copy-input': {
+		type: 'string'
+	},
+	'copy-include': {
+		type: 'string'
+	},
+	'copy-exclude': {
+		type: 'string'
+	},
+	'copy-queue-size': {
+		type: 'int',
+		map: 'copyQueueBuffer'
+	},
 	
 	help: {
 		type: 'bool',
@@ -573,6 +587,35 @@ if(argv.out) {
 }
 if(argv.overwrite !== null)
 	ulOpts.nzb.writeOpts.flags = argv.overwrite ? 'w' : 'wx';
+
+if(argv['copy-input']) {
+	var copyIncl, copyExcl, copyTarget = argv['copy-input'];
+	var reFlags = process.platform == 'win32' ? 'i' : '';
+	if(argv['copy-include'])
+		copyIncl = new RegExp(argv['copy-include'], reFlags);
+	if(argv['copy-exclude'])
+		copyExcl = new RegExp(argv['copy-exclude'], reFlags);
+	
+	var copyProc = copyTarget.match(/^proc:\/\//i);
+	if(copyProc)
+		copyTarget = copyTarget.substr(7);
+	else
+		fs = fs || require('fs');
+	
+	ulOpts.inputCopy = function(filename, size) {
+		if(copyIncl && !filename.match(copyIncl)) return;
+		if(copyExcl && filename.match(copyExcl)) return;
+		
+		var target = copyTarget.replace(/\{(filename|size)\}/ig, function(m, token) {
+			return token == 'filename' ? filename : size;
+		});
+		if(copyProc) {
+			return processStart(target, {stdio: ['pipe','ignore','ignore']}).stdin;
+		} else {
+			return fs.createWriteStream(target);
+		}
+	};
+}
 
 // map custom headers
 if(argv.headers) {
