@@ -7,49 +7,49 @@ module.exports = {
 
 
 
-
 /** Upload Server Options **/
-server: {
-	// connection options - see the following pages for full documentation
-	// non-SSL: https://nodejs.org/api/net.html#net_socket_connect_options_connectlistener
-	// SSL: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
-	connect: { // connection options
-		host: 'localhost',
-		port: null, // null => if server.secure, port=563, else, port=119
+servers: [
+	{
+		// connection options - see the following pages for full documentation
+		// non-SSL: https://nodejs.org/api/net.html#net_socket_connect_options_connectlistener
+		// SSL: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
+		connect: { // connection options
+			host: 'localhost',
+			port: null, // null => if server.secure, port=563, else, port=119
+			
+			// SSL options
+			rejectUnauthorized: true,
+		},
+		secure: false, // set to true to use SSL
+		user: '',
+		password: '',
+		// note that these times are specified in miliseconds
+		timeout: 60000, // 60000ms = 1 minute
+		connTimeout: 30000, // 30 seconds
+		reconnectDelay: 5000, // 5 seconds
+		connectRetries: 1,
+		requestRetries: 5, // how many times to retry an interrupted request
+		postRetries: 1, // how many times to retry if server returns 441 response to posted article
+		keepAlive: false, // always reconnect on error, even if not needed
+		onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
+		tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
 		
-		// SSL options
-		rejectUnauthorized: true,
+		postConnections: 3, // number of connections for posting
+		checkConnections: 0, // number of connections used for checking
+		// TODO: consider ability to reuse posting connections for checking?
+		//ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 	},
-	secure: false, // set to true to use SSL
-	user: '',
-	password: '',
-	// note that these times are specified in miliseconds
-	timeout: 60000, // 60000ms = 1 minute
-	connTimeout: 30000, // 30 seconds
-	reconnectDelay: 5000, // 5 seconds
-	connectRetries: 1,
-	requestRetries: 5, // how many times to retry an interrupted request
-	postRetries: 1, // how many times to retry if server returns 441 response to posted article
-	connections: 3, // number of connections
-	keepAlive: false, // always reconnect on error, even if not needed
-	onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
-	tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
-},
+],
+// multiple servers can be specified by adding elements to tbe above array, but note that:
+// - specifying options via the CLI may get confusing
+// - servers are currently selected randomly for posting/checking; Nyuu won't otherwise do anything special if you specify multiple servers (this includes falling over if a server is misbehaving)
 
 /** Post Check Options **/
 check: {
-	// this 'server' block is identical to the 'server' block above
-	// missing fields are simply copied from there
-	server: {
-		connect: {
-		},
-		connections: 0, // 1 is a good number, but if you're uploading fast enough that it becomes a bottleneck, increase it
-	},
 	delay: 5000, // (in ms) initial delay for performing check
 	recheckDelay: 30000, // (in ms) delay retries by this amount of time; not used if tries<2
 	tries: 3, // number of check attempts; should be 0 if not performing post checks
 	group: '', // if set, will switch checking connections to this group; some servers seem to want one when STATing posts, otherwise they fail to show them; if set, should be a valid group you never post to, eg "bit.test"
-	ulConnReuse: false, // use uploading connections for post checks; only works if checking the same server as the one being uploaded to
 	postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 	queueBuffer: null, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size; default is numConnections*8
 },
@@ -80,7 +80,7 @@ postHeaders: {
 	// optional headers
 	//Organization: '',
 	'User-Agent': 'Nyuu/' + require('./package.json').version,
-	// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm
+	// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm or http://www.cs.tut.fi/~jkorpela/headers.html
 },
 // postHeaders can also, itself, be a function, in which case, it is called with (name, size, num, numTotal) as arguments, and must return an object like the above
 
