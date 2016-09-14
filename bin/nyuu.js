@@ -4,8 +4,19 @@
 process.title = 'Nyuu';
 
 var fs;
+var util = require('../lib/util');
+var error = function(msg) {
+	console.error(msg);
+	console.error('Enter `nyuu --help` or `nyuu --help-full` for usage information');
+	process.exit(1);
+};
+var processes;
+var processStart = function() {
+	if(!processes) processes = new (require('../lib/procman'))();
+	return processes.start.apply(processes, arguments);
+};
 
-var optMap = {
+var servOptMap = {
 	host: {
 		type: 'string',
 		alias: 'h'
@@ -13,95 +24,117 @@ var optMap = {
 	port: {
 		type: 'int',
 		alias: 'P',
-		map: 'server/connect/port'
+		keyMap: 'connect/port'
 	},
 	'bind-host': {
 		type: 'string',
-		map: 'server/connect/localAddress'
+		keyMap: 'connect/localAddress'
 	},
 	'tcp-keep-alive': {
 		type: 'time',
-		map: 'server/tcpKeepAlive'
+		keyMap: 'tcpKeepAlive'
 	},
 	ipv6: {
 		type: 'bool',
+		keyMap: 'connect/family',
+		fn: function(v) {
+			return v ? 6 : undefined;
+		},
 		alias: '6'
 	},
 	ssl: {
 		type: 'bool',
-		map: 'server/secure',
+		keyMap: 'secure',
 		alias: 'S'
 	},
 	'ignore-cert': {
-		type: 'bool'
+		type: 'bool',
+		keyMap: 'connect/rejectUnauthorized',
+		fn: function(v) {
+			return !v;
+		}
 	},
 	'sni-host': {
 		type: 'string',
-		map: 'server/connect/servername'
+		keyMap: 'connect/servername'
 	},
 	'ssl-ciphers': {
 		type: 'string',
-		map: 'server/connect/ciphers'
+		keyMap: 'connect/ciphers'
 	},
 	'ssl-method': {
 		type: 'string',
-		map: 'server/connect/secureProtocol'
+		keyMap: 'connect/secureProtocol'
 	},
 	user: {
 		type: 'string',
 		alias: 'u',
-		map: 'server/user'
+		keyMap: 'user'
 	},
 	password: {
 		type: 'string',
 		alias: 'p',
-		map: 'server/password'
+		keyMap: 'password'
 	},
+	timeout: {
+		type: 'time',
+		keyMap: 'timeout'
+	},
+	'connect-timeout': {
+		type: 'time',
+		keyMap: 'connTimeout'
+	},
+	'reconnect-delay': {
+		type: 'time',
+		keyMap: 'reconnectDelay'
+	},
+	'connect-retries': {
+		type: 'int',
+		keyMap: 'connectRetries'
+	},
+	'request-retries': {
+		type: 'int',
+		keyMap: 'requestRetries'
+	},
+	'post-retries': {
+		type: 'int',
+		postOnly: true,
+		keyMap: 'postRetries'
+	},
+	'on-post-timeout': {
+		type: 'string',
+		postOnly: true,
+		keyMap: 'onPostTimeout',
+		fn: function(v) {
+			return v.split(',').map(function(s) {
+				var v = s.trim().toLowerCase();
+				if(v != 'retry' && v != 'ignore' && !v.match(/^strip-hdr=./))
+					error('Unknown value for `--on-post-timeout`: ' + s);
+				return v;
+			});
+		}
+	},
+	'keep-alive': {
+		type: 'bool',
+		keyMap: 'keepAlive'
+	},
+};
+
+var optMap = {
 	connections: {
 		type: 'int',
 		alias: 'n',
 		map: 'server/connections'
-	},
-	timeout: {
-		type: 'time',
-		map: 'server/timeout'
-	},
-	'connect-timeout': {
-		type: 'time',
-		map: 'server/connTimeout'
-	},
-	'reconnect-delay': {
-		type: 'time',
-		map: 'server/reconnectDelay'
-	},
-	'connect-retries': {
-		type: 'int',
-		map: 'server/connectRetries'
-	},
-	'request-retries': {
-		type: 'int',
-		map: 'server/requestRetries'
-	},
-	'post-retries': {
-		type: 'int',
-		map: 'server/postRetries'
-	},
-	'on-post-timeout': {
-		type: 'string'
-	},
-	'keep-alive': {
-		type: 'bool',
-		map: 'server/keepAlive'
 	},
 	'check-connections': {
 		type: 'int',
 		map: 'check/server/connections',
 		alias: 'k'
 	},
-	'check-reuse-conn': {
+	/*'check-reuse-conn': {
 		type: 'bool',
 		map: 'check/ulConnReuse'
-	},
+	},*/
 	'check-delay': {
 		type: 'time',
 		map: 'check/delay'
@@ -122,71 +155,6 @@ var optMap = {
 		type: 'int',
 		map: 'check/postRetries'
 	},
-	'check-host': {
-		type: 'string'
-	},
-	'check-port': {
-		type: 'int',
-		map: 'check/server/connect/port'
-	},
-	'check-bind-host': {
-		type: 'string',
-		map: 'check/server/connect/localAddress'
-	},
-	'check-ipv6': {
-		type: 'bool'
-	},
-	'check-ssl': {
-		type: 'bool',
-		map: 'check/server/connect/secure',
-	},
-	'check-ignore-cert': {
-		type: 'bool'
-	},
-	'check-sni-host': {
-		type: 'string',
-		map: 'check/server/connect/servername'
-	},
-	'check-ssl-ciphers': {
-		type: 'string',
-		map: 'check/server/connect/ciphers'
-	},
-	'check-ssl-method': {
-		type: 'string',
-		map: 'check/server/connect/secureProtocol'
-	},
-	'check-user': {
-		type: 'string',
-		map: 'check/server/user'
-	},
-	'check-password': {
-		type: 'string',
-		map: 'check/server/password'
-	},
-	'check-timeout': {
-		type: 'time',
-		map: 'check/server/timeout'
-	},
-	'check-connect-timeout': {
-		type: 'time',
-		map: 'check/server/connTimeout'
-	},
-	'check-reconnect-delay': {
-		type: 'time',
-		map: 'check/server/reconnectDelay'
-	},
-	'check-connect-retries': {
-		type: 'int',
-		map: 'check/server/connectRetries'
-	},
-	'check-request-retries': {
-		type: 'int',
-		map: 'check/server/requestRetries'
-	},
-	'check-keep-alive': {
-		type: 'bool',
-		map: 'check/server/keepAlive'
-	},
 	'article-size': {
 		type: 'size',
 		alias: 'a',
@@ -194,7 +162,11 @@ var optMap = {
 	},
 	'article-line-size': {
 		type: 'int',
-		map: 'bytesPerLine'
+		map: 'bytesPerLine',
+		fn: function(v) {
+			if(v < 1) error('Invalid value for `article-line-size`');
+			return v;
+		}
 	},
 	comment: {
 		type: 'string',
@@ -207,7 +179,12 @@ var optMap = {
 	},
 	date: {
 		type: 'string',
-		map: 'postDate'
+		map: 'postDate',
+		fn: function(v) {
+			if((typeof v == 'string') && v.toLowerCase() == 'now')
+				return Date.now();
+			return v;
+		}
 	},
 	'keep-message-id': {
 		type: 'bool',
@@ -224,7 +201,23 @@ var optMap = {
 	},
 	subject: {
 		type: 'string',
-		alias: 's'
+		alias: 's',
+		map: 'postHeaders/Subject',
+		fn: function(v) {
+			return function(filenum, filenumtotal, filename, filesize, part, parts, size) {
+				return v.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(p) {
+					switch(p[1].toLowerCase()) {
+						case 'filenum': return filenum;
+						case 'files': return filenumtotal;
+						case 'filename': return filename;
+						case 'filesize': return filesize;
+						case 'part': return part;
+						case 'parts': return parts;
+						case 'size': return size;
+					}
+				});
+			};
+		}
 	},
 	from: {
 		type: 'string',
@@ -239,7 +232,18 @@ var optMap = {
 	out: {
 		type: 'string',
 		alias: 'o',
-		map: 'nzb/writeTo'
+		map: 'nzb/writeTo',
+		fn: function(v) {
+			if(v === '-')
+				return process.stdout;
+			else if(v.match(/^proc:\/\//i)) {
+				return function(cmd) {
+					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
+					// if process exits early, the write stream should break and throw an error
+				}.bind(null, v.substr(7));
+			}
+			return v;
+		}
 	},
 	minify: {
 		type: 'bool',
@@ -247,7 +251,12 @@ var optMap = {
 	},
 	'nzb-compress': {
 		type: 'string',
-		map: 'nzb/compression'
+		map: 'nzb/compression',
+		fn: function(v) {
+			if(['gzip','zlib','deflate','xz'].indexOf(v) < 0)
+				error('Invalid value supplied for `--nzb-compress`');
+			return v;
+		}
 	},
 	'nzb-compress-level': {
 		type: 'int',
@@ -259,16 +268,29 @@ var optMap = {
 	},
 	overwrite: {
 		type: 'bool',
-		alias: 'O'
+		alias: 'O',
+		map: 'nzb/writeOpts/flags',
+		fn: function(v) {
+			return v ? 'w' : 'wx';
+		}
 	},
 	meta: {
 		type: 'map',
-		alias: 'M'
+		alias: 'M',
+		fn: function(v, o) {
+			for(var k in v)
+				o.nzb.metaData[k] = v[k];
+		}
 	},
 	subdirs: {
 		type: 'string',
 		alias: 'r',
-		map: 'subdirs'
+		map: 'subdirs',
+		fn: function(v) {
+			if(['skip','keep'].indexOf(v) < 0)
+				error('Invalid option supplied for `--subdirs`');
+			return v;
+		}
 	},
 	'disk-req-size': {
 		type: 'size',
@@ -299,7 +321,15 @@ var optMap = {
 	},
 	'skip-errors': {
 		type: 'string',
-		alias: 'e'
+		alias: 'e',
+		map: 'skipErrors',
+		fn: function(v) {
+			if(v.toLowerCase() == 'all')
+				return true;
+			return v.split(',').map(function(s) {
+				return s.trim().toLowerCase();
+			});
+		}
 	},
 	'post-error-limit': {
 		type: 'int',
@@ -365,6 +395,20 @@ var optMap = {
 	}
 };
 
+for(var k in servOptMap) {
+	var o = util.clone(servOptMap[k]);
+	if('keyMap' in o)
+		o.map = 'server/' + o.keyMap;
+	optMap[k] = o;
+	if(!o.postOnly) {
+		var o2 = util.clone(servOptMap[k]);
+		delete o2.alias;
+		if('keyMap' in o)
+			o.map = 'check/server/' + o.keyMap;
+		optMap['check-' + k] = o2;
+	}
+}
+
 
 // build minimist's option map
 var mOpts = {string: [], boolean: [], alias: {}, default: {}};
@@ -398,11 +442,6 @@ if(argv.version) {
 	process.exit(0);
 }
 
-var error = function(msg) {
-	console.error(msg);
-	console.error('Enter `nyuu --help` or `nyuu --help-full` for usage information');
-	process.exit(1);
-};
 var parseSize = function(s) {
 	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s);
 	var parts;
@@ -443,7 +482,7 @@ var ulOpts = require('../config.js');
 if(argv.config) {
 	// TODO: allow proc:// or json:// ?
 	var cOpts = require(require('fs').realpathSync(argv.config));
-	require('../lib/util').deepMerge(ulOpts, cOpts);
+	util.deepMerge(ulOpts, cOpts);
 }
 
 for(var k in argv) {
@@ -456,7 +495,11 @@ for(var k in argv) {
 	
 	var o = optMap[k];
 	if(o.type == 'bool' && v === null) continue; // hack to get around minimist forcing unset values to be false
-	if(o.type == 'int')
+	if(o.type == 'int') {
+		v = v|0;
+		if(v < 0) error('Invalid number specified for `' + k + '`');
+	}
+	if(o.type == '-int')
 		v = v|0;
 	if(o.type == 'size') {
 		v = parseSize(v);
@@ -495,42 +538,9 @@ for(var k in argv) {
 				config[path[i]] = {};
 			config = config[path[i]];
 		}
-		config[path.slice(-1)] = v;
-	}
-}
-
-if(argv.subject) {
-	ulOpts.postHeaders.Subject = function(filenum, filenumtotal, filename, filesize, part, parts, size) {
-		return argv.subject.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(p) {
-			switch(p[1].toLowerCase()) {
-				case 'filenum': return filenum;
-				case 'files': return filenumtotal;
-				case 'filename': return filename;
-				case 'filesize': return filesize;
-				case 'part': return part;
-				case 'parts': return parts;
-				case 'size': return size;
-			}
-		});
-	};
-}
-
-if(argv['skip-errors']) {
-	if(argv['skip-errors'].toLowerCase() == 'all')
-		ulOpts.skipErrors = true;
-	else
-		ulOpts.skipErrors = argv['skip-errors'].split(',').map(function(s) {
-			return s.trim().toLowerCase();
-		});
-}
-
-if(argv['on-post-timeout']) {
-	ulOpts.server.onPostTimeout = argv['on-post-timeout'].split(',').map(function(s) {
-		var v = s.trim().toLowerCase();
-		if(v != 'retry' && v != 'ignore' && !v.match(/^strip-hdr=./))
-			error('Unknown value for `--on-post-timeout`: ' + s);
-		return v;
-	});
+		config[path.slice(-1)] = o.fn ? o.fn(v, ulOpts) : v;
+	} else if(o.fn)
+		o.fn(v, ulOpts);
 }
 
 if(argv['dump-failed-posts']) {
@@ -544,49 +554,16 @@ if(argv['dump-failed-posts']) {
 	} catch(x) {}
 }
 
-if((typeof argv.date == 'string') && argv.date.toLowerCase() == 'now') {
-	ulOpts.postDate = Date.now();
-}
-
-var connOptMap = {
-	'ignore-cert': function(o, v) {
-		o.rejectUnauthorized = !v;
-	},
-	ipv6: function(o, v) {
-		o.family = v ? 6 : undefined;
-	},
-	host: function(o, v) {
-		if(v.match(/^unix:/i))
-			o.path = v.substr(5);
-		else
-			o.host = v;
-	}
+var hostFn = function(o, v) {
+	if(v.match(/^unix:/i))
+		o.path = v.substr(5);
+	else
+		o.host = v;
 };
-for(var k in connOptMap) {
-	if(argv[k] !== null && argv[k] !== undefined)
-		connOptMap[k](ulOpts.server.connect, argv[k]);
-	if(argv['check-'+k] !== null && argv['check-'+k] !== undefined)
-		connOptMap[k](ulOpts.check.server.connect, argv['check-'+k]);
-}
-
-var processes;
-var processStart = function() {
-	if(!processes) processes = new (require('../lib/procman'))();
-	return processes.start.apply(processes, arguments);
-};
-
-if(argv.out) {
-	if(argv.out === '-')
-		ulOpts.nzb.writeTo = process.stdout;
-	else if(argv.out.match(/^proc:\/\//i)) {
-		ulOpts.nzb.writeTo = function(cmd) {
-			return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
-			// if process exits early, the write stream should break and throw an error
-		}.bind(null, argv.out.substr(7));
-	}
-}
-if(argv.overwrite !== null)
-	ulOpts.nzb.writeOpts.flags = argv.overwrite ? 'w' : 'wx';
+if(argv.host)
+	hostFn(ulOpts.server.connect, argv.host);
+if(argv['check-host'])
+	hostFn(ulOpts.check.server.connect, argv['check-host']);
 
 if(argv['copy-input']) {
 	var copyIncl, copyExcl, copyTarget = argv['copy-input'];
@@ -618,26 +595,20 @@ if(argv['copy-input']) {
 }
 
 // map custom headers
-if(argv.headers) {
+if(argv.header) {
 	// to preserve case, build case-insensitive lookup
 	var headerCMap = {};
 	for(var k in ulOpts.postHeaders)
 		headerCMap[k.toLowerCase()] = k;
 	
-	for(var k in argv.headers) {
+	for(var k in argv.header) {
 		// handle casing wierdness
 		var kk = headerCMap[k.toLowerCase()];
 		if(!kk) {
 			headerCMap[k.toLowerCase()] = kk = k;
 		}
-		ulOpts.postHeaders[kk] = argv.headers[k];
+		ulOpts.postHeaders[kk] = argv.header[k];
 	}
-}
-
-// map custom meta tags
-if(argv.meta) {
-	for(var k in argv.meta)
-		ulOpts.nzb.metaData[k] = argv.meta[k];
 }
 
 if(argv['preload-modules']) {
@@ -654,10 +625,6 @@ if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
 
 // custom validation rules
 if(!argv._.length)                  error('Must supply at least one input file');
-if(argv.subdirs && ['skip','keep'].indexOf(argv.subdirs) < 0)
-	error('Invalid option supplied for `--subdirs`');
-if(argv['nzb-compress'] && ['gzip','zlib','deflate','xz'].indexOf(argv['nzb-compress']) < 0)
-	error('Invalid value supplied for `--nzb-compress`');
 // TODO: more validation
 
 if(argv.quiet && argv.verbose)
