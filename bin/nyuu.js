@@ -118,19 +118,14 @@ var servOptMap = {
 		type: 'bool',
 		keyMap: 'keepAlive'
 	},
-};
-
-var optMap = {
 	connections: {
 		type: 'int',
 		alias: 'n',
-		map: 'server/connections'
+		checkAlias: 'k'
 	},
-	'check-connections': {
-		type: 'int',
-		map: 'check/server/connections',
-		alias: 'k'
-	},
+};
+
+var optMap = {
 	/*'check-reuse-conn': {
 		type: 'bool',
 		map: 'check/ulConnReuse'
@@ -276,11 +271,7 @@ var optMap = {
 	},
 	meta: {
 		type: 'map',
-		alias: 'M',
-		fn: function(v, o) {
-			for(var k in v)
-				o.nzb.metaData[k] = v[k];
-		}
+		alias: 'M'
 	},
 	subdirs: {
 		type: 'string',
@@ -396,15 +387,12 @@ var optMap = {
 };
 
 for(var k in servOptMap) {
-	var o = util.clone(servOptMap[k]);
-	if('keyMap' in o)
-		o.map = 'server/' + o.keyMap;
+	var o = servOptMap[k];
 	optMap[k] = o;
 	if(!o.postOnly) {
-		var o2 = util.clone(servOptMap[k]);
+		var o2 = util.clone(o);
 		delete o2.alias;
-		if('keyMap' in o)
-			o.map = 'check/server/' + o.keyMap;
+		if(o2.checkAlias) o2.alias = o2.checkAlias;
 		optMap['check-' + k] = o2;
 	}
 }
@@ -485,6 +473,17 @@ if(argv.config) {
 	util.deepMerge(ulOpts, cOpts);
 }
 
+var setPathedVal = function(base, key, val) {
+	var path = key.split('/');
+	var obj = base;
+	for(var i=0; i<path.length-1; i++) {
+		if(!(path[i] in obj))
+			obj[path[i]] = {};
+		obj = obj[path[i]];
+	}
+	obj[path.slice(-1)[0]] = val;
+};
+
 for(var k in argv) {
 	if(k == '_') continue;
 	var v = argv[k];
@@ -513,35 +512,110 @@ for(var k in argv) {
 	// fix arrays/maps
 	var isArray = Array.isArray(v);
 	if(o.type == 'array' || o.type == 'map') {
-		if(!isArray) argv[k] = [v];
+		if(!isArray) v = [v];
 		// create map
 		if(o.type == 'map') {
-			v = {};
-			argv[k].forEach(function(h) {
+			var tmp = {};
+			v.forEach(function(h) {
 				var m;
 				if(m = h.match(/^(.+?)[=:](.*)$/)) {
-					v[m[1].trim()] = m[2].trim();
+					tmp[m[1].trim()] = m[2].trim();
 				} else {
 					error('Invalid format for `' + k + '`');
 				}
 			});
-			argv[k] = v;
+			v = tmp;
 		}
 	} else if(isArray)
 		error('Multiple values supplied for `' + k + '`!');
 	
-	if(o.map) {
-		var path = o.map.split('/');
-		var config = ulOpts;
-		for(var i=0; i<path.length-1; i++) {
-			if(!(path[i] in config))
-				config[path[i]] = {};
-			config = config[path[i]];
-		}
-		config[path.slice(-1)] = o.fn ? o.fn(v, ulOpts) : v;
-	} else if(o.fn)
-		o.fn(v, ulOpts);
+	argv[k] = v;
+	if(o.map)
+		setPathedVal(ulOpts, o.map, o.fn ? o.fn(v, ulOpts) : v);
 }
+
+
+// handle server options mess
+if(!ulOpts.servers || ulOpts.servers.length < 1)
+	ulOpts.servers = [{}];
+
+// check if postConnections/checkConnections is set in the config, if so, we assume that those servers are marked for posting/checking, otherwise, assume that all servers are fair game
+var defNumConnPost = 0, defNumConnCheck = 0;
+ulOpts.servers.forEach(function(server) {
+	defNumConnPost += server.postConnections;
+	defNumConnCheck += server.checkConnections;
+	if(server.ulConnReuse)
+		defNumConnCheck += server.postConnections;
+});
+
+var servOptHelper = function(k, val, type, servers) {
+	if(val === null || val === undefined) return;
+	
+	var o = servOptMap[k];
+	var key = o.keyMap;
+	if(!key) switch(k) {
+		case 'connections':
+			key = type + 'Connections';
+		break;
+		case 'host':
+			if(val.match(/^unix:/i)) {
+				key = 'connect/path';
+				val  = val.substr(5);
+			} else
+				key = 'connect/host';
+		break;
+		default:
+			throw new Error('Unhandled server setting `' + k + '`');
+	}
+	
+	servers.forEach(function(server) {
+		setPathedVal(server, key, o.fn ? o.fn(val, server) : val);
+	});
+};
+var checkOverrides = false;
+for(var k in servOptMap) {
+	servOptHelper(k, argv[k], 'post', ulOpts.servers.filter(function(server) {
+		// set options if posting is (or will be) enabled
+		return (!defNumConnPost && argv.connections) || server.postConnections;
+	}));
+	if(argv['check-' + k] !== null && argv['check-' + k] !== undefined) {
+		if(k == 'connections') {
+			// connections is special in that it's not an override
+			ulOpts.servers.forEach(function(server) {
+				if(!defNumConnCheck || server.checkConnections)
+					server.checkConnections = argv['check-' + k];
+			});
+		} else {
+			checkOverrides = true;
+		}
+	}
+}
+if(checkOverrides && argv['check-connections'] !== 0 && (defNumConnCheck || argv['check-connections'])) {
+	// go through servers, find ones with check connections enabled, and split out
+	var chkServ = [], addServ = [];
+	ulOpts.servers.forEach(function(server) {
+		if(!defNumConnCheck || server.checkConnections) {
+			if(server.postConnections) {
+				// split this server into two parts - one for checking, other for posting
+				var copy = JSON.parse(JSON.stringify(server));
+				copy.postConnections = 0;
+				chkServ.push(copy);
+				addServ.push(copy);
+				server.checkConnections = 0;
+			} else {
+				// this server is only used for checking, no need to split
+				chkServ.push(server);
+			}
+		}
+	});
+	
+	for(var k in servOptMap) {
+		servOptHelper(k, argv['check-' + k], 'check', chkServ);
+	}
+	
+	ulOpts.servers = ulOpts.servers.concat(addServ);
+}
+
 
 if(argv['dump-failed-posts']) {
 	try {
@@ -553,17 +627,6 @@ if(argv['dump-failed-posts']) {
 		}
 	} catch(x) {}
 }
-
-var hostFn = function(o, v) {
-	if(v.match(/^unix:/i))
-		o.path = v.substr(5);
-	else
-		o.host = v;
-};
-if(argv.host)
-	hostFn(ulOpts.server.connect, argv.host);
-if(argv['check-host'])
-	hostFn(ulOpts.check.server.connect, argv['check-host']);
 
 if(argv['copy-input']) {
 	var copyIncl, copyExcl, copyTarget = argv['copy-input'];
@@ -609,6 +672,12 @@ if(argv.header) {
 		}
 		ulOpts.postHeaders[kk] = argv.header[k];
 	}
+}
+
+// map custom meta tags
+if(argv.meta) {
+	for(var k in argv.meta)
+		ulOpts.nzb.metaData[k] = argv.meta[k];
 }
 
 if(argv['preload-modules']) {
