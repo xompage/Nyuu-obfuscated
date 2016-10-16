@@ -733,6 +733,9 @@ if(argv.progress) {
 			case 'stderrx':
 				progress.push({type: type});
 				stdErrProgress = true;
+				
+				if(argv['preload-modules'])
+					require('../lib/progrec');
 			break;
 			case 'tcp':
 			case 'http':
