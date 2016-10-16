@@ -1016,7 +1016,9 @@ fuploader.once('start', function(files, _uploader) {
 						var LINE_WIDTH = 35;
 						var barSize = Math.floor(chkPerc*LINE_WIDTH);
 						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
-						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, LINE_WIDTH) + '] ' + friendlySize(speed) + '/s, ETA ' + eta;
+						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
+							' ' + friendlySize(speed) + '/s, ETA ' + eta
+						: '');
 					} else {
 						// extended display
 						var posted = '' + uploader.articlesChecked;
