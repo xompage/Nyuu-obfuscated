@@ -986,7 +986,11 @@ fuploader.once('start', function(files, _uploader) {
 			case 'stderr':
 			case 'stderrx':
 				if(getProcessIndicator) break; // no need to double output =P
-				var postedSamples = [[0,0]];
+				var ProgressRecorder = require('../lib/progrec');
+				var byteSamples = new ProgressRecorder(180);
+				var progressSamples = new ProgressRecorder(180);
+				byteSamples.add(0);
+				progressSamples.add(0);
 				getProcessIndicator = function() {
 					var chkPerc = uploader.articlesChecked / totalPieces,
 					    pstPerc = uploader.articlesPosted / totalPieces,
@@ -996,10 +1000,9 @@ fuploader.once('start', function(files, _uploader) {
 					var speed = uploader.bytesPosted; // for first sample, just use current overall progress
 					var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
 					var advancement = completed;
-					if(postedSamples.length >= 2) {
-						var lastSample = postedSamples[postedSamples.length-1];
-						speed = (lastSample[0] - postedSamples[0][0]) / (postedSamples.length-1);
-						advancement = (lastSample[1] - postedSamples[0][1]) / (postedSamples.length-1);
+					if(byteSamples.count() >= 2) {
+						speed = byteSamples.average(4, 4*ulOpts.articleSize);
+						advancement = progressSamples.average(10, 20);
 					}
 					
 					var eta = (totalPieces - completed) / advancement;
@@ -1027,10 +1030,9 @@ fuploader.once('start', function(files, _uploader) {
 					}
 				};
 				var seInterval = setInterval(function() {
+					byteSamples.add(uploader.bytesPosted);
+					progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
 					process.stderr.write(getProcessIndicator());
-					postedSamples.push([uploader.bytesPosted, (uploader.articlesChecked + uploader.articlesPosted)/2]);
-					if(postedSamples.length >= 4) // maintain max 4 samples
-						postedSamples.shift();
 				}, 1000);
 				seInterval.unref();
 				process.on('finished', function() {
