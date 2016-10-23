@@ -125,7 +125,7 @@ copyQueueBuffer: 4, // number of article-sized chunks to buffer to copied stream
 useBufferPool: true, // self manage article buffers rather than rely on GC's management; also improves performance of writing to buffers
 headerAllocSize: 4096, // amount of buffer space to allocate for post headers, only used if useBufferPool is true
 
-diskReqSize: null, // chunk size when reading from disk; default = articleSize
+diskReqSize: null, // chunk size when reading from disk; default = Math.ceil(1048576/articleSize)*articleSize
 diskBufferSize: 1, // number of chunks to buffer
 articleQueueBuffer: null, // number of buffered articles; default is numConnections
 

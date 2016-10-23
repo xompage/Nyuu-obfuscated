@@ -198,7 +198,8 @@ NZB Output Options:
 
 Advanced Tuning Options:
 
-       --disk-req-size       Disk read request size (default `--article-size`)
+       --disk-req-size       Disk read request size (default
+                             roundup(1M, `--article-size`))
        --disk-buf-size       Number of requests to read-ahead (default 1). Set
                              to 0 to disable read-ahead buffering.
        --post-queue-size     Max number of buffered articles for posting
