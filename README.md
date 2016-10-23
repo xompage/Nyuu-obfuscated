@@ -197,13 +197,6 @@ Usage
 For command line usage, [see here](<help.txt>), [or here](<help-short.txt>) for
 a summarized list of options.
 
-As an example, if you’re interested in the exact command used by the Anime Tosho
-usenet bot, here it is: (note, this may not be optimal for you)
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/usr/bin/nodejs bin/nyuu --user [user] --password [pass] --host [host] --from "Anime Tosho <usenet.bot@animetosho.org>" --connections 8 --minify --log-time --group-files --skip-errors post-timeout,check-timeout,check-missing --on-post-timeout retry,strip-hdr=User-Agent,retry,ignore --check-tries 4 --check-post-tries 2 --check-connections 1 --check-delay 2s --progress http:localhost --subdirs keep --disk-req-size 28000K --post-queue-size 16 --request-retries 8 -H "Organization=Anime Tosho" [folder] --comment [torrentname] -M "x-generator=Nyuu [https://animetosho.org/app/nyuu]" -M "title=[torrentname]" -M "x-info-url=https://animetosho.org/view/[id]" --groups alt.binaries.multimedia.anime.highspeed --preload-modules -o "proc:///usr/bin/7z a -tgzip -bd -mx=9 -si [nzb]" 2>>[logfile]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Planned Features
 ================
 
