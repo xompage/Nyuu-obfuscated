@@ -10,9 +10,12 @@ function NNTPServer(opts) {
 	this.posts = {};
 	this.postIdMap = {};
 	this.groups = ['limbs', 'rifles', 'bloodbath']; // list of available groups
+	this.connectHook = function(){};
 	
 	this.server = require(this.opts.ssl ? 'tls' : 'net').createServer(function(c) {
-		new NNTPConnection(this.opts, this, c);
+		var conn = new NNTPConnection(this.opts, this, c);
+		this.connectHook(conn);
+		conn._respond(opts.denyPost ? 201 : 200, 'host test server');
 	}.bind(this));
 }
 NNTPServer.prototype = {
@@ -105,6 +108,9 @@ NNTPServer.prototype = {
 	},
 	onRequest: function(f) {
 		this.opts.requestHook = f;
+	},
+	onConnect: function(f) {
+		this.connectHook = f;
 	}
 };
 
@@ -113,7 +119,6 @@ function NNTPConnection(opts, server, conn) {
 	this.opts = opts;
 	this.server = server;
 	this.conn = conn;
-	this._respond(opts.denyPost ? 201 : 200, 'host test server');
 	
 	conn.on('data', this.onData.bind(this));
 	conn.on('error', function(err) {

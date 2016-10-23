@@ -130,6 +130,43 @@ it('complex test', function(done) {
 	});
 });
 
+it('should close connections on complete, even on hanging connection', function(done) {
+	var files = ['help.txt'];
+	var opts = {
+		server: {
+			postConnections: 2,
+			
+			timeout: 1000,
+			connTimeout: 1000,
+			reconnectDelay: 500,
+			connectRetries: 10,
+			requestRetries: 10,
+			postRetries: 10
+		},
+	};
+	
+	var s = Date.now();
+	(function(cb) {
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			var t = Date.now() - s;
+			assert(t < 500); // shouldn't wait for other connections to get through
+			server.close(function() {
+				cb(null, server);
+			});
+		});
+		var connCnt = 0;
+		server.onConnect(function(conn) {
+			// only let the 2nd connection do anything
+			if(++connCnt == 2) return;
+			conn._respond = function() {};
+		});
+	})(function(err, server) {
+		done(err);
+	});
+});
+
+
 it('should retry check if first attempt doesn\'t find it', function(done) {
 	var files = ['help.txt'];
 	var opts = {
