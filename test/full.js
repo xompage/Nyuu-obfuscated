@@ -7,8 +7,9 @@ var NNTPServer = require('./_nntpsrv');
 
 var lastServerPort = 0;
 var clientOpts = function(opts) {
-	var o = require('../config');
 	var deepMerge = require('../lib/util').deepMerge;
+	var o = {};
+	deepMerge(o, require('../config'));
 	deepMerge(o, {
 		server: {
 			connect: {
