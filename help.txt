@@ -216,6 +216,14 @@ Advanced Tuning Options:
                              able to load modules asynchronously. Usually is
                              slower, but may be useful if the CPU or disk is
                              overloaded.
+       --net-raw-speed       Track the raw network upload speed (flag option).
+                             If tracked, the speed is displayed at the end of
+                             the upload process, as well as the HTTP/TCP
+                             progress server.
+                             Default is enabled, so use `--no-net-raw-speed` to
+                             disable.
+                             Disabling this can slightly reduce CPU usage when
+                             uploading at very fast rates.
 
 Other Options:
 

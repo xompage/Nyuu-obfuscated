@@ -306,6 +306,9 @@ var optMap = {
 	'preload-modules': {
 		type: 'bool'
 	},
+	'net-raw-speed': {
+		type: 'bool'
+	},
 	'use-lazy-connect': {
 		type: 'bool',
 		map: 'useLazyConnect'
@@ -680,6 +683,12 @@ if(argv.meta) {
 		ulOpts.nzb.metaData[k] = argv.meta[k];
 }
 
+var trackNntpStats = true;
+if(argv['net-raw-speed'] === false) {
+	require('../lib/nntp').trackStats = false;
+	trackNntpStats = false;
+}
+
 if(argv['preload-modules']) {
 	if(ulOpts.server.secure || ulOpts.check.server.secure)
 		require('tls'); // will require('net') as well
@@ -1027,10 +1036,15 @@ fuploader.once('start', function(files, _uploader) {
 						var posted = '' + uploader.articlesChecked;
 						if(uploader.articlesChecked != uploader.articlesPosted)
 							posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
-						if(ret.length > 80)
-							// if too long, strip the raw post speed
-							ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) @ ' + friendlySize(speed) + '/s ';
+						if(trackNntpStats) {
+							ret += '(raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
+							if(ret.length > 80)
+								// if too long, strip the raw post speed
+								ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+						} else {
+							ret += 'ETA ' + eta;
+						}
 						return '\x1b[0G\x1B[0K' + ret;
 					}
 				};
@@ -1061,8 +1075,8 @@ fuploader.once('start', function(files, _uploader) {
 						'Articles posted: ' + uploader.articlesPosted,
 						'Articles checked: ' + uploader.articlesChecked,
 						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-						'Raw Posting Upload Rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
-						'',
+						trackNntpStats ? 'Raw Posting Upload Rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s\r\n' : '',
+						
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
 						'',
@@ -1219,7 +1233,7 @@ fuploader.once('start', function(files, _uploader) {
 				msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
 		}
 		
-		Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
+		Nyuu.log.info(msg + (trackNntpStats ? '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s' : ''));
 	};
 });
 fuploader.on('processing_file', function(file) {
