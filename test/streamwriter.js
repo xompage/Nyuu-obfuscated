@@ -59,7 +59,7 @@ it('should work', function(done) {
 
 it('should work (2)', function(done) {
 	var s = makeStream();
-	var w = new BufferedStreamWriter(s, 1);
+	var w = new BufferedStreamWriter(s, 0);
 	
 	w.write('abc', function(err) {
 		if(err) throw err;
@@ -93,5 +93,7 @@ it('should work (2)', function(done) {
 		});
 	});
 });
+
+// TODO: test volatile sources
 
 });
