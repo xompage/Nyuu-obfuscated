@@ -24,10 +24,10 @@ var clientOpts = function(opts) {
 			connectRetries: 1,
 			requestRetries: 1,
 			postRetries: 1,
-			connections: 1
+			postConnections: 1,
+			checkConnections: 0
 		},
 		check: {
-			server: {},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 0,
@@ -62,9 +62,9 @@ var clientOpts = function(opts) {
 		},
 	});
 	
-	deepMerge(o.check.server, o.server);
-	o.check.server.connections = 0;
+	// TODO: ability to test multi-server
 	deepMerge(o, opts);
+	o.servers = [o.server];
 	return o;
 };
 
@@ -90,7 +90,7 @@ describe('Nyuu', function() {
 it('basic test', function(done) {
 	doTest(['help.txt'], {
 		server: {
-			connections: 1
+			postConnections: 1
 		},
 		check: {
 			delay: 10,
@@ -108,12 +108,10 @@ it('basic test', function(done) {
 it('complex test', function(done) {
 	doTest(['lib/', 'help.txt'], {
 		server: {
-			connections: 3
+			postConnections: 3,
+			checkConnections: 1
 		},
 		check: {
-			server: {
-				connections: 1
-			},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 1,
@@ -136,12 +134,10 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 	var files = ['help.txt'];
 	var opts = {
 		server: {
-			connections: 1
+			postConnections: 1,
+			checkConnections: 1
 		},
 		check: {
-			server: {
-				connections: 1
-			},
 			delay: 10,
 			recheckDelay: 500,
 			tries: 2,
@@ -180,12 +176,10 @@ it('should retry post if post check finds first attempt missing', function(done)
 	var files = ['help.txt'];
 	var opts = {
 		server: {
-			connections: 1
+			postConnections: 1,
+			checkConnections: 1
 		},
 		check: {
-			server: {
-				connections: 1
-			},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 1,
@@ -212,12 +206,10 @@ it('should skip check-missing error if requested to do so', function(done) {
 	var files = ['help.txt'];
 	var opts = {
 		server: {
-			connections: 1
+			postConnections: 1,
+			checkConnections: 1
 		},
 		check: {
-			server: {
-				connections: 1
-			},
 			delay: 10,
 			recheckDelay: 10,
 			tries: 1,
@@ -245,7 +237,7 @@ it('should skip post-reject error if requested to do so', function(done) {
 	var files = ['help.txt'];
 	var opts = {
 		server: {
-			connections: 1,
+			postConnections: 1,
 			postRetries: 0
 		},
 		skipErrors: ['post-reject']
@@ -270,12 +262,10 @@ it('should skip check-timeout error if requested to do so', function(done) {
 	var files = ['help.txt'];
 	var opts = {
 		server: {
-			connections: 1
+			postConnections: 1,
+			checkConnections: 1
 		},
 		check: {
-			server: {
-				connections: 1
-			},
 			delay: 10,
 			tries: 1
 		},
