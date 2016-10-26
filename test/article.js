@@ -3,12 +3,13 @@
 var assert = require("assert");
 
 var MultiEncoder = require('../lib/article');
+var BufferPool = require('../lib/bufferpool');
 
 describe('Article', function() {
 
 // TODO: test case of header exceeding line length??
 
-it('should work', function(done) {
+var simpleCheck = function(pool) {
 	var a = new MultiEncoder('some\nfile', 6, 3);
 	assert.equal(a.filename, 'somefile');
 	assert.ok(a.line_size);
@@ -25,7 +26,7 @@ it('should work', function(done) {
 			assert.equal(size, 3);
 			return 'fromfield';
 		}
-	}, Buffer('abc'));
+	}, Buffer('abc'), pool);
 	assert.equal(a1.part, 1);
 	s = a1.data.toString();
 	
@@ -42,7 +43,7 @@ it('should work', function(done) {
 	
 	var a2 = a.generate({
 		'X-Test': ''
-	}, Buffer('def'));
+	}, Buffer('def'), pool);
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
 	headers = a2.data.slice(0, a2.postPos).toString();
@@ -54,6 +55,18 @@ it('should work', function(done) {
 	assert(!a2.headers.subject); // since we didn't supply one
 	
 	assert.equal(a.pos, 6);
+};
+
+it('basic unpooled post test', function(done) {
+	simpleCheck();
+	done();
+});
+it('basic (small) pooled post test', function(done) {
+	simpleCheck(new BufferPool(1));
+	done();
+});
+it('basic (large) pooled post test', function(done) {
+	simpleCheck(new BufferPool(4096));
 	done();
 });
 
