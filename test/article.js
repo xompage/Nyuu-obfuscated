@@ -55,6 +55,17 @@ var simpleCheck = function(pool) {
 	assert(!a2.headers.subject); // since we didn't supply one
 	
 	assert.equal(a.pos, 6);
+	
+	// test release+reload
+	var oldData = new Buffer(a1.data);
+	a1.releaseData();
+	a1.reloadData(new Buffer('abc'));
+	assert.equal(oldData.toString('hex'), a1.data.toString('hex'));
+	
+	oldData = new Buffer(a2.data);
+	a2.releaseData();
+	a2.reloadData(new Buffer('def'));
+	assert.equal(oldData.toString('hex'), a2.data.toString('hex'));
 };
 
 it('basic unpooled post test', function(done) {
@@ -99,8 +110,8 @@ it('should throw if sent data isn\'t expected amount', function(done) {
 	done();
 });
 
-// TODO: test use of sending a pool
-// TODO: test Post stuff?
+// TODO: test Post.* stuff?
 // TODO: check message IDs
+// TODO: test raw posts
 
 });
