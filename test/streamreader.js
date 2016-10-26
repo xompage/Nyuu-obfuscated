@@ -166,7 +166,7 @@ it('should deal with buffering disabled', function(done) {
 	var s = makeStream();
 	var r = new BufferedStreamReader(s, 0);
 	
-	var bigdata = Buffer(65536*4); // should be large enough to exceed any node buffers; has nothing to do with a particular fad term
+	var bigdata = new Buffer(65536*4); // should be large enough to exceed any node buffers; has nothing to do with a particular fad term
 	s.push(bigdata);
 	tl.defer(function() {
 		r.read(65536*2, function(err, data) {

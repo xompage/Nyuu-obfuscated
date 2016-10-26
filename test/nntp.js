@@ -46,7 +46,7 @@ NNTP.log = {
 
 // emulate a simple echo/expectation server
 function TestServer(onConn) {
-	this.data = Buffer(0);
+	this.data = new Buffer(0);
 	this.server = net.createServer(function(c) {
 		if(this._conn) throw new Error('Multiple connections received');
 		this._conn = c;
@@ -82,7 +82,7 @@ TestServer.prototype = {
 		if(this.data.length == this._expect.length) {
 			assert.equal(this.data.toString(), this._expect.toString());
 			this._expect = null;
-			this.data = Buffer(0);
+			this.data = new Buffer(0);
 			if(typeof this._expectAction == 'function')
 				this._expectAction.call(this);
 			else if(this._expectAction)
