@@ -1114,7 +1114,7 @@ fuploader.once('start', function(files, _uploader) {
 							var dumpPost = function(post) {
 								resp.write([
 									'Message-ID: ' + post.messageId,
-									'Subject: ' + post.headers.subject,
+									'Subject: ' + post.getHeader('subject'),
 									'Body length: ' + post.postLen,
 									'Post attempts: ' + post.postTries,
 									''

@@ -27,7 +27,8 @@ var simpleCheck = function(pool) {
 			return 'fromfield';
 		}
 	});
-	var a1 = a.generate(new Buffer('abc'), pool);
+	var a1Headers = {};
+	var a1 = a.generate(new Buffer('abc'), pool, a1Headers);
 	assert.equal(a1.part, 1);
 	s = a1.data.toString();
 	
@@ -36,16 +37,17 @@ var simpleCheck = function(pool) {
 	// first part should not have a crc32 (but may have a pcrc32)
 	assert(!s.match(/[^p]crc32=/));
 	assert.notEqual(headers.indexOf('first post!'), -1);
-	assert.equal(a1.headers.subject, 'first post!');
+	assert.equal(a1Headers.subject, 'first post!');
 	assert.notEqual(headers.indexOf('fromfield'), -1);
-	assert.equal(a1.headers.from, 'fromfield');
+	assert.equal(a1Headers.from, 'fromfield');
 	
 	// TODO: consider parsing data and checking everything
 	
 	a.setHeaders({
 		'X-Test': ''
 	});
-	var a2 = a.generate(new Buffer('def'), pool);
+	var a2Headers = {};
+	var a2 = a.generate(new Buffer('def'), pool, a2Headers);
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
 	headers = a2.data.slice(0, a2.postPos).toString();
@@ -53,8 +55,8 @@ var simpleCheck = function(pool) {
 	// check a2 has a crc32
 	assert.notEqual(s.indexOf('crc32='), -1);
 	assert.notEqual(headers.indexOf('X-Test:'), -1);
-	assert.equal(a2.headers['x-test'], '');
-	assert(!a2.headers.subject); // since we didn't supply one
+	assert.equal(a2Headers['x-test'], '');
+	assert(!a2Headers.subject); // since we didn't supply one
 	
 	assert.equal(a.pos, 6);
 	
