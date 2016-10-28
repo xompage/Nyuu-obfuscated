@@ -16,7 +16,7 @@ var simpleCheck = function(pool) {
 	
 	var s;
 	
-	var a1 = a.generate({
+	a.setHeaders({
 		Subject: 'first post!',
 		From: function(filename, filesize, part, parts, size) {
 			assert.equal(filename, 'somefile');
@@ -26,7 +26,8 @@ var simpleCheck = function(pool) {
 			assert.equal(size, 3);
 			return 'fromfield';
 		}
-	}, new Buffer('abc'), pool);
+	});
+	var a1 = a.generate(new Buffer('abc'), pool);
 	assert.equal(a1.part, 1);
 	s = a1.data.toString();
 	
@@ -41,9 +42,10 @@ var simpleCheck = function(pool) {
 	
 	// TODO: consider parsing data and checking everything
 	
-	var a2 = a.generate({
+	a.setHeaders({
 		'X-Test': ''
-	}, new Buffer('def'), pool);
+	});
+	var a2 = a.generate(new Buffer('def'), pool);
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
 	headers = a2.data.slice(0, a2.postPos).toString();
@@ -83,29 +85,32 @@ it('basic (large) pooled post test', function(done) {
 
 it('should throw if sent too many parts', function(done) {
 	var a = new MultiEncoder('file', 6, 6);
-	var a1 = a.generate({}, new Buffer('aabbcc'));
+	a.setHeaders({});
+	var a1 = a.generate(new Buffer('aabbcc'));
 	
 	assert.equal(a1.part, 1);
 	assert.notEqual(a1.data.toString().indexOf('crc32='), -1);
 	
 	assert.throws(function() {
-		a.generate({}, new Buffer('b'));
+		a.generate(new Buffer('b'));
 	}, Error);
 	done();
 });
 it('should throw if sent too much data', function(done) {
 	var a = new MultiEncoder('file', 3, 2);
-	a.generate({}, new Buffer('aa'));
+	a.setHeaders({});
+	a.generate(new Buffer('aa'));
 	assert.throws(function() {
-		a.generate({}, new Buffer('bb'));
+		a.generate(new Buffer('bb'));
 	}, Error);
 	done();
 });
 it('should throw if sent data isn\'t expected amount', function(done) {
 	var a = new MultiEncoder('file', 5, 3);
-	a.generate({}, new Buffer('aa'));
+	a.setHeaders({});
+	a.generate(new Buffer('aa'));
 	assert.throws(function() {
-		a.generate({}, new Buffer('bb'));
+		a.generate(new Buffer('bb'));
 	}, Error);
 	done();
 });
