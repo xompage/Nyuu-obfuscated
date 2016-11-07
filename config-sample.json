@@ -1,0 +1,28 @@
+{
+	"host":               "127.0.0.1",
+	"port":               119,
+	"ssl":                false,
+	"ignore-cert":        false,
+	"user":               "",
+	"password":           "",
+	"connections":        3,
+	
+	"comment":            "",
+	"from":               "Snazzy Poster <me@localhost>",
+	"groups":             "alt.binaries.test",
+	"header":             [],
+	
+	"check-connections":  0,
+	"check-tries":        3,
+	"check-delay":        "5s",
+	"check-retry-delay":  "30s",
+	"check-post-tries":   1,
+	
+	"skip-errors":        false,
+	
+	"out":                null,
+	"overwrite":          false,
+	"meta":               [],
+	
+	"quiet":              false
+}

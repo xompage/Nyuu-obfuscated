@@ -62,8 +62,15 @@ NZB Output Options:
 Other Options:
 
   -q,  --quiet               Only show warnings/errors. (flag option)
-  -C,  --config              Use a custom configuration file, see config.js for
-                             an example
+  -C,  --config              Use a custom configuration file, see
+                             config-sample.json for an example. The options
+                             correspond with the command arguments documented
+                             in this help file (full options only, short
+                             aliases aren't supported).
+                             Nyuu also accepts a complex config file, see
+                             config.js for an example.
+                             SECURITY WARNING: do not load untrusted config
+                             files as they can be malicious
   -?,  --help                Display this help screen (flag option)
        --help-full           Display full help screen (flag option)
 

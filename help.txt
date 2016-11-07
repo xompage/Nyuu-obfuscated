@@ -272,8 +272,15 @@ Other Options:
                                    Start HTTP server on 2001::1 port 1234
                                --progress tcp:localhost
                                    Start TCP server on localhost on random port
-  -C,  --config              Use a custom configuration file, see config.js for
-                             an example
+  -C,  --config              Use a custom configuration file, see
+                             config-sample.json for an example. The options
+                             correspond with the command arguments documented
+                             in this help file (full options only, short
+                             aliases aren't supported).
+                             Nyuu also accepts a complex config file, see
+                             config.js for an example.
+                             SECURITY WARNING: do not load untrusted config
+                             files as they can be malicious
   -?,  --help                Display a summarized list of options (flag option)
        --help-full           Display this help screen (flag option)
        --version             Print application version number (flag option)

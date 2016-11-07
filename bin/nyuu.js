@@ -231,7 +231,7 @@ var optMap = {
 		fn: function(v) {
 			if(v === '-')
 				return process.stdout;
-			else if(v.match(/^proc:\/\//i)) {
+			else if(v && v.match(/^proc:\/\//i)) {
 				return function(cmd) {
 					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
 					// if process exits early, the write stream should break and throw an error
@@ -315,6 +315,7 @@ var optMap = {
 		alias: 'e',
 		map: 'skipErrors',
 		fn: function(v) {
+			if(!v) return false;
 			if(v.toLowerCase() == 'all')
 				return true;
 			return v.split(',').map(function(s) {
@@ -470,7 +471,19 @@ var ulOpts = require('../config.js');
 if(argv.config) {
 	// TODO: allow proc:// or json:// ?
 	var cOpts = require(require('fs').realpathSync(argv.config));
-	util.deepMerge(ulOpts, cOpts);
+	if(cOpts.isFullConfig)
+		util.deepMerge(ulOpts, cOpts);
+	else {
+		// simple config format, just set unset CLI args
+		var verbosityOnCli = (argv.quiet || argv.verbose);
+		for(var k in cOpts) {
+			// allow --quiet or --verbose to override whatever is specified in the config, without error
+			if(verbosityOnCli && (k == 'quiet' || k == 'verbose')) continue;
+			
+			if(!(k in argv) || argv[k] === null)
+				argv[k] = cOpts[k];
+		}
+	}
 }
 
 var setPathedVal = function(base, key, val) {

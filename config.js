@@ -2,6 +2,7 @@
 // This file contains all the default options for Nyuu
 // You can customize these options to avoid having to specify them on the command line, however it is recommended that you not edit this file
 // Instead, copy this file elsewhere and use the `--config` option to get Nyuu to use this copy. Missing options there will sourced from this file
+// WARNING: this file is not maintained for backwards compatibility; this means that you'll need to re-set all custom options every time Nyuu is upgraded!
 
 module.exports = {
 
@@ -144,5 +145,5 @@ dumpPostLoc: '', // dump all failed articles to this location (the Message-ID wi
 
 
 
-
+isFullConfig: true // leave here to indicate that this is a full config file, as opposed to the simplified config file
 };
