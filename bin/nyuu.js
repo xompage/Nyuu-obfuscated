@@ -106,6 +106,7 @@ var servOptMap = {
 		postOnly: true,
 		keyMap: 'onPostTimeout',
 		fn: function(v) {
+			if(!v) return;
 			return v.split(',').map(function(s) {
 				var v = s.trim().toLowerCase();
 				if(v != 'retry' && v != 'ignore' && !v.match(/^strip-hdr=./))
@@ -199,6 +200,7 @@ var optMap = {
 		alias: 's',
 		map: 'postHeaders/Subject',
 		fn: function(v) {
+			if(!v) return;
 			return function(filenum, filenumtotal, filename, filesize, part, parts, size) {
 				return v.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(p) {
 					switch(p[1].toLowerCase()) {
@@ -248,7 +250,7 @@ var optMap = {
 		type: 'string',
 		map: 'nzb/compression',
 		fn: function(v) {
-			if(['gzip','zlib','deflate','xz'].indexOf(v) < 0)
+			if(v && ['gzip','zlib','deflate','xz'].indexOf(v) < 0)
 				error('Invalid value supplied for `--nzb-compress`');
 			return v;
 		}
@@ -278,6 +280,7 @@ var optMap = {
 		alias: 'r',
 		map: 'subdirs',
 		fn: function(v) {
+			if(!v) return 'skip';
 			if(['skip','keep'].indexOf(v) < 0)
 				error('Invalid option supplied for `--subdirs`');
 			return v;
