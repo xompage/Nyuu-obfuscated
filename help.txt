@@ -133,6 +133,9 @@ Other Upload/Check Options:
                                                 posted article; assume success
                                  check-fail: check failed for any reason; if
                                              set, assume success
+                                 connect-fail: connect/login failed for any
+                                               reason; if set, ignore failed
+                                               connections
                              Note that for requests that are retried (posting),
                              only the last result is considered.
                              Also note: Nyuu will exit with return code 32
