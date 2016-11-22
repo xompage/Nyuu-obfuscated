@@ -364,6 +364,24 @@ it('should not connect if destroyed straight after', function(done) {
 });
 // TODO: test both of the above with an active request
 
+it('should notify cancellation if cancelled during connect retry wait', function(done) {
+	async.waterfall([
+		killServer,
+		function(cb) {
+			var client = newNNTP();
+			client.connect(function(err) {
+				assert(err.code, 'cancelled');
+				assert.equal(client.state, 'inactive');
+				cb();
+			});
+			// this is triggered to run whilst the reconnect timeout is running
+			setTimeout(function() {
+				client.destroy();
+			}, 100);
+		}
+	], done);
+});
+
 
 it('should handle half-open end request', function(done) {
 	var server, client;
@@ -1011,6 +1029,44 @@ it('should retry on timeout during init sequence', function(done) {
 });
 it('should throw error on auth failure');
 it('should throw error if selected group fails on connect');
+
+it('test handling of connection failure if init sequence almost completes', function(done) {
+	var server, client;
+	async.waterfall([
+		killServer,
+		function(cb) {
+			var dropped = false;
+			var s = Date.now();
+			var server = new TestServer(function() {
+				// first connection = drop right after sending a response, otherwise continue
+				if(dropped) {
+					var timeTaken = Date.now() - s;
+					assert(timeTaken >= 300); // reconnect delay should be 300ms
+					assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+					server.respond('200 host test server');
+				} else {
+					server.respond('200 host test server');
+					server.drop();
+					dropped = true;
+				}
+			});
+			server.listen(0, function() {
+				cb(null, server, newNNTP());
+			});
+			currentServer = server;
+		},
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
 
 it('should retry on a single auth failure');
 
