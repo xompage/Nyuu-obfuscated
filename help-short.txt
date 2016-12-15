@@ -16,7 +16,7 @@ Upload Server Options:
   -P,  --port                Port to connect to (default 119 or 563 if `--ssl`
                              is specified)
   -S,  --ssl                 Connect over SSL (flag option)
-       --ignore-cert         Ignore SSL certificate problems
+       --ignore-cert         Ignore SSL certificate problems (flag option)
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 3)

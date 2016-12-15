@@ -23,7 +23,7 @@ Upload Server Options:
        --tcp-keep-alive      If set, enables TCP keep-alive with the probe
                              interval set the number specified.
   -S,  --ssl                 Connect over SSL (flag option)
-       --ignore-cert         Ignore SSL certificate problems
+       --ignore-cert         Ignore SSL certificate problems (flag option)
        --sni-host            SNI host name to send if connecting over SSL
        --ssl-ciphers         List of SSL ciphers to use, in OpenSSL format
                              See https://nodejs.org/api/tls.html for defaults
