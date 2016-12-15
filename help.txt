@@ -48,8 +48,10 @@ Article/Post Options:
   -a,  --article-size        Target size of each news post (default 700K). Note
                              that yEnc makes the actual size larger.
        --article-line-size   Max bytes per line (default 128)
-  -t,  --comment             Comment to insert before post subject
-       --comment2            Comment to append after post subject
+  -t,  --comment             Comment to insert before post subject. Ignored if
+                             `--subject` is specified
+       --comment2            Comment to append after post subject. Ignored if
+                             `--subject` is specified
   -F,  --group-files         Group files by filename, similar to how indexers
                              would see them. This only affects the file counter
                              placed in the subject (flag option)
@@ -63,7 +65,7 @@ Article/Post Options:
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
                              Default is similar to the following:
-                                 {comment} [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
+                                 [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize}
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>'
   -g,  --groups              Shortcut for `-H Newsgroups=...`

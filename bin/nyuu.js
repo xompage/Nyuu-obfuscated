@@ -202,8 +202,8 @@ var optMap = {
 		fn: function(v) {
 			if(!v) return;
 			return function(filenum, filenumtotal, filename, filesize, part, parts, size) {
-				return v.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(p) {
-					switch(p[1].toLowerCase()) {
+				return v.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(m, token) {
+					switch(token.toLowerCase()) {
 						case 'filenum': return filenum;
 						case 'files': return filenumtotal;
 						case 'filename': return filename;
