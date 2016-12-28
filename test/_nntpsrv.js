@@ -71,7 +71,7 @@ NNTPServer.prototype = {
 		if(this.onPostHook) {
 			var f = this.onPostHook;
 			this.onPostHook = null;
-			dropPost = f(post);
+			dropPost = f(post, headers, msg);
 		}
 		
 		if(!dropPost && post.messageId)

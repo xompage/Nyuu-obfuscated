@@ -4,10 +4,10 @@ var assert = require("assert");
 var tl = require('./_testlib');
 var FileUploader = require('../lib/fileuploader');
 var NNTPServer = require('./_nntpsrv');
+var deepMerge = require('../lib/util').deepMerge;
 
 var lastServerPort = 0;
 var clientOpts = function(opts) {
-	var deepMerge = require('../lib/util').deepMerge;
 	var o = {};
 	deepMerge(o, require('../config'));
 	deepMerge(o, {
@@ -209,6 +209,54 @@ it('should retry check if first attempt doesn\'t find it', function(done) {
 	});
 });
 
+it('test check cache eviction and reload', function(done) {
+	var files = ['help.txt'];
+	var opts = {
+		server: {
+			postConnections: 1,
+			checkConnections: 1
+		},
+		check: {
+			delay: 0,
+			recheckDelay: 0,
+			tries: 1,
+			postRetries: 1,
+			queueCache: 0,
+			queueBuffer: 5
+		}
+	};
+	
+	var makePostStr = function(_headers, msg) {
+		var headers = {};
+		deepMerge(headers, _headers);
+		delete headers['message-id'];
+		return JSON.stringify(headers) + msg;
+	};
+	
+	// TODO: actually check that the post was dropped from memory
+	// TODO: perhaps test dropping posts other than the first
+	(function(cb) {
+		var server = testSkel(files, opts, function(err) {
+			if(err) return cb(err);
+			server.close(function() {
+				cb(null, server);
+			});
+		});
+		var post, firstStr;
+		server.onPostHook = function(post, headers, msg) {
+			firstStr = makePostStr(headers, msg);
+			server.onPostHook = function(post, headers, msg) {
+				assert.equal(firstStr, makePostStr(headers, msg));
+			};
+			return true; // drop first post
+		};
+	})(function(err, server) {
+		if(err) return done(err);
+		assert.equal(Object.keys(server.posts.rifles).length, 1);
+		assert.equal(Object.keys(server.postIdMap).length, 1);
+		done(err);
+	});
+});
 
 it('should retry post if post check finds first attempt missing', function(done) {
 	var files = ['help.txt'];
