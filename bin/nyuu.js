@@ -1129,9 +1129,11 @@ fuploader.once('start', function(files, _uploader) {
 								'Content-Type': 'text/plain'
 							});
 							var dumpPost = function(post) {
+								var subj = post.getHeader('subject');
+								if(subj === null) subj = '[unknown, post evicted from cache]';
 								resp.write([
 									'Message-ID: ' + post.messageId,
-									'Subject: ' + post.getHeader('subject'),
+									'Subject: ' + subj,
 									'Body length: ' + post.postLen,
 									'Post attempts: ' + post.postTries,
 									''
