@@ -274,4 +274,33 @@ it('test read after close (2)', function(done) {
 
 // TODO: possible to test cases involving slow disk reads?
 
+it('test readRange', function(done) {
+	var r = new BufferedFileReader('./test/10bytes.txt', 10, new Buffer(20));
+	var buf = new Buffer(4);
+	r.readRange(0, buf, function(err, b) {
+		assert(!err);
+		assert.equal(b.toString(), '0123');
+		
+		r.readRange(2, buf, function(err, b) {
+			assert(!err);
+			assert.equal(b.toString(), '2345');
+			
+			// test reading over edge
+			r.readRange(8, buf, function(err, b) {
+				assert(!err);
+				assert.equal(b.toString(), '89');
+				
+				// test invalid range
+				r.readRange(12, buf, function(err, b) {
+					assert(!err);
+					assert.equal(b.toString(), '');
+					
+					done();
+				});
+				
+				
+			});
+		});
+	});
+});
 });
