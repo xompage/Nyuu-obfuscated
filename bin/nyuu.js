@@ -1076,6 +1076,7 @@ fuploader.once('start', function(files, _uploader) {
 						'Articles read: ' + uploader.articlesRead,
 						'Articles posted: ' + uploader.articlesPosted,
 						'Articles checked: ' + uploader.articlesChecked,
+						'Articles reloaded: ' + uploader.articlesReloaded,
 						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
 						'Raw Posting Upload Rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
 						'',
