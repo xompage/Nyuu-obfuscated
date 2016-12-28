@@ -1172,11 +1172,18 @@ fuploader.once('start', function(files, _uploader) {
 								}
 							}
 							if(post) {
-								// dump post from check queue
-								resp.writeHead(200, {
-									'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
-								});
-								resp.write(post.data);
+								if(post.data) {
+									// dump post from check queue
+									resp.writeHead(200, {
+										'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
+									});
+									resp.write(post.data);
+								} else {
+									resp.writeHead(500, {
+										'Content-Type': 'text/plain'
+									});
+									resp.write('Specified post exists, but cannot be retrieved as it has been evicted from cache');
+								}
 							} else {
 								resp.writeHead(404, {
 									'Content-Type': 'text/plain'
