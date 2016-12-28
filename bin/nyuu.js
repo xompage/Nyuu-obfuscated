@@ -302,6 +302,10 @@ var optMap = {
 		type: 'int',
 		map: 'check/queueBuffer'
 	},
+	'check-queue-cache': {
+		type: 'int',
+		map: 'check/queueCache'
+	},
 	'use-post-pool': {
 		type: 'bool',
 		map: 'useBufferPool'

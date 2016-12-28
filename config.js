@@ -52,8 +52,8 @@ check: {
 	tries: 3, // number of check attempts; should be 0 if not performing post checks
 	group: '', // if set, will switch checking connections to this group; some servers seem to want one when STATing posts, otherwise they fail to show them; if set, should be a valid group you never post to, eg "bit.test"
 	postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
-	queueCache: null, // maximum number of cached posts in the post-check queue; if this number is exceeded, posts are dropped from cache if possible; if posts cannot be dropped from cache, this value acts like queueBuffer and will pause uploading when full. Caching is only useful if posts need to be re-posted due to a failure condition, in which case, uncached posts need to be re-generated off disk
-	queueBuffer: null, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size; default is numConnections*8
+	queueCache: null, // maximum number of cached posts in the post-check queue; if this number is exceeded, posts are dropped from cache if possible; if posts cannot be dropped from cache, this value acts like queueBuffer and will pause uploading when full. Caching is only useful if posts need to be re-posted due to a failure condition, in which case, uncached posts need to be re-generated off disk; default 5 or min(connections*8,100) if unseekable streams are used
+	queueBuffer: 10000, // maximum number of posts in the post-check queue; if this number is exceeded, uploading is paused until the queue is emptied below this size
 },
 
 skipErrors: [], // list of errors to skip; can be set to true to imply all errors; valid options are 

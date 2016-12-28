@@ -112,9 +112,7 @@ Post Check Options:
                              disable re-posting articles (default 1)
        --check-queue-size    Max number of articles queued for checking.
                              Posting will stall if the number of articles to be
-                             checked exceeds this number. Increase this number
-                             to avoid these stalls, at the expense of higher
-                             memory usage (default min(`--connections`*8, 100))
+                             checked exceeds this number. Default 10000.
 
 Other Upload/Check Options:
 
@@ -209,6 +207,15 @@ Advanced Tuning Options:
                              to 0 to disable read-ahead buffering.
        --post-queue-size     Max number of buffered articles for posting
                              (default `--connections`)
+       --check-queue-cache   Max number of articles to cache in the check queue
+                             (default 5, or if un-seekable streams are present,
+                             min(`--connections`*8, 100)). Cache is not used if
+                             `--check-post-tries` is 0. Caching prevents
+                             articles from being re-read off disk if reposting
+                             is necessary. Note that if un-seekable streams are
+                             present, this option will limit the max number of
+                             articles that can be queued for checking, as these
+                             posts cannot be dropped from cache.
        --use-post-pool       Use a buffer pool to improve memory management.
                              Buffers are pre-allocated, which can also improve
                              performance, but can increase memory usage.
