@@ -1001,7 +1001,6 @@ fuploader.once('start', function(files, _uploader) {
 				var logInterval = setInterval(function() {
 					Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
 				}, prg.interval);
-				logInterval.unref();
 				process.on('finished', function() {
 					clearInterval(logInterval);
 				});
@@ -1059,7 +1058,6 @@ fuploader.once('start', function(files, _uploader) {
 					progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
 					process.stderr.write(getProcessIndicator());
 				}, 1000);
-				seInterval.unref();
 				process.on('finished', function() {
 					clearInterval(seInterval);
 				});
