@@ -261,9 +261,11 @@ NNTPConnection.prototype = {
 		return this.server.addPost(h, data);
 	},
 	_respond: function(code, msg) {
-		this.conn.write(code + ' ');
+		this.conn.write(code + ' ' + msg + '\r\n');
+		// slower, but may pick up more bugs?
+		/* this.conn.write(code + ' ');
 		this.conn.write(msg);
-		this.conn.write('\r\n');
+		this.conn.write('\r\n'); */
 	}
 };
 
