@@ -917,25 +917,16 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	}
 	return file;
 }), ulOpts, function(err) {
-	var setRtnCode = function(code) {
-		if(isNode010 && (!processes || !processes.running)) // .exitCode not available in node 0.10.x
-			process.exit(code);
-		else
-			process.exitCode = code;
-	};
 	if(getProcessIndicator)
 		process.removeListener('exit', writeNewline);
 	getProcessIndicator = null;
 	process.emit('finished');
 	if(err) {
 		displayCompleteMessage(err);
-		setRtnCode(33);
+		process.exitCode = 33;
 	} else {
 		displayCompleteMessage();
-		if(errorCount)
-			setRtnCode(32);
-		else
-			process.exitCode = 0;
+		process.exitCode = errorCount ? 32 : 0;
 	}
 	(function(cb) {
 		if(processes && processes.running) {
@@ -948,7 +939,12 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			});
 		} else cb();
 	})(function() {
-		if(isNode010 && process.exitCode) process.exit(process.exitCode);
+		if(isNode010 && process.exitCode) {
+			// hack for lack of .exitCode support on node 0.10
+			process.on('exit', function() {
+				process.exit(process.exitCode);
+			});
+		}
 		setTimeout(function() {
 			Nyuu.log.warn('Process did not terminate cleanly');
 			process.exit();
