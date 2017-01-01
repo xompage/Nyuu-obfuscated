@@ -81,7 +81,9 @@ fastest](<bench/info.md#benchmark-2>)) usenet posters
 
 **Unique features:** the not so usual stuff
 
--   Pipe input/output from/to processes instead of files
+-   Pipe input/output from/to processes instead of files, plus the ability to
+    pipe out a copy of read input to an external process without incurring
+    additional disk reads
 
 -   Extensive upload diagnostic details available (via optional TCP/HTTP status
     server) to help tune settings or find problems
@@ -205,7 +207,7 @@ Planned Features
 
 -   Streaming 7-Zip creation
 
--   Multi-server support for both posting and checking
+-   Improve multi-server support for both posting and checking
 
 -   Repost missing articles from NZB, and/or some sort of resumption support
 
