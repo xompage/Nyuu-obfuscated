@@ -701,10 +701,10 @@ if(argv.meta) {
 }
 
 if(argv['preload-modules']) {
-	if(ulOpts.server.secure || ulOpts.check.server.secure)
-		require('tls'); // will require('net') as well
-	else
-		require('net');
+	require('net'); // tls requires it, so may as well...
+	ulOpts.servers.forEach(function(server) {
+		if(server.secure) require('tls');
+	});
 	// we won't consider modules loaded by the UploadManager constructor (zlib/xz, nzbbuffer, bufferpool, procman) as 'too late', since it occurs before the 'start' event is fired, hence won't bother preloading these here
 }
 
