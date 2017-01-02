@@ -978,6 +978,9 @@ var friendlyTime = function(t, compact) {
 		ret += decimalPoint + lpad(t + '', 3, '0');
 	return ret;
 };
+var toPercent = function(n) {
+	return (Math.round(n*10000)/100).toFixed(2) + '%';
+};
 var retArg = function(_) { return _; };
 fuploader.once('start', function(files, _uploader) {
 	var totalSize = 0, totalPieces = 0, totalFiles = 0;
@@ -1012,7 +1015,7 @@ fuploader.once('start', function(files, _uploader) {
 				getProcessIndicator = function() {
 					var chkPerc = uploader.articlesChecked / totalPieces,
 					    pstPerc = uploader.articlesPosted / totalPieces,
-					    totPerc = Math.round((chkPerc+pstPerc)*5000)/100;
+					    totPerc = toPercent((chkPerc+pstPerc)/2);
 					
 					// calculate speed over last 4s
 					var speed = uploader.bytesPosted; // for first sample, just use current overall progress
@@ -1034,7 +1037,7 @@ fuploader.once('start', function(files, _uploader) {
 						var LINE_WIDTH = 35;
 						var barSize = Math.floor(chkPerc*LINE_WIDTH);
 						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
-						return '\x1b[0G\x1B[0K ' + lpad(totPerc.toFixed(2), 6) + '%  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
+						return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
 							' ' + friendlySize(speed) + '/s, ETA ' + eta
 						: '');
 					} else {
@@ -1042,7 +1045,7 @@ fuploader.once('start', function(files, _uploader) {
 						var posted = '' + uploader.articlesChecked;
 						if(uploader.articlesChecked != uploader.articlesPosted)
 							posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc.toFixed(2) + '%) @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
+						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
 						if(ret.length > 80)
 							// if too long, strip the raw post speed
 							ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
@@ -1071,17 +1074,19 @@ fuploader.once('start', function(files, _uploader) {
 						'Start time: ' + (new Date(startTime)),
 						'',
 						'Total articles: ' + totalPieces,
-						'Articles read: ' + uploader.articlesRead + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
-						'Articles posted: ' + uploader.articlesPosted + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-						'Articles checked: ' + uploader.articlesChecked,
+						'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
+						'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
+						'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
 						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-						'Raw Posting Upload Rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s',
+						'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
 						'',
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
 						'',
-						'Post queue size: ' + uploader.queue.queue.length + (uploader.queue.hasFinished ? ' (finished)' : ''),
-						'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + (uploader.checkQueue.hasFinished ? ' (finished)' : ''),
+						'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
+						'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
+						'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
+						'Re-read queue size: ' + uploader.reloadQueue.queue.length,
 						'', ''
 					].join('\r\n'));
 					
