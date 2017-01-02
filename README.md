@@ -5,8 +5,9 @@ Nyuu
 
 Nyuu is a **command-line [binary usenet poster](<https://en.wikipedia.org/wiki/Usenet#Binary_content>)**.
 
-Nyuu is designed primarily to be fast, efficient and customizable, exposing all
-the interesting bits and pieces.
+Nyuu is designed primarily to be fast/efficient, reliable and customizable,
+exposing all the interesting bits and pieces. From what I’ve seen, Nyuu excels
+more than any other usenet posting client in these aspects.
 
 Nyuu runs on top of node.js (which *everyone* knows is [bad ass rock star
 tech](<https://www.youtube.com/watch?v=bzkRVzciAZg>)) with minimal dependencies.
@@ -34,7 +35,8 @@ Features
 -   Sub-directory handling
 
 **Fast & efficient:** Nyuu is amongst the fastest (if not [the
-fastest](<bench/info.md#benchmark-2>)) usenet posters
+fastest](<bench/info.md#benchmark-2>)) usenet posters, designed to run on low
+power, overloaded servers with \>= 1Gbps connections
 
 -   Multiple uploading connections
 
@@ -48,6 +50,9 @@ fastest](<bench/info.md#benchmark-2>)) usenet posters
 
 -   No unnecessary disk reads - only performs a single, sequential read pass
     over files
+
+    -   If a post needs to be resubmitted, due to a check failure, and it is not
+        cached, it will need to be re-read off disk
 
     -   PAR2 generation (when integrated) will require an extra initial pass of
         just the first 16KB of each file, and may require multiple read passes
@@ -229,10 +234,10 @@ my rather sour and depressing comments. Many of these are probably great, but,
 competition and, ya'know...
 
 -   [GoPostStuff](<https://github.com/madcowfred/GoPostStuff/>): relatively
-    newer post tool written in Go, by the same author as Newsmangler. Appears
-    to no longer be in development, and the code doesn't work as is due to
-    invalid URL references (forks exist which have corrected this issue).
-    Doesn’t appear to support NZB generation.
+    newer post tool written in Go, by the same author as Newsmangler. Appears to
+    no longer be in development, and the code doesn't work as is due to invalid
+    URL references (forks exist which have corrected this issue). Doesn’t appear
+    to support NZB generation.
 
 -   [Newsmangler](<https://github.com/madcowfred/newsmangler>): no longer
     maintained tool written in Python. Relatively basic and lacks some features
@@ -272,20 +277,24 @@ Other usenet posters I've come across:
 
 -   PowerPost variants such as:
 
-    -   CamelSystem PowerPost (can't find official site, but [can be downloaded from here](https://www.binaries4all.com/powerpost/pp24_en.zip))
-    -   [YEnc-Power-Post-A&A](http://powerpost.free.fr/)
+    -   CamelSystem PowerPost (can't find official site, but [can be downloaded
+        from here](<https://www.binaries4all.com/powerpost/pp24_en.zip>))
+
+    -   [YEnc-Power-Post-A&A](<http://powerpost.free.fr/>)
 
 -   EasyUSENET Uploader
 
--   [JBinUp](http://www.jbinup.com/en/)
+-   [JBinUp](<http://www.jbinup.com/en/>)
 
--   [nntpPoster](https://github.com/boranblok/nntpPoster)
+-   [nntpPoster](<https://github.com/boranblok/nntpPoster>)
 
--   [Pan](http://pan.rebelbase.com/)
+-   [Pan](<http://pan.rebelbase.com/>)
 
--   yEncBin Poster ([website dead](http://members.home.nl/yencbin_poster/), download [currently available here](https://mega.co.nz/#!uFtHmRzZ!MmgH-n-TRzTraubpnTvsWTEseX03OpPeuQXLDYp9k3M))
+-   yEncBin Poster ([website dead](<http://members.home.nl/yencbin_poster/>),
+    download [currently available
+    here](<https://mega.co.nz/#!uFtHmRzZ!MmgH-n-TRzTraubpnTvsWTEseX03OpPeuQXLDYp9k3M>))
 
-Some older utilities listed [here](http://yenc-post.org/posting.htm)
+Some older utilities listed [here](<http://yenc-post.org/posting.htm>)
 
 License
 =======
