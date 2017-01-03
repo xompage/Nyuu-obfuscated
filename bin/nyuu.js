@@ -931,6 +931,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 	(function(cb) {
 		if(processes && processes.running) {
 			var procWarnTO = setTimeout(function() {
+				if(!processes.running) return;
 				Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
 			}, 1000).unref();
 			processes.onEnd(function() {
