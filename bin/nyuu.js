@@ -947,7 +947,26 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			});
 		}
 		setTimeout(function() {
-			Nyuu.log.warn('Process did not terminate cleanly');
+			if(process._getActiveHandles) { // undocumented function, but seems to always work
+				var ah = process._getActiveHandles();
+				var hTypes = {};
+				ah.forEach(function(h) {
+					var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
+					if(cn in hTypes)
+						hTypes[cn]++;
+					else
+						hTypes[cn] = 1;
+				});
+				var handleStr = '';
+				for(var hn in hTypes) {
+					handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
+				}
+				Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
+				if(verbosity >= 4) {
+					process.stderr.write(require('util').inspect(ah, {colors: process.stderr.isTTY}) + '\n');
+				}
+			} else
+				Nyuu.log.warn('Process did not terminate cleanly');
 			process.exit();
 		}, 5000).unref();
 	});
