@@ -1010,7 +1010,11 @@ fuploader.once('start', function(files, uploader) {
 		totalPieces += Math.ceil(sz / ulOpts.articleSize);
 		totalFiles++;
 	}
-	Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
+	if(argv['input-raw-posts']) {
+		totalPieces = totalFiles;
+		Nyuu.log.info('Uploading ' + totalPieces + ' article(s) totalling about ' + friendlySize(totalSize));
+	} else
+		Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
 	
 	var startTime = Date.now();
 	progress.forEach(function(prg) {
