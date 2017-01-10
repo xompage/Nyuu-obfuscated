@@ -351,7 +351,7 @@ it('should not connect if destroyed straight after', function(done) {
 			server = _server;
 			client = _client;
 			client.connect(function(err) {
-				assert(err.code, 'cancelled');
+				assert.equal(err.code, 'cancelled');
 				cb();
 			});
 			client.destroy();
@@ -362,7 +362,6 @@ it('should not connect if destroyed straight after', function(done) {
 		}
 	], done);
 });
-// TODO: test both of the above with an active request
 
 it('should notify cancellation if cancelled during connect retry wait', function(done) {
 	async.waterfall([
@@ -370,7 +369,7 @@ it('should notify cancellation if cancelled during connect retry wait', function
 		function(cb) {
 			var client = newNNTP();
 			client.connect(function(err) {
-				assert(err.code, 'cancelled');
+				assert.equal(err.code, 'cancelled');
 				assert.equal(client.state, 'inactive');
 				cb();
 			});
@@ -382,40 +381,147 @@ it('should notify cancellation if cancelled during connect retry wait', function
 	], done);
 });
 
+it('should notify cancellation + kill reconnect if ended during connect retry wait', function(done) {
+	async.waterfall([
+		killServer,
+		function(cb) {
+			var client = newNNTP();
+			client.connect(function(err) {
+				assert.equal(err.code, 'cancelled');
+				assert.equal(client.state, 'inactive');
+				cb();
+			});
+			// this is triggered to run whilst the reconnect timeout is running
+			setTimeout(function() {
+				client.end();
+			}, 100);
+		}
+	], done);
+});
 
-it('should handle half-open end request', function(done) {
+it('should notify cancellation if cancelled during authentication', function(done) {
 	var server, client;
 	async.waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
-			client.connect(cb);
+			client.opts.user = 'nyuu';
+			client.opts.password = 'iamreallylucy';
+			
+			server.expect('AUTHINFO USER nyuu\r\n', function() {
+				assert.equal(client.state, 'authenticating');
+				client.destroy();
+				assert.equal(client.state, 'inactive');
+			});
+			client.connect(function(err) {
+				assert.equal(err.code, 'cancelled');
+				cb();
+			});
 		},
 		function(cb) {
-			assert.equal(client.state, 'connected');
-			
-			// request something and immediately end - response should still come back
-			server.expect('DATE\r\nQUIT\r\n', function() {
-				setImmediate(function() {
-					server.respond('111 20110204060810');
-					server.respond('205 Connection closing');
-				});
-			});
-			client.date(cb);
-			client.end();
-			assert.equal(client.state, 'closing');
-		},
-		function(date, cb) {
-			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
-			
 			tl.defer(function() {
 				server.close(cb);
 				currentServer = null;
-				assert.equal(client.state, 'disconnected');
+				assert.equal(client.state, 'inactive');
 			});
 		}
 	], done);
+});
+
+[
+	{msg: 'half-open end request', resp: true, req: 'date'},
+	{msg: 'half-open end request (error)', resp: false, req: 'date'},
+	//{msg: 'end request during post': resp: true, req: 'post'},
+	//{msg: 'end request during post (error)': resp: false, req: 'post'}
+].forEach(function(test) {
+	it('should handle ' + test.msg, function(done) {
+		var server, client;
+		async.waterfall([
+			setupTest,
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				
+				// request something and immediately end - response should still come back
+				if(test.req == 'date') {
+					server.expect('DATE\r\nQUIT\r\n', function() {
+						if(test.resp) {
+							setImmediate(function() {
+								server.respond('111 20110204060810');
+								server.respond('205 Connection closing');
+							});
+						} else {
+							// do nothing so that client times out
+							// TODO: check that client doesn't attempt to reconnect
+						}
+					});
+					client.date(function(err, date) {
+						if(test.resp) {
+							assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+						} else {
+							assert.equal(err.code, 'timeout');
+							assert(!date);
+							//assert.equal(client.state, 'disconnected');
+						}
+						cb();
+					});
+				}
+				if(test.req == 'post') {
+					// TODO: support this??
+				}
+				client.end();
+				assert.equal(client.state, 'closing');
+			},
+			function(cb) {
+				tl.defer(function() {
+					server.close(cb);
+					currentServer = null;
+					assert.equal(client.state, 'disconnected');
+				});
+			}
+		], done);
+	});
+});
+
+[true, false].forEach(function(resp) {
+	it('end request during auth' + (resp ? '':' (error)'), function(done) {
+		var server, client;
+		async.waterfall([
+			setupTest,
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.opts.user = 'nyuu';
+				client.opts.password = 'iamreallylucy';
+				
+				server.expect('AUTHINFO USER nyuu\r\n', function() {
+					assert.equal(client.state, 'authenticating');
+					client.end();
+					assert.equal(client.state, 'inactive'); // calling end during auth = immediate shutdown
+					server.expect('QUIT\r\n');
+					if(resp) {
+						server.respond('381 Give AUTHINFO PASS command');
+					}
+				});
+				client.connect(function(err) {
+					assert.equal(err.code, 'cancelled'); // we don't distinguish between a response being given or not for .end requests during connection setup
+					cb();
+				});
+			},
+			function(cb) {
+				tl.defer(function() {
+					server.close(cb);
+					currentServer = null;
+					assert.equal(client.state, 'disconnected');
+				});
+			}
+		], done);
+	});
 });
 
 it('should not honor half-open destroy request', function(done) {
