@@ -819,25 +819,25 @@ var writeNewline = function() {
 };
 var clrRow = stdErrProgress ? '\x1b[0G\x1B[0K' : '';
 if(process.stderr.isTTY) {
-	var writeLog = function(col, msg) {
+	var writeLog = function(col, type, msg) {
 		process.stderr.write(
-			clrRow + '\x1B['+col+'m' + logTimestamp(' ') + msg.toString() + '\x1B[39m\n'
+			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + ' ' + msg.toString() + '\x1B[39m\n'
 			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
 	// assume colours are supported
 	logger = {
 		debug: function(msg) {
-			writeLog('36', msg);
+			writeLog('36', '[DBG] ', msg);
 		},
 		info: function(msg) {
-			writeLog('32', msg);
+			writeLog('32', '[INFO]', msg);
 		},
 		warn: function(msg) {
-			writeLog('33', msg);
+			writeLog('33', '[WARN]', msg);
 		},
 		error: function(msg) {
-			writeLog('31', msg);
+			writeLog('31', '[ERR] ', msg);
 			errorCount++;
 		}
 	};
