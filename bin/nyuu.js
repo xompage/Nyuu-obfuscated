@@ -879,7 +879,7 @@ if(verbosity < 1) {
 
 var displayCompleteMessage = function(err) {
 	if(err)
-		Nyuu.log.error(err);
+		Nyuu.log.error(err.toString() + (err.skippable ? ' (use `--skip-errors` to ignore)':''));
 	else if(errorCount)
 		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
 	else
@@ -1257,7 +1257,7 @@ fuploader.once('start', function(files, uploader) {
 		var msg = '';
 		var time = Date.now() - startTime;
 		if(err) {
-			Nyuu.log.error(err);
+			Nyuu.log.error(err.toString() + (err.skippable ? ' (use `--skip-errors` to ignore)':''));
 			msg = 'Posted ' + uploader.articlesPosted + ' article(s)';
 			var unchecked = uploader.articlesPosted - uploader.articlesChecked;
 			if(unchecked)
