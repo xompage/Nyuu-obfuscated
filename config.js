@@ -31,6 +31,8 @@ servers: [
 		connectRetries: 1,
 		requestRetries: 5, // how many times to retry an interrupted request
 		postRetries: 1, // how many times to retry if server returns 441 response to posted article
+		errorTeardown: false, // false = gracefully close bad connections, true = forcefully destroy them
+		closeTimeout: 10000, // 10 seconds; wait period before forcefully dropping gracefully closed connections
 		keepAlive: false, // always reconnect on error, even if not needed
 		onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
 		tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)

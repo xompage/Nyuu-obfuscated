@@ -40,6 +40,10 @@ Upload Server Options:
        --request-retries     Number of request retry attempts (default 5)
        --post-retries        Number of post retry attempts in response to 441
                              errors (default 1)
+       --error-teardown      Force teardown of bad connections (flag option).
+                             If unset, bad connections are closed gracefully.
+       --disconnect-timeout  How long to wait for a connection to disconnect
+                             before forcefully tearing it down (default 10s).
        --keep-alive          Try to always keep connection alive even if not
                              needed (flag option).
 

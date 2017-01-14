@@ -137,6 +137,8 @@ var newNNTP = function(opts) {
 		connectRetries: 1,
 		requestRetries: 5,
 		postRetries: 1,
+		errorTeardown: false,
+		closeTimeout: 10,
 		keepAlive: false
 	};
 	deepMerge(o, opts);
@@ -187,13 +189,22 @@ function setupAuth(client, server, cb) {
 	});
 }
 
+var endClient = function(client, cb) {
+	var called = false;
+	client.end(function() {
+		if(called) throw new Error('client.end callback called twice');
+		called = true;
+		if(cb) cb();
+	});
+};
+
 function closeTest(client, server, cb) {
 	if(client.state == 'disconnected' || client.state == 'inactive') {
 		server.close(cb);
 		currentServer = null;
 	} else {
 		server.expect('QUIT\r\n', '205 Connection closing');
-		client.end();
+		endClient(client);
 		assert.equal(client.state, 'closing');
 		tl.defer(function() {
 			assert.equal(client.state, 'disconnected');
@@ -393,7 +404,7 @@ it('should notify cancellation + kill reconnect if ended during connect retry wa
 			});
 			// this is triggered to run whilst the reconnect timeout is running
 			setTimeout(function() {
-				client.end();
+				endClient(client);
 			}, 100);
 		}
 	], done);
@@ -474,7 +485,9 @@ it('should notify cancellation if cancelled during authentication', function(don
 				if(test.req == 'post') {
 					// TODO: support this??
 				}
-				client.end();
+				endClient(client, function() {
+					assert.equal(client.state, 'disconnected');
+				});
 				assert.equal(client.state, 'closing');
 			},
 			function(cb) {
@@ -501,8 +514,8 @@ it('should notify cancellation if cancelled during authentication', function(don
 				
 				server.expect('AUTHINFO USER nyuu\r\n', function() {
 					assert.equal(client.state, 'authenticating');
-					client.end();
-					assert.equal(client.state, 'inactive'); // calling end during auth = immediate shutdown
+					endClient(client);
+					assert.equal(client.state, 'closing');
 					server.expect('QUIT\r\n');
 					if(resp) {
 						server.respond('381 Give AUTHINFO PASS command');
@@ -517,7 +530,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 				tl.defer(function() {
 					server.close(cb);
 					currentServer = null;
-					assert.equal(client.state, 'disconnected');
+					assert.equal(client.state, 'inactive');
 				});
 			}
 		], done);

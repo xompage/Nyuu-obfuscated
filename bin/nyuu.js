@@ -108,6 +108,14 @@ var servOptMap = {
 		postOnly: true,
 		keyMap: 'postRetries'
 	},
+	'error-teardown': {
+		type: 'bool',
+		keyMap: 'errorTeardown'
+	},
+	'disconnect-timeout': {
+		type: 'time',
+		keyMap: 'closeTimeout'
+	},
 	'on-post-timeout': {
 		type: 'list',
 		postOnly: true,

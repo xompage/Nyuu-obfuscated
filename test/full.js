@@ -45,6 +45,8 @@ var clientOpts = function(opts) {
 			connectRetries: 1,
 			requestRetries: 1,
 			postRetries: 1,
+			errorTeardown: false,
+			closeTimeout: 10,
 			postConnections: 1,
 			checkConnections: 0
 		},
