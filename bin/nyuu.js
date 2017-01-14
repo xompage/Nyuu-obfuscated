@@ -28,11 +28,13 @@ var servOptMap = {
 	},
 	'bind-host': {
 		type: 'string',
-		keyMap: 'connect/localAddress'
+		keyMap: 'connect/localAddress',
+		ifSetDefault: ''
 	},
 	'tcp-keep-alive': {
 		type: 'time',
-		keyMap: 'tcpKeepAlive'
+		keyMap: 'tcpKeepAlive',
+		ifSetDefault: '30s'
 	},
 	ipv6: {
 		type: 'bool',
@@ -56,25 +58,30 @@ var servOptMap = {
 	},
 	'sni-host': {
 		type: 'string',
-		keyMap: 'connect/servername'
+		keyMap: 'connect/servername',
+		ifSetDefault: ''
 	},
 	'ssl-ciphers': {
 		type: 'string',
-		keyMap: 'connect/ciphers'
+		keyMap: 'connect/ciphers',
+		ifSetDefault: ''
 	},
 	'ssl-method': {
 		type: 'string',
-		keyMap: 'connect/secureProtocol'
+		keyMap: 'connect/secureProtocol',
+		ifSetDefault: ''
 	},
 	user: {
 		type: 'string',
 		alias: 'u',
-		keyMap: 'user'
+		keyMap: 'user',
+		ifSetDefault: ''
 	},
 	password: {
 		type: 'string',
 		alias: 'p',
-		keyMap: 'password'
+		keyMap: 'password',
+		ifSetDefault: ''
 	},
 	timeout: {
 		type: 'time',
@@ -109,7 +116,7 @@ var servOptMap = {
 			if(!v) return;
 			return v.map(function(s) {
 				if(s != 'retry' && s != 'ignore' && !s.match(/^strip-hdr=./))
-					error('Unknown value for `--on-post-timeout`: ' + s);
+					error('Unknown value for `on-post-timeout`: ' + s);
 				return s;
 			});
 		}
@@ -144,7 +151,8 @@ var optMap = {
 	},
 	'check-group': {
 		type: 'string',
-		map: 'check/group'
+		map: 'check/group',
+		ifSetDefault: ''
 	},
 	'check-post-tries': {
 		type: 'int',
@@ -166,15 +174,18 @@ var optMap = {
 	comment: {
 		type: 'string',
 		alias: 't',
-		map: 'comment'
+		map: 'comment',
+		ifSetDefault: ''
 	},
 	comment2: {
 		type: 'string',
-		map: 'comment2'
+		map: 'comment2',
+		ifSetDefault: ''
 	},
 	date: {
 		type: 'string',
 		map: 'postDate',
+		ifSetDefault: '',
 		fn: function(v) {
 			if((typeof v == 'string') && v.toLowerCase() == 'now')
 				return Date.now();
@@ -248,9 +259,10 @@ var optMap = {
 	'nzb-compress': {
 		type: 'string',
 		map: 'nzb/compression',
+		ifSetDefault: 'gzip',
 		fn: function(v) {
 			if(v && ['gzip','zlib','deflate','xz'].indexOf(v) < 0)
-				error('Invalid value supplied for `--nzb-compress`');
+				error('Invalid value supplied for `nzb-compress`');
 			return v;
 		}
 	},
@@ -278,10 +290,11 @@ var optMap = {
 		type: 'string',
 		alias: 'r',
 		map: 'subdirs',
+		ifSetDefault: 'keep',
 		fn: function(v) {
 			if(!v) return 'skip';
 			if(['skip','keep'].indexOf(v) < 0)
-				error('Invalid option supplied for `--subdirs`');
+				error('Invalid option supplied for `subdirs`');
 			return v;
 		}
 	},
@@ -320,6 +333,7 @@ var optMap = {
 		type: 'list',
 		alias: 'e',
 		map: 'skipErrors',
+		ifSetDefault: 'all',
 		fn: function(v) {
 			if(!v) return false;
 			if(v.indexOf('all') >= 0)
@@ -333,7 +347,8 @@ var optMap = {
 	},
 	'dump-failed-posts': {
 		type: 'string',
-		map: 'dumpPostLoc'
+		map: 'dumpPostLoc',
+		ifSetDefault: ''
 	},
 	'input-raw-posts': {
 		type: 'bool'
@@ -511,6 +526,17 @@ for(var k in argv) {
 	
 	var o = optMap[k];
 	if(o.type == 'bool' && v === null) continue; // hack to get around minimist forcing unset values to be false
+	if(o.type != 'bool') {
+		// handle set and '--no-' syntax for non-bool values
+		if(v === true || v === '') {
+			if(o.ifSetDefault !== undefined)
+				v = o.ifSetDefault;
+			else
+				error('No value supplied for `' + k + '`');
+		} else if(v === false) {
+			continue; // explicitly unset
+		}
+	}
 	if(o.type == 'int') {
 		v = v|0;
 		if(v < 0) error('Invalid number specified for `' + k + '`');
@@ -722,7 +748,7 @@ if(!argv._.length)                  error('Must supply at least one input file')
 // TODO: more validation
 
 if(argv.quiet && argv.verbose)
-	error('Cannot specify both `--quiet` and `--verbose`');
+	error('Cannot specify both `quiet` and `verbose`');
 
 var verbosity = 3;
 if(argv['log-level'])
@@ -884,7 +910,7 @@ if(verbosity < 1) {
 
 var displayCompleteMessage = function(err) {
 	if(err)
-		Nyuu.log.error(err.toString() + (err.skippable ? ' (use `--skip-errors` to ignore)':''));
+		Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
 	else if(errorCount)
 		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
 	else
@@ -1262,7 +1288,7 @@ fuploader.once('start', function(files, uploader) {
 		var msg = '';
 		var time = Date.now() - startTime;
 		if(err) {
-			Nyuu.log.error(err.toString() + (err.skippable ? ' (use `--skip-errors` to ignore)':''));
+			Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
 			msg = 'Posted ' + uploader.articlesPosted + ' article(s)';
 			var unchecked = uploader.articlesPosted - uploader.articlesChecked;
 			if(unchecked)
