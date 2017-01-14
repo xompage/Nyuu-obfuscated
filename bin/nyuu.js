@@ -102,16 +102,15 @@ var servOptMap = {
 		keyMap: 'postRetries'
 	},
 	'on-post-timeout': {
-		type: 'string',
+		type: 'list',
 		postOnly: true,
 		keyMap: 'onPostTimeout',
 		fn: function(v) {
 			if(!v) return;
-			return v.split(',').map(function(s) {
-				var v = s.trim().toLowerCase();
-				if(v != 'retry' && v != 'ignore' && !v.match(/^strip-hdr=./))
+			return v.map(function(s) {
+				if(s != 'retry' && s != 'ignore' && !s.match(/^strip-hdr=./))
 					error('Unknown value for `--on-post-timeout`: ' + s);
-				return v;
+				return s;
 			});
 		}
 	},
@@ -318,16 +317,14 @@ var optMap = {
 		map: 'useLazyConnect'
 	},
 	'skip-errors': {
-		type: 'string',
+		type: 'list',
 		alias: 'e',
 		map: 'skipErrors',
 		fn: function(v) {
 			if(!v) return false;
-			if(v.toLowerCase() == 'all')
+			if(v.indexOf('all') >= 0)
 				return true;
-			return v.split(',').map(function(s) {
-				return s.trim().toLowerCase();
-			});
+			return v;
 		}
 	},
 	'post-error-limit': {
@@ -531,21 +528,29 @@ for(var k in argv) {
 	
 	// fix arrays/maps
 	var isArray = Array.isArray(v);
-	if(o.type == 'array' || o.type == 'map') {
-		if(!isArray) v = [v];
+	if(o.type == 'array' && !isArray)
+		v = [v];
+	else if(o.type == 'list') {
+		var tmp = [];
+		(isArray ? v : [v]).forEach(function(e) {
+			tmp = tmp.concat(e.split(',').map(function(s) {
+				return s.trim().toLowerCase();
+			}));
+		});
+		v = tmp;
+	}
+	else if(o.type == 'map') {
 		// create map
-		if(o.type == 'map') {
-			var tmp = {};
-			v.forEach(function(h) {
-				var m;
-				if(m = h.match(/^(.+?)[=:](.*)$/)) {
-					tmp[m[1].trim()] = m[2].trim();
-				} else {
-					error('Invalid format for `' + k + '`');
-				}
-			});
-			v = tmp;
-		}
+		var tmp = {};
+		(isArray ? v : [v]).forEach(function(h) {
+			var m;
+			if(m = h.match(/^(.+?)[=:](.*)$/)) {
+				tmp[m[1].trim()] = m[2].trim();
+			} else {
+				error('Invalid format for `' + k + '`');
+			}
+		});
+		v = tmp;
 	} else if(isArray)
 		error('Multiple values supplied for `' + k + '`!');
 	
