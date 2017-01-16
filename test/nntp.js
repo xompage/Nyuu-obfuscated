@@ -189,11 +189,13 @@ function setupAuth(client, server, cb) {
 	});
 }
 
-var endClient = function(client, cb) {
+var endClient = function(client, cb, ef) {
 	var called = false;
-	client.end(function() {
+	ef = ef || 'end';
+	client[ef](function() {
 		if(called) throw new Error('client.end callback called twice');
 		called = true;
+		assert.equal(client.state, 'inactive');
 		if(cb) cb();
 	});
 };
@@ -207,7 +209,7 @@ function closeTest(client, server, cb) {
 		endClient(client);
 		assert.equal(client.state, 'closing');
 		tl.defer(function() {
-			assert.equal(client.state, 'disconnected');
+			assert.equal(client.state, 'inactive');
 			server.close(cb);
 			currentServer = null;
 		});
@@ -374,40 +376,27 @@ it('should not connect if destroyed straight after', function(done) {
 	], done);
 });
 
-it('should notify cancellation if cancelled during connect retry wait', function(done) {
-	async.waterfall([
-		killServer,
-		function(cb) {
-			var client = newNNTP();
-			client.connect(function(err) {
-				assert.equal(err.code, 'cancelled');
-				assert.equal(client.state, 'inactive');
-				cb();
-			});
-			// this is triggered to run whilst the reconnect timeout is running
-			setTimeout(function() {
-				client.destroy();
-			}, 100);
-		}
-	], done);
-});
-
-it('should notify cancellation + kill reconnect if ended during connect retry wait', function(done) {
-	async.waterfall([
-		killServer,
-		function(cb) {
-			var client = newNNTP();
-			client.connect(function(err) {
-				assert.equal(err.code, 'cancelled');
-				assert.equal(client.state, 'inactive');
-				cb();
-			});
-			// this is triggered to run whilst the reconnect timeout is running
-			setTimeout(function() {
-				endClient(client);
-			}, 100);
-		}
-	], done);
+['end','close','destroy'].forEach(function(ef) {
+	it('should notify cancellation + kill reconnect if ' + ef + '() during connect retry wait', function(done) {
+		async.waterfall([
+			killServer,
+			function(cb) {
+				var client = newNNTP();
+				client.connect(function(err) {
+					assert.equal(err.code, 'cancelled');
+					assert.equal(client.state, 'inactive');
+					cb();
+				});
+				// this is triggered to run whilst the reconnect timeout is running
+				setTimeout(function() {
+					if(ef == 'destroy')
+						client.destroy();
+					else
+						endClient(client, null, ef);
+				}, 100);
+			}
+		], done);
+	});
 });
 
 it('should notify cancellation if cancelled during authentication', function(done) {
@@ -441,10 +430,12 @@ it('should notify cancellation if cancelled during authentication', function(don
 });
 
 [
-	{msg: 'half-open end request', resp: true, req: 'date'},
-	{msg: 'half-open end request (error)', resp: false, req: 'date'},
-	//{msg: 'end request during post': resp: true, req: 'post'},
-	//{msg: 'end request during post (error)': resp: false, req: 'post'}
+	{msg: 'half-open end request', resp: true, req: 'date', ef: 'end'},
+	{msg: 'half-open end request (error)', resp: false, req: 'date', ef: 'end'},
+	{msg: 'half-open close request', resp: true, req: 'date', ef: 'close'},
+	{msg: 'half-open close request (error)', resp: false, req: 'date', ef: 'close'},
+	//{msg: 'end request during post': resp: true, req: 'post', ef: 'end'},
+	//{msg: 'end request during post (error)': resp: false, req: 'post', ef: 'end'}
 ].forEach(function(test) {
 	it('should handle ' + test.msg, function(done) {
 		var server, client;
@@ -472,7 +463,10 @@ it('should notify cancellation if cancelled during authentication', function(don
 						}
 					});
 					client.date(function(err, date) {
-						if(test.resp) {
+						if(test.ef == 'close') {
+							assert.equal(err.code, 'cancelled');
+							assert(!date);
+						} else if(test.resp) {
 							assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
 						} else {
 							assert.equal(err.code, 'timeout');
@@ -485,24 +479,23 @@ it('should notify cancellation if cancelled during authentication', function(don
 				if(test.req == 'post') {
 					// TODO: support this??
 				}
-				endClient(client, function() {
-					assert.equal(client.state, 'disconnected');
-				});
+				endClient(client, null, test.ef);
 				assert.equal(client.state, 'closing');
 			},
 			function(cb) {
 				tl.defer(function() {
 					server.close(cb);
 					currentServer = null;
-					assert.equal(client.state, 'disconnected');
+					assert.equal(client.state, 'inactive');
 				});
 			}
 		], done);
 	});
 });
 
-[true, false].forEach(function(resp) {
-	it('end request during auth' + (resp ? '':' (error)'), function(done) {
+[{resp: true, ef: 'end'}, {resp: false, ef: 'end'},
+ {resp: true, ef: 'close'}, {resp: false, ef: 'close'}].forEach(function(t) {
+	it(t.ef + ' request during auth' + (t.resp ? '':' (error)'), function(done) {
 		var server, client;
 		async.waterfall([
 			setupTest,
@@ -514,10 +507,10 @@ it('should notify cancellation if cancelled during authentication', function(don
 				
 				server.expect('AUTHINFO USER nyuu\r\n', function() {
 					assert.equal(client.state, 'authenticating');
-					endClient(client);
+					endClient(client, null, t.ef);
 					assert.equal(client.state, 'closing');
 					server.expect('QUIT\r\n');
-					if(resp) {
+					if(t.resp) {
 						server.respond('381 Give AUTHINFO PASS command');
 					}
 				});
