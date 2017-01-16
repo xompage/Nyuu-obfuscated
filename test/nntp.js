@@ -121,7 +121,7 @@ TestServer.prototype = {
 var deepMerge = require('../lib/util').deepMerge;
 
 var currentServer;
-var lastServerPort = 0;
+var lastServerPort = -1;
 var newNNTP = function(opts) {
 	var o = { // connection settings
 		connect: {
@@ -145,10 +145,12 @@ var newNNTP = function(opts) {
 	return new NNTP(o);
 };
 function killServer(cb) {
+	cb = cb || function(){};
 	if(!currentServer) return cb();
 	try {
 		currentServer.close(function() {
 			currentServer = null;
+			lastServerPort = -1;
 			cb();
 		});
 		return;
@@ -157,6 +159,7 @@ function killServer(cb) {
 function setupTest(o, cb) {
 	nntpLastLog = {warn: null, info: null, debug: null};
 	
+	lastServerPort = -1;
 	if(currentServer) { // previous test failed?
 		killServer(setupTest.bind(null, o, cb));
 		return;
@@ -203,7 +206,7 @@ var endClient = function(client, cb, ef) {
 function closeTest(client, server, cb) {
 	if(client.state == 'disconnected' || client.state == 'inactive') {
 		server.close(cb);
-		currentServer = null;
+		killServer();
 	} else {
 		server.expect('QUIT\r\n', '205 Connection closing');
 		endClient(client);
@@ -211,7 +214,7 @@ function closeTest(client, server, cb) {
 		tl.defer(function() {
 			assert.equal(client.state, 'inactive');
 			server.close(cb);
-			currentServer = null;
+			killServer();
 		});
 	}
 	
@@ -422,7 +425,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 		function(cb) {
 			tl.defer(function() {
 				server.close(cb);
-				currentServer = null;
+				killServer();
 				assert.equal(client.state, 'inactive');
 			});
 		}
@@ -485,7 +488,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 			function(cb) {
 				tl.defer(function() {
 					server.close(cb);
-					currentServer = null;
+					killServer();
 					assert.equal(client.state, 'inactive');
 				});
 			}
@@ -522,7 +525,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 			function(cb) {
 				tl.defer(function() {
 					server.close(cb);
-					currentServer = null;
+					killServer();
 					assert.equal(client.state, 'inactive');
 				});
 			}
@@ -556,7 +559,7 @@ it('should not honor half-open destroy request', function(done) {
 			assert.equal(client.state, 'inactive');
 			tl.defer(function() {
 				server.close(cb);
-				currentServer = null;
+				killServer();
 			});
 		}
 	], done);
