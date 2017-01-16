@@ -367,6 +367,15 @@ it('should authenticate', function(done) {
 });
 
 it('should end when requested'); // also test .destroy() method
+['end','close'].forEach(function(ef) {
+	// also check that the 'end' event is received by the server, but not 'close'
+	// also check for correct timings if the server actually ends the connection
+	it('should destroy if '+ef+' timeout exceeded');
+	
+});
+
+it('should call all end/close callbacks when closed');
+
 it('should not connect if destroyed straight after', function(done) {
 	var server, client;
 	waterfall([
@@ -454,8 +463,8 @@ it('should notify cancellation if cancelled during authentication', function(don
 	{msg: 'half-open end request (error)', resp: false, req: 'date', ef: 'end'},
 	{msg: 'half-open close request', resp: true, req: 'date', ef: 'close'},
 	{msg: 'half-open close request (error)', resp: false, req: 'date', ef: 'close'},
-	//{msg: 'end request during post': resp: true, req: 'post', ef: 'end'},
-	//{msg: 'end request during post (error)': resp: false, req: 'post', ef: 'end'}
+	{msg: 'close request during post', resp: true, req: 'post', ef: 'close'},
+	{msg: 'close request during post (error)', resp: false, req: 'post', ef: 'close'}
 ].forEach(function(test) {
 	it('should handle ' + test.msg, function(done) {
 		var server, client;
@@ -471,11 +480,12 @@ it('should notify cancellation if cancelled during authentication', function(don
 				
 				// request something and immediately end - response should still come back
 				if(test.req == 'date') {
-					server.expect('DATE\r\nQUIT\r\n', function() {
+					server.expect('DATE\r\n' + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
 						if(test.resp) {
 							setImmediate(function() {
 								server.respond('111 20110204060810');
-								server.respond('205 Connection closing');
+								if(test.ef == 'end')
+									server.respond('205 Connection closing');
 							});
 						} else {
 							// do nothing so that client times out
@@ -497,7 +507,23 @@ it('should notify cancellation if cancelled during authentication', function(don
 					});
 				}
 				if(test.req == 'post') {
-					// TODO: support this??
+					var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+					server.expect('POST\r\n' + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
+						if(test.resp) {
+							this.respond('340  Send article');
+							if(test.ef == 'end')
+								server.respond('205 Connection closing');
+						}
+					});
+					client.post(new DummyPost(msg), function(err, a) {
+						if(test.ef == 'close') {
+							assert.equal(err.code, 'cancelled');
+							assert(!a);
+						} else {
+							// TODO: support this??
+						}
+						cb();
+					});
 				}
 				endClient(client, null, test.ef);
 				assert.equal(client.state, 'closing');
@@ -510,6 +536,55 @@ it('should notify cancellation if cancelled during authentication', function(don
 				});
 			}
 		], done);
+	});
+});
+
+[true, false].forEach(function(resp) {
+	var ef = 'close';
+	it('should handle close request during post upload' + (resp ? '':' (error)'), function(done) {
+		var server, client;
+		waterfall([
+			setupTest,
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				
+				var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+				server.expect('POST\r\n' + (ef == 'end' ? 'QUIT\r\n':''), function() {
+					this.expect(msg, function() {
+						if(resp) {
+							this.respond('240 <new-article> Article received ok');
+							if(ef == 'end')
+								server.respond('205 Connection closing');
+						}
+					});
+					this.respond('340  Send article');
+					endClient(client, null, ef);
+					assert.equal(client.state, 'closing');
+				});
+				client.post(new DummyPost(msg), function(err, a) {
+					if(ef == 'close') {
+						assert.equal(err.code, 'cancelled');
+						assert(!a);
+					} else {
+						// TODO: support this??
+					}
+					cb();
+				});
+			},
+			function(cb) {
+				tl.defer(function() {
+					server.close(cb);
+					killServer();
+					assert.equal(client.state, 'inactive');
+				});
+			}
+		], done);
+		
 	});
 });
 
@@ -529,7 +604,8 @@ it('should notify cancellation if cancelled during authentication', function(don
 					assert.equal(client.state, 'authenticating');
 					endClient(client, null, t.ef);
 					assert.equal(client.state, 'closing');
-					server.expect('QUIT\r\n');
+					if(t.ef == 'end')
+						server.expect('QUIT\r\n');
 					if(t.resp) {
 						server.respond('381 Give AUTHINFO PASS command');
 					}
@@ -1050,8 +1126,6 @@ it('should deal with connection timeouts', function(done) {
 	], done);
 });
 it('should do nothing on an idle too long message');
-
-it('should not allow concurrent requests');
 
 it('should retry reconnecting if it only fails once', function(done) {
 	var server, client;
