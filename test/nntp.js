@@ -5,6 +5,23 @@ var async = require('async');
 var NNTP = require('../lib/nntp');
 var net = require('net');
 
+// async.waterfall wrapper which checks if callbacks are called more than once
+var waterfall = function(funcs, cb) {
+	var called = Array(funcs.length);
+	async.waterfall(funcs.map(function(f, idx) {
+		return function() {
+			var args = Array.prototype.slice.call(arguments);
+			var cb = args.pop();
+			args.push(function() {
+				if(called[idx]) throw new Error('async callback called more than once');
+				called[idx] = true;
+				cb.apply(null, arguments);
+			});
+			f.apply(null, args);
+		};
+	}), cb);
+};
+
 // mimick Post object as far as the NNTP module requires it
 function DummyPost(data) {
 	this.data = new Buffer(data);
@@ -225,7 +242,7 @@ describe('NNTP Client', function() {
 it('should handle basic tasks', function(done) {
 	
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -295,7 +312,7 @@ it('should handle basic tasks', function(done) {
 
 it('should auto-connect on request', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -314,7 +331,7 @@ it('should auto-connect on request', function(done) {
 
 it('should honour a request made before connected', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -334,7 +351,7 @@ it('should honour a request made before connected', function(done) {
 
 it('should authenticate', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -352,7 +369,7 @@ it('should authenticate', function(done) {
 it('should end when requested'); // also test .destroy() method
 it('should not connect if destroyed straight after', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			var _server = new TestServer(function() {
@@ -381,7 +398,7 @@ it('should not connect if destroyed straight after', function(done) {
 
 ['end','close','destroy'].forEach(function(ef) {
 	it('should notify cancellation + kill reconnect if ' + ef + '() during connect retry wait', function(done) {
-		async.waterfall([
+		waterfall([
 			killServer,
 			function(cb) {
 				var client = newNNTP();
@@ -404,7 +421,7 @@ it('should not connect if destroyed straight after', function(done) {
 
 it('should notify cancellation if cancelled during authentication', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -442,7 +459,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 ].forEach(function(test) {
 	it('should handle ' + test.msg, function(done) {
 		var server, client;
-		async.waterfall([
+		waterfall([
 			setupTest,
 			function(_server, _client, cb) {
 				server = _server;
@@ -500,7 +517,7 @@ it('should notify cancellation if cancelled during authentication', function(don
  {resp: true, ef: 'close'}, {resp: false, ef: 'close'}].forEach(function(t) {
 	it(t.ef + ' request during auth' + (t.resp ? '':' (error)'), function(done) {
 		var server, client;
-		async.waterfall([
+		waterfall([
 			setupTest,
 			function(_server, _client, cb) {
 				server = _server;
@@ -535,7 +552,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 
 it('should not honor half-open destroy request', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -552,9 +569,9 @@ it('should not honor half-open destroy request', function(done) {
 					server.respond('111 20110204060810');
 				});
 			});
-			client.date(function(err) {
+			client.date(tl.fn1(function(err) {
 				assert.equal(err.code, 'cancelled');
-			});
+			}));
 			client.destroy();
 			assert.equal(client.state, 'inactive');
 			tl.defer(function() {
@@ -567,7 +584,7 @@ it('should not honor half-open destroy request', function(done) {
 
 it('should handle connection drop just before request', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -593,7 +610,7 @@ it('should deal with invalid responses'); // including onconnect
 
 it('should attempt to reconnect if connection is lost (keepalive=1)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
@@ -619,7 +636,7 @@ it('should attempt to reconnect if connection is lost (keepalive=1)', function(d
 });
 it('should attempt to rejoin a group if connection is lost (keepalive=1)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
@@ -652,7 +669,7 @@ it('should attempt to rejoin a group if connection is lost (keepalive=1)', funct
 });
 it('should attempt to reconnect if connection is lost after new request (keepalive=0)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -683,7 +700,7 @@ it('should attempt to reconnect if connection is lost after new request (keepali
 });
 it('should attempt to rejoin a group if connection is lost after new request (keepalive=0)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -727,7 +744,7 @@ it('should disconnect if response received exceeds 4KB in size');
 
 it('should resend request if connection lost before response received', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -761,7 +778,7 @@ it('should resend request if connection lost before response received', function
 });
 it('should reattempt to post if connection drops out', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -798,7 +815,7 @@ it('should reattempt to post if connection drops out', function(done) {
 
 it('should reattempt to post if first time fails', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -832,7 +849,7 @@ it('should reattempt to post if first time fails', function(done) {
 
 it('should resend request if connection lost and reconnect fails once', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -866,7 +883,7 @@ it('should resend request if connection lost and reconnect fails once', function
 
 it('should retry on request timeout', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -892,7 +909,7 @@ it('should retry on request timeout', function(done) {
 });
 it('should retry on posting timeout', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -925,7 +942,7 @@ it('should retry on posting timeout', function(done) {
 
 it('should ignore posting timeout if requested', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest.bind(null, {onPostTimeout: ['ignore']}),
 		function(_server, _client, cb) {
 			server = _server;
@@ -953,7 +970,7 @@ it('should ignore posting timeout if requested', function(done) {
 
 it('should return error if reconnect completely fails during a request', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -980,7 +997,7 @@ it('should return error if reconnect completely fails during a request', functio
 
 it('should work if requesting whilst disconnected without pending connect', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest.bind(null, {connTimeout: 20, connectRetries: 1, reconnectDelay: 10}),
 		function(_server, _client, cb) {
 			server = _server;
@@ -995,22 +1012,23 @@ it('should work if requesting whilst disconnected without pending connect', func
 			// wait after all reconnect attempts have been tried
 			setTimeout(function() {
 				assert.equal(client.state, 'inactive');
-				server.listen(lastServerPort, function() {
-					server.expect('DATE\r\n', '111 20110204060810');
-					client.date(function(err, date) {
-						assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
-						assert.equal(client.state, 'connected');
-						closeTest(client, server, cb);
-					});
-				});
+				server.listen(lastServerPort, cb);
 			}, 100);
+		},
+		function(cb) {
+			server.expect('DATE\r\n', '111 20110204060810');
+			client.date(tl.fn1(function(err, date) {
+				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+				assert.equal(client.state, 'connected');
+				closeTest(client, server, cb);
+			}));
 		}
 	], done);
 });
 
 it('should deal with connection timeouts', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -1037,7 +1055,7 @@ it('should not allow concurrent requests');
 
 it('should retry reconnecting if it only fails once', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			// we don't start a server so that the connect fails, but start it up a while after so that the retry should succeed
@@ -1079,7 +1097,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 });
 it('should retry reconnecting if init sequence fails', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			var dropped = false;
@@ -1115,7 +1133,7 @@ it('should retry reconnecting if init sequence fails', function(done) {
 });
 it('should retry on timeout during init sequence', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -1147,7 +1165,7 @@ it('should throw error if selected group fails on connect');
 
 it('test handling of connection failure if init sequence almost completes', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			var dropped = false;
@@ -1188,7 +1206,7 @@ it('should retry on a single auth failure');
 it('should warn on unexpected spurious data received');
 it('should deal with unexpected 200 messages by reconnecting (keepalive=1)', function(done) {
 	var server, client, ct;
-	async.waterfall([
+	waterfall([
 		setupTest.bind(null, {keepAlive: true}),
 		function(_server, _client, cb) {
 			server = _server;
@@ -1215,7 +1233,7 @@ it('should deal with unexpected 200 messages by reconnecting (keepalive=1)', fun
 });
 it('should deal with 200 responses by reconnecting', function(done) {
 	var server, client, ct;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -1243,7 +1261,7 @@ it('should deal with 200 responses by reconnecting', function(done) {
 });
 it('should deal with unexpected 200 messages by disconnecting (keepalive=0)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -1271,7 +1289,7 @@ it('should deal with unexpected 200 messages by disconnecting (keepalive=0)', fu
 it('should give up after max reconnect retries hit', function(done) {
 	var server, client;
 	var connectAttempts = 0;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			server = new TestServer(function() {
@@ -1285,20 +1303,20 @@ it('should give up after max reconnect retries hit', function(done) {
 			currentServer = server;
 		},
 		function(cb) {
-			client.connect(function(err) {
+			client.connect(tl.fn1(function(err) {
 				tl.defer(function() {
 					assert.equal(err.code, 'connect_fail');
 					assert.equal(connectAttempts, 2);
 					closeTest(client, server, cb);
 				});
-			});
+			}));
 		}
 	], done);
 });
 it('should give up after max reconnect retries hit (lazy connect)', function(done) {
 	var server, client;
 	var connectAttempts = 0;
-	async.waterfall([
+	waterfall([
 		killServer,
 		function(cb) {
 			server = new TestServer(function() {
@@ -1312,13 +1330,13 @@ it('should give up after max reconnect retries hit (lazy connect)', function(don
 			currentServer = server;
 		},
 		function(cb) {
-			client.date(function(err) {
+			client.date(tl.fn1(function(err) {
 				tl.defer(function() {
 					assert.equal(err.code, 'connect_fail');
 					assert.equal(connectAttempts, 2);
 					closeTest(client, server, cb);
 				});
-			});
+			}));
 		}
 	], done);
 });
@@ -1326,7 +1344,7 @@ it('should give up after max reconnect retries hit (lazy connect)', function(don
 
 it('should give up after max request retries hit', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
@@ -1356,7 +1374,7 @@ it('should give up after max request retries hit', function(done) {
 });
 it('should give up after max request retries hit (post timeout)', function(done) {
 	var server, client;
-	async.waterfall([
+	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
