@@ -533,6 +533,7 @@ for(var k in argv) {
 		error('Unknown option `' + k + '`');
 	
 	var o = optMap[k];
+	var isArray = Array.isArray(v);
 	if(o.type == 'bool' && v === null) continue; // hack to get around minimist forcing unset values to be false
 	if(o.type != 'bool') {
 		// handle set and '--no-' syntax for non-bool values
@@ -545,48 +546,62 @@ for(var k in argv) {
 			continue; // explicitly unset
 		}
 	}
-	if(o.type == 'int') {
-		v = v|0;
-		if(v < 0) error('Invalid number specified for `' + k + '`');
+	if(['list','array','map'].indexOf(o.type) === -1) {
+		if(isArray) error('Multiple values supplied for `' + k + '`!');
+	} else {
+		if(isArray) {
+			v.forEach(function(vv) {
+				if(vv === true || vv === false || vv === '' || v === null) {
+					error('Missing value for `' + k + '`');
+				}
+			});
+		} else
+			v = [v];
 	}
-	if(o.type == '-int')
-		v = v|0;
-	if(o.type == 'size') {
-		v = parseSize(v);
-		if(!v) error('Invalid size specified for `' + k + '`');
+	switch(o.type) {
+		case 'int':
+			v = v|0;
+			if(v < 0) error('Invalid number specified for `' + k + '`');
+			break;
+		
+		case '-int':
+			v = v|0;
+			break;
+		
+		case 'size':
+			v = parseSize(v);
+			if(!v) error('Invalid size specified for `' + k + '`');
+			break;
+		
+		case 'time':
+			v = parseTime(v);
+			if(v === false) error('Invalid time specified for `' + k + '`');
+			break;
+		
+		case 'list':
+			var tmp = [];
+			v.forEach(function(e) {
+				tmp = tmp.concat(e.split(',').map(function(s) {
+					return s.trim().toLowerCase();
+				}));
+			});
+			v = tmp;
+			break;
+		
+		case 'map':
+			// create map
+			var tmp = {};
+			v.forEach(function(h) {
+				var m;
+				if(m = h.match(/^(.+?)[=:](.*)$/)) {
+					tmp[m[1].trim()] = m[2].trim();
+				} else {
+					error('Invalid format for `' + k + '`');
+				}
+			});
+			v = tmp;
+			break;
 	}
-	if(o.type == 'time') {
-		v = parseTime(v);
-		if(v === false) error('Invalid time specified for `' + k + '`');
-	}
-	
-	// fix arrays/maps
-	var isArray = Array.isArray(v);
-	if(o.type == 'array' && !isArray)
-		v = [v];
-	else if(o.type == 'list') {
-		var tmp = [];
-		(isArray ? v : [v]).forEach(function(e) {
-			tmp = tmp.concat(e.split(',').map(function(s) {
-				return s.trim().toLowerCase();
-			}));
-		});
-		v = tmp;
-	}
-	else if(o.type == 'map') {
-		// create map
-		var tmp = {};
-		(isArray ? v : [v]).forEach(function(h) {
-			var m;
-			if(m = h.match(/^(.+?)[=:](.*)$/)) {
-				tmp[m[1].trim()] = m[2].trim();
-			} else {
-				error('Invalid format for `' + k + '`');
-			}
-		});
-		v = tmp;
-	} else if(isArray)
-		error('Multiple values supplied for `' + k + '`!');
 	
 	argv[k] = v;
 	if(o.map)
