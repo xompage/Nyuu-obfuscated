@@ -242,6 +242,7 @@ describe('NNTP Client', function() {
 it('should handle basic tasks', function(done) {
 	
 	var server, client;
+	var date1set = false;
 	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
@@ -251,11 +252,18 @@ it('should handle basic tasks', function(done) {
 		},
 		function(cb) {
 			assert.equal(client.state, 'connected');
-			server.expect('DATE\r\n', '111 20110204060810');
+			// this tests a pipelined DATE request
+			server.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20110204060810');
+			client.date(function(err, date) {
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
+				date1set = true;
+			});
 			client.date(cb);
 		},
 		function(date, cb) {
 			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			assert(date1set);
 			
 			server.expect('GROUP some-group\r\n', '211 2 1 2 some-group');
 			client.group('some-group', cb);
@@ -331,17 +339,24 @@ it('should auto-connect on request', function(done) {
 
 it('should honour a request made before connected', function(done) {
 	var server, client;
+	var date1set = false;
 	waterfall([
 		setupTest,
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
 			
-			server.expect('DATE\r\n', '111 20110204060810');
+			server.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20110204060810');
 			client.connect();
+			client.date(function(err, date) {
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
+				date1set = true;
+			});
 			client.date(cb);
 		},
 		function(date, cb) {
+			assert(date1set);
 			assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
 			assert.equal(client.state, 'connected');
 			closeTest(client, server, cb);
