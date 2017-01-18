@@ -495,9 +495,9 @@ var parseTime = function(s) {
 };
 
 var ulOpts = require('../config.js');
-if(argv.config) {
+if(argv.config || process.env.NYUU_CONFIG) {
 	// TODO: allow proc:// or json:// ?
-	var cOpts = require(require('fs').realpathSync(argv.config));
+	var cOpts = require(require('fs').realpathSync(argv.config || process.env.NYUU_CONFIG));
 	if(cOpts.isFullConfig)
 		util.deepMerge(ulOpts, cOpts);
 	else {

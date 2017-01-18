@@ -178,6 +178,17 @@ directory, with the following contents:
 
 (obviously, fix the paths to what they actually are)
 
+Default Configuration
+---------------------
+
+As entering long command lines may be tiresome, you may use a config file with
+Nyuu via the `--config` or `-C` option. You may use the *config-sample.json*
+file as reference to what a config file should be like.
+
+If a config file isn't specified, Nyuu will also search the `NYUU_CONFIG`
+environment variable for a default configuration (saving you from needing to
+specify this file on every run, if you set the environment up in your shell).
+
 Optional Modules
 ----------------
 
