@@ -210,7 +210,7 @@ Advanced Tuning Options:
        --disk-buf-size       Number of requests to read-ahead (default 1). Set
                              to 0 to disable read-ahead buffering.
        --post-queue-size     Max number of buffered articles for posting
-                             (default min(round(`--connections`*0.5),10))
+                             (default min(round(`--connections`*0.5),25))
        --check-queue-cache   Max number of articles to cache in the check queue
                              (default 5, or if un-seekable streams are present,
                              min(`--connections`*8, 100)). Cache is not used if
