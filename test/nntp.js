@@ -128,7 +128,7 @@ TestServer.prototype = {
 	},
 	listen: function(port, cb) {
 		this._closed = false;
-		this.server.listen(port, 'localhost', function() {
+		this.server.listen(port, '127.0.0.1', function() {
 			lastServerPort = this.server.address().port;
 			cb();
 		}.bind(this));
@@ -138,11 +138,11 @@ TestServer.prototype = {
 var deepMerge = require('../lib/util').deepMerge;
 
 var currentServer;
-var lastServerPort = -1;
+var lastServerPort = 1; // hopefully invalid port
 var newNNTP = function(opts) {
 	var o = { // connection settings
 		connect: {
-			host: 'localhost',
+			host: '127.0.0.1',
 			port: lastServerPort,
 		},
 		secure: false, // we won't bother testing SSL, since it's a minimal change on our side
@@ -167,7 +167,7 @@ function killServer(cb) {
 	try {
 		currentServer.close(function() {
 			currentServer = null;
-			lastServerPort = -1;
+			lastServerPort = 1;
 			cb();
 		});
 		return;
@@ -176,7 +176,7 @@ function killServer(cb) {
 function setupTest(o, cb) {
 	nntpLastLog = {warn: null, info: null, debug: null};
 	
-	lastServerPort = -1;
+	lastServerPort = 1;
 	if(currentServer) { // previous test failed?
 		killServer(setupTest.bind(null, o, cb));
 		return;

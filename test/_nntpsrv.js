@@ -98,7 +98,7 @@ NNTPServer.prototype = {
 		return true;
 	},
 	listen: function(port, cb) {
-		this.server.listen(port, 'localhost', cb);
+		this.server.listen(port, '127.0.0.1', cb);
 	},
 	address: function() {
 		return this.server.address();
