@@ -33,6 +33,7 @@ function DummyPost(data) {
 var newFakeConn = function() {
 	var fakeConn = new (require('stream').Writable)();
 	fakeConn.destroy = function() {};
+	fakeConn.resume = function() {};
 	return fakeConn;
 };
 
