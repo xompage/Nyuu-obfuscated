@@ -41,6 +41,7 @@ var clientOpts = function(opts) {
 			password: 'blogs',
 			timeout: 100,
 			connTimeout: 100,
+			postTimeout: 150,
 			reconnectDelay: 50,
 			connectRetries: 1,
 			requestRetries: 1,

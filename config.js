@@ -20,13 +20,16 @@ servers: [
 			
 			// SSL options
 			rejectUnauthorized: true,
+			
+			highWaterMark: 0, // disable node's internal bufferring to improve our timings (we always send full chunks, so bufferring by node isn't needed)
 		},
 		secure: false, // set to true to use SSL
 		user: '',
 		password: '',
 		// note that these times are specified in miliseconds
-		timeout: 60000, // 60000ms = 1 minute
+		timeout: 20000, // 20000ms = 20 seconds
 		connTimeout: 30000, // 30 seconds
+		postTimeout: 150000, // 2.5 minutes
 		reconnectDelay: 5000, // 5 seconds
 		connectRetries: 1,
 		requestRetries: 5, // how many times to retry an interrupted request
@@ -36,6 +39,7 @@ servers: [
 		keepAlive: false, // always reconnect on error, even if not needed
 		onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
 		tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
+		uploadChunkSize: 0, // break up post into chunks of this size when uploading; 0 to disable chunking
 		
 		postConnections: 3, // number of connections for posting
 		checkConnections: 0, // number of connections used for checking

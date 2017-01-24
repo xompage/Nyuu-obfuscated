@@ -41,6 +41,7 @@ var tl = require('./_testlib');
 
 var DEBUG = false;
 
+// TODO: consider throwing errors on unexpected warnings
 var nntpLastLog = {warn: null, info: null, debug: null};
 NNTP.log = {
 	error: function(msg) {
@@ -151,6 +152,7 @@ var newNNTP = function(opts) {
 		password: null,
 		timeout: 75,
 		connTimeout: 500, // timeout is higher than the reconnect delay - a test relies on it
+		postTimeout: 150,
 		reconnectDelay: 300,
 		connectRetries: 1,
 		requestRetries: 5,

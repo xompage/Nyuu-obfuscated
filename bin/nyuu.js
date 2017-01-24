@@ -91,6 +91,10 @@ var servOptMap = {
 		type: 'time',
 		keyMap: 'connTimeout'
 	},
+	'post-timeout': {
+		type: 'time',
+		keyMap: 'postTimeout'
+	},
 	'reconnect-delay': {
 		type: 'time',
 		keyMap: 'reconnectDelay'
@@ -132,6 +136,11 @@ var servOptMap = {
 	'keep-alive': {
 		type: 'bool',
 		keyMap: 'keepAlive'
+	},
+	'post-chunk-size': {
+		type: 'size',
+		keyMap: 'uploadChunkSize',
+		ifSetDefault: '192K'
 	},
 	connections: {
 		type: 'int',

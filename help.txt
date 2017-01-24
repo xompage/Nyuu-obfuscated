@@ -33,8 +33,9 @@ Upload Server Options:
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 3)
-       --timeout             Timeout on server responses (default 60s)
+       --timeout             Timeout on server responses (default 20s)
        --connect-timeout     Connect timeout (default 30s)
+       --post-timeout        Timeout on uploading a post (default 150s)
        --connect-retries     Number of connection retry attempts (default 1)
        --reconnect-delay     Delay connection retries (default 5s)
        --request-retries     Number of request retry attempts (default 5)
@@ -222,6 +223,8 @@ Advanced Tuning Options:
                              present, this option will limit the max number of
                              articles that can be queued for checking, as these
                              posts cannot be dropped from cache.
+       --post-chunk-size     Limit upload chunk size to specified amount. Set
+                             to 0 to disable (default 0)
        --use-post-pool       Use a buffer pool to improve memory management.
                              Buffers are pre-allocated, which can also improve
                              performance, but can increase memory usage.
