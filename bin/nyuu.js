@@ -1345,6 +1345,11 @@ fuploader.once('start', function(files, uploader) {
 		
 		Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
 	};
+	
+	process.once('SIGINT', function() {
+		Nyuu.log.warn('SIGINT received, cancelling...');
+		uploader.cancel();
+	});
 });
 fuploader.on('processing_file', function(file) {
 	Nyuu.log.info('Reading file ' + file.name + '...');
