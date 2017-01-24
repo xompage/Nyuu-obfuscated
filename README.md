@@ -239,72 +239,11 @@ Not planned
 Alternatives
 ============
 
-The following are all the command-line usenet posters I could find, along with
-my rather sour and depressing comments. Many of these are probably great, but,
-competition and, ya'know...
+A list of Usenet posters I’ve come across can [be found
+here](<https://github.com/animetosho/Nyuu/wiki/Usenet-Uploaders>).
 
--   [GoPostStuff](<https://github.com/madcowfred/GoPostStuff/>): relatively
-    newer post tool written in Go, by the same author as Newsmangler. Appears to
-    no longer be in development, and the code doesn't work as is due to invalid
-    URL references (forks exist which have corrected this issue). Doesn’t appear
-    to support NZB generation.
-
--   [Newsmangler](<https://github.com/madcowfred/newsmangler>): no longer
-    maintained tool written in Python. Relatively basic and lacks some features
-    I’d like to have (e.g. specifying where NZBs are written to), but otherwise
-    quite capable. Updated forks, which add extra functionality, [do
-    exist](<https://github.com/nicors57/newsmangler>).
-
--   [Newspost](<https://github.com/joehillen/newspost>): fairly old unmaintained
-    tool written in C. Powerful, but does not generate NZBs and not particularly
-    efficient. [bytesbacon](<https://www.reddit.com/user/bytesbacon>) has also
-    pointed out that a [threaded fork
-    exists](<https://github.com/PietjeBell88/newspost>), which greatly improves
-    its efficiency.
-
--   [NewsUP](<https://github.com/demanuel/NewsUP/>): flexible tool written in
-    Perl with many features. Still quite actively maintained.
-
--   [Sanguinews](<https://github.com/tdobrovolskij/sanguinews>): inspired from
-    Newsmangler and similar in a number of ways. Unfortunately appears to be
-    rather slow in my benchmarks. Written in Ruby.
-
--   [Yencee](<https://sourceforge.net/projects/yencee/>): simple tool written in
-    Perl. No NZB output.
-
--   [Ypost](<https://sourceforge.net/projects/ypost/>): old tool written in C++.
-    Does not generate NZBs.
-
-(to continue the obvious tradition of using a different language, Nyuu is
-written in Javascript)
-
-[Here's a benchmark comparison](<bench/info.md>) between a few of the above.
-
-Non-command line
-----------------
-
-Other usenet posters I've come across:
-
--   PowerPost variants such as:
-
-    -   CamelSystem PowerPost (can't find official site, but [can be downloaded
-        from here](<https://www.binaries4all.com/powerpost/pp24_en.zip>))
-
-    -   [YEnc-Power-Post-A&A](<http://powerpost.free.fr/>)
-
--   EasyUSENET Uploader
-
--   [JBinUp](<http://www.jbinup.com/en/>)
-
--   [nntpPoster](<https://github.com/boranblok/nntpPoster>)
-
--   [Pan](<http://pan.rebelbase.com/>)
-
--   yEncBin Poster ([website dead](<http://members.home.nl/yencbin_poster/>),
-    download [currently available
-    here](<https://mega.co.nz/#!uFtHmRzZ!MmgH-n-TRzTraubpnTvsWTEseX03OpPeuQXLDYp9k3M>))
-
-Some older utilities listed [here](<http://yenc-post.org/posting.htm>)
+[Here's a benchmark comparison](<bench/info.md>) between a few of the command
+line posters.
 
 License
 =======
