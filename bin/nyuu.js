@@ -498,9 +498,24 @@ var ulOpts = require('../config.js');
 if(argv.config || process.env.NYUU_CONFIG) {
 	// TODO: allow proc:// or json:// ?
 	var cOpts = require(require('fs').realpathSync(argv.config || process.env.NYUU_CONFIG));
-	if(cOpts.isFullConfig)
+	if(cOpts.isFullConfig) {
+		if(cOpts.servers) {
+			// for the default setup of one upload server, but multiple specified in custom config, duplicate the default setup for each custom server
+			if(ulOpts.servers.length == 1 && cOpts.servers.length > 1) {
+				var srv = JSON.stringify(ulOpts.servers[0]);
+				for(var i = 1; i < cOpts.servers.length; i++)
+					ulOpts.servers[i] = JSON.parse(srv);
+			}
+			if(ulOpts.servers.length == cOpts.servers.length) {
+				// merge server options one by one
+				ulOpts.servers.forEach(function(server, i) {
+					util.deepMerge(server, cOpts.servers[i]);
+				});
+				delete cOpts.servers; // don't merge this any more
+			}
+		}
 		util.deepMerge(ulOpts, cOpts);
-	else {
+	} else {
 		// simple config format, just set unset CLI args
 		var verbosityOnCli = (argv.quiet || argv.verbose);
 		for(var k in cOpts) {
