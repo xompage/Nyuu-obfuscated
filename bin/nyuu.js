@@ -294,6 +294,10 @@ var optMap = {
 		type: 'map',
 		alias: 'M'
 	},
+	'nzb-cork': {
+		type: 'bool',
+		map: 'nzb/corkOutput'
+	},
 	subdirs: {
 		type: 'string',
 		alias: 'r',

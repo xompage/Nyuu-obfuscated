@@ -113,6 +113,7 @@ nzb: {
 		// eg:
 		// password: 'mysecret',
 	},
+	corkOutput: false, // cork the output stream (node >=0.12); is here until we have better support for output buffering
 },
 
 /** Input Stream Copy/Tee Options **/
