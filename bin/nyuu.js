@@ -1356,8 +1356,8 @@ fuploader.once('start', function(files, uploader) {
 	};
 	
 	process.once('SIGINT', function() {
-		Nyuu.log.warn('SIGINT received, cancelling...');
-		uploader.cancel();
+		Nyuu.log.warn('SIGINT received, aborting...');
+		uploader.cancel('Process aborted by user');
 	});
 });
 fuploader.on('processing_file', function(file) {
