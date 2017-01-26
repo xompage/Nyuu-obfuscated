@@ -1,7 +1,8 @@
 /**** Nyuu options/config file ****/
 // This file contains all the default options for Nyuu
 // You can customize these options to avoid having to specify them on the command line, however it is recommended that you not edit this file
-// Instead, copy this file elsewhere and use the `--config` option to get Nyuu to use this copy. Missing options there will sourced from this file
+// It is strongly recommended that you create a config file and supply it to Nyuu via the `--config` option, see config-sample.json for an example
+// If the .json config file isn't sufficient, you can copy this file elsewhere and still use the `--config` option to read it. Missing options there will sourced from this file
 // WARNING: this file is not maintained for backwards compatibility; this means that you'll need to re-set all custom options every time Nyuu is upgraded!
 
 module.exports = {
@@ -27,7 +28,7 @@ servers: [
 		user: '',
 		password: '',
 		// note that these times are specified in miliseconds
-		timeout: 20000, // 20000ms = 20 seconds
+		timeout: 30000, // 30000ms = 30 seconds
 		connTimeout: 30000, // 30 seconds
 		postTimeout: 150000, // 2.5 minutes
 		reconnectDelay: 5000, // 5 seconds
@@ -136,7 +137,7 @@ headerAllocSize: 4096, // amount of buffer space to allocate for post headers, o
 
 diskReqSize: null, // chunk size when reading from disk; default = Math.ceil(1048576/articleSize)*articleSize
 diskBufferSize: 1, // number of chunks to buffer
-articleQueueBuffer: null, // number of buffered articles; default is numConnections
+articleQueueBuffer: null, // number of buffered articles; default is min(round(numConnections*0.5),25)
 
 /** Other Options **/
 subdirs: 'skip', // can be 'skip' or 'keep'; note that it affects directly passed directories too

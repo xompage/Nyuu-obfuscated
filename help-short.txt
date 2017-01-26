@@ -48,7 +48,7 @@ Post Check Options:
 
 Other Upload/Check Options:
 
-       --skip-errors=all     Continue processing regardless of errors.
+  -e,  --skip-errors=all     Continue processing regardless of errors.
                              By default, Nyuu stops on all errors.
 
 NZB Output Options:
@@ -59,7 +59,7 @@ NZB Output Options:
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
 
-Other Options:
+UI Options:
 
   -q,  --quiet               Only show warnings/errors. (flag option)
   -C,  --config              Use a custom configuration file, see

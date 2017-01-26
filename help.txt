@@ -33,7 +33,7 @@ Upload Server Options:
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to use (default 3)
-       --timeout             Timeout on server responses (default 20s)
+       --timeout             Timeout on server responses (default 30s)
        --connect-timeout     Connect timeout (default 30s)
        --post-timeout        Timeout on uploading a post (default 150s)
        --connect-retries     Number of connection retry attempts (default 1)
@@ -121,7 +121,7 @@ Post Check Options:
 
 Other Upload/Check Options:
 
-       --skip-errors         Continue processing regardless of specified
+  -e,  --skip-errors         Continue processing regardless of specified
                              errors. By default, Nyuu stops on all errors. You
                              can specify `--skip-errors all` to skip all
                              skippable errors, otherwise a comma separated list
@@ -239,7 +239,7 @@ Advanced Tuning Options:
                              slower, but may be useful if the CPU or disk is
                              overloaded.
 
-Other Options:
+Post Dumping Options:
 
        --dump-failed-posts   Write out articles that fail to post to this
                              location. Message-ID will be appended to this to
@@ -256,6 +256,9 @@ Other Options:
        --delete-raw-posts    Delete successfully posted raw articles (flag
                              option). This only has any effect if the
                              `--input-raw-posts` flag is specified.
+
+UI Options:
+
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
                                  1: only show fatal errors
