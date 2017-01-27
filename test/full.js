@@ -35,6 +35,7 @@ var clientOpts = function(opts) {
 			connect: {
 				host: '127.0.0.1',
 				port: lastServerPort,
+				highWaterMark: 0
 			},
 			secure: false, // set to 'true' to use SSL
 			user: 'joe',

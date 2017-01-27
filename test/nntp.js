@@ -146,6 +146,7 @@ var newNNTP = function(opts) {
 		connect: {
 			host: '127.0.0.1',
 			port: lastServerPort,
+			highWaterMark: 0
 		},
 		secure: false, // we won't bother testing SSL, since it's a minimal change on our side
 		user: null,
