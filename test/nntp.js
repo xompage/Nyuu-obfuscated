@@ -336,6 +336,44 @@ it('should handle basic tasks', function(done) {
 	], done);
 });
 
+it('should be able to pipeline a post after a stat', function(done) {
+	var server, client;
+	waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			var rc = 0;
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			
+			assert.equal(client.state, 'connected');
+			
+			server.expect('STAT <valid-post>\r\nPOST\r\n', function() {
+				this.expect(msg, '240 <new-article> Article received ok');
+				this.respond('223 51 <valid-post> article retrieved - request text separately\r\n340  Send article');
+			});
+			// TODO: consider testing the post with a post-timeout-hack enabled
+			client.stat('valid-post', function(err, a) {
+				assert.equal(rc++, 0);
+				assert.equal(a[0], 51);
+				assert.equal(a[1], 'valid-post');
+			});
+			client.post(new DummyPost(msg), function(err, a) {
+				assert.equal(rc++, 1);
+				assert.equal(a, 'new-article');
+				cb();
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+
 it('should auto-connect on request', function(done) {
 	var server, client;
 	waterfall([
@@ -405,6 +443,32 @@ it('should end when requested'); // also test .destroy() method
 	// also check for correct timings if the server actually ends the connection
 	it('should destroy if '+ef+' timeout exceeded');
 	
+	// this isn't much of a test, since errors after end/close should largely be discarded
+	// it's mostly to ensure that no exceptions get thrown
+	it('should deal with socket errors after '+ef+' called', function(done) {
+		var server, client;
+		waterfall([
+			setupTest,
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				if(ef == 'end')
+					server.expect('QUIT\r\n', '205 Connection closing');
+				client[ef](function() {
+					assert.equal(client.state, 'inactive');
+					cb();
+				});
+				client.socket.emit('error', new Error('test error'));
+			},
+			function(cb) {
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 
 it('should call all end/close callbacks when closed');
@@ -494,8 +558,12 @@ it('should notify cancellation if cancelled during authentication', function(don
 [
 	{msg: 'half-open end request', resp: true, req: 'date', ef: 'end'}, // this test seems to fail with SSL enabled; maybe node has slightly different semantics with calling .end() and not receiving data afterwards
 	{msg: 'half-open end request (error)', resp: false, req: 'date', ef: 'end'},
+	{msg: 'half-open end pipelined request', resp: true, req: 'date2', ef: 'end'},
+	{msg: 'half-open end pipelined request (error)', resp: false, req: 'date2', ef: 'end'},
 	{msg: 'half-open close request', resp: true, req: 'date', ef: 'close'},
 	{msg: 'half-open close request (error)', resp: false, req: 'date', ef: 'close'},
+	{msg: 'half-open close pipelined request', resp: true, req: 'date2', ef: 'close'},
+	{msg: 'half-open close pipelined request (error)', resp: false, req: 'date2', ef: 'close'},
 	{msg: 'close request during post', resp: true, req: 'post', ef: 'close'},
 	{msg: 'close request during post (error)', resp: false, req: 'post', ef: 'close'}
 ].forEach(function(test) {
@@ -512,11 +580,11 @@ it('should notify cancellation if cancelled during authentication', function(don
 				assert.equal(client.state, 'connected');
 				
 				// request something and immediately end - response should still come back
-				if(test.req == 'date') {
-					server.expect('DATE\r\n' + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
+				if(test.req == 'date' || test.req == 'date2') {
+					server.expect('DATE\r\n' + (test.req == 'date2' ? 'DATE\r\n':'') + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
 						if(test.resp) {
 							setImmediate(function() {
-								server.respond('111 20110204060810');
+								server.respond('111 20110204060810' + (test.req == 'date2' ? '\r\n111 20110204060810':''));
 								if(test.ef == 'end')
 									server.respond('205 Connection closing');
 							});
@@ -525,7 +593,8 @@ it('should notify cancellation if cancelled during authentication', function(don
 							// TODO: check that client doesn't attempt to reconnect
 						}
 					});
-					client.date(function(err, date) {
+					var called = 0;
+					var respCb = function(err, date) {
 						if(test.ef == 'close') {
 							assert.equal(err.code, 'cancelled');
 							assert(!date);
@@ -536,6 +605,19 @@ it('should notify cancellation if cancelled during authentication', function(don
 							assert(!date);
 							//assert.equal(client.state, 'disconnected');
 						}
+					};
+					
+					if(test.req == 'date2') {
+						client.date(function(err, date) {
+							assert.equal(called++, 0);
+							respCb(err, date);
+						});
+					} else {
+						called++;
+					}
+					client.date(function(err, date) {
+						assert.equal(called++, 1);
+						respCb(err, date);
 						cb();
 					});
 				}
@@ -1016,10 +1098,157 @@ it('should retry on request timeout', function(done) {
 	], done);
 	
 });
-it('should retry on posting timeout', function(done) {
+it('should retry on request timeout (3x pipeline)', function(done) {
 	var server, client;
 	waterfall([
 		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			server.expect('DATE\r\nDATE\r\nDATE\r\n', function() {
+				// respond to only one request, ignore other two, which should be tried again
+				server.expect('DATE\r\nDATE\r\n', '111 20120204060810\r\n111 20130204060810');
+				
+				server.respond('111 20110204060810');
+			});
+			
+			var called = 0;
+			client.date(function(err, date) {
+				assert.equal(called++, 0);
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			});
+			client.date(function(err, date) {
+				assert.equal(called++, 1);
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2012-02-04 06:08:10')).toString());
+			});
+			client.date(function(err, date) {
+				assert.equal(called++, 2);
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2013-02-04 06:08:10')).toString());
+				cb();
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+it('should send timeout errors to pipelined requests', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {requestRetries: 0}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			server.expect('DATE\r\nDATE\r\n', function() {
+				// don't respond -> timeout error
+				// the second request will be resent though...
+				server.expect('DATE\r\n', function() {
+					server.drop();
+				});
+			});
+			
+			var called = 0;
+			client.date(function(err, date) {
+				assert.equal(called++, 0);
+				assert.equal(err.code, 'timeout');
+				assert(!date);
+			});
+			client.date(function(err, date) {
+				assert.equal(called++, 1);
+				assert.equal(err.code, 'connection_lost');
+				assert(!date);
+				cb();
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+it('check timeout timing of pipelined requests', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {requestRetries: 0, timeout: 200}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			var t = Date.now();
+			server.expect('DATE\r\nDATE\r\n', function() {
+				// don't respond -> timeout error
+				assert(Date.now()-t >= 100);
+				server.expect('DATE\r\n'); // expected 2nd request
+			});
+			
+			var called = 0;
+			client.date(function(err, date) {
+				assert.equal(called++, 0);
+				assert(Date.now()-t >= 200); // timeout delay
+				assert(Date.now()-t < 300); // but less than timeout + second request delay
+				assert.equal(err.code, 'timeout');
+				assert(!date);
+			});
+			setTimeout(function() {
+				client.date(function(err, date) {
+					assert.equal(called++, 1);
+					assert(Date.now()-t >= 400); // the first timeout should trigger a reconnect, resetting the second timeout, so total time should be > 2*timeout
+					assert.equal(err.code, 'timeout');
+					assert(!date);
+					cb();
+				});
+			}, 100);
+		},
+		function(cb) {
+			var t = Date.now();
+			server.expect('DATE\r\nDATE\r\n', function() {
+				// respond to only one
+				this.respond('111 20110204060810');
+			});
+			
+			var called = 0;
+			client.date(function(err, date) {
+				assert.equal(called++, 0);
+				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
+			});
+			setTimeout(function() {
+				client.date(function(err, date) {
+					assert.equal(called++, 1);
+					assert(Date.now()-t >= 300); // timeout + second request delay
+					assert(Date.now()-t < 400); // but less than 2*timeout
+					assert.equal(err.code, 'timeout');
+					assert(!date);
+					cb();
+				});
+			}, 100);
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+
+it('should retry on posting timeout', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {postTimeout: 100000}), // test that we hit the request timeout, not the upload timeout
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -1044,6 +1273,49 @@ it('should retry on posting timeout', function(done) {
 		},
 		function(a, cb) {
 			assert.equal(a, 'new-article');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+it('should report upload timeouts', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {
+			postTimeout: 300,
+			timeout: 100000, // test that we hit upload timeouts, not request timeouts
+			requestRetries: 0,
+			uploadChunkSize: 1048576 // this seems to increase the likelihood of upload stalls
+		}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var msg = ' ';
+			// make a large enough message to exhaust Node's internal buffers (4MB doesn't seem to work on node v0.10, but 8MB seems fine) so that pausing actually works
+			for(var i=0; i<24; i++)
+				msg += msg;
+			msg = 'My-Secret: not telling\r\n\r\n' + msg + '\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this._conn.pause(); // try to not accept any data
+				this.respond('340  Send article');
+				
+				// don't respond and hope for an upload timeout
+			});
+			client.post(new DummyPost(msg), function(err, a) {
+				assert.equal(err.code, 'timeout');
+				process.nextTick(function() { // in current code, state is 'disconnected' now, and gets switched to 'inactive' a bit later
+					assert.equal(client.state, 'inactive');
+					cb();
+				});
+			});
+		},
+		function(cb) {
+			server.drop(); // drop any client connection
 			closeTest(client, server, cb);
 		}
 	], done);
@@ -1090,11 +1362,19 @@ it('should return error if reconnect completely fails during a request', functio
 			server.close(); // reject all future connect attempts
 			currentServer = null;
 			// send req
-			server.expect('DATE\r\n', function() {
-				this.expect('DATE\r\n', '111 20110204060810');
+			server.expect('DATE\r\nDATE\r\n', function() {
+				this.expect('DATE\r\nDATE\r\n', '111 20110204060810\r\n111 20120204060810');
 				this.drop();
 			});
+			var called = 0;
 			client.date(function(err, date) {
+				assert.equal(called++, 0);
+				assert(!date);
+				assert.equal(err.code, 'connect_fail');
+				assert.equal(client.state, 'inactive');
+			});
+			client.date(function(err, date) {
+				assert.equal(called++, 1);
 				assert(!date);
 				assert.equal(err.code, 'connect_fail');
 				assert.equal(client.state, 'inactive');
@@ -1125,12 +1405,20 @@ it('should work if requesting whilst disconnected without pending connect', func
 			}, 100);
 		},
 		function(cb) {
-			server.expect('DATE\r\n', '111 20110204060810');
-			client.date(tl.fn1(function(err, date) {
+			server.expect('DATE\r\nDATE\r\n', '111 20110204060810\r\n111 20120204060810');
+			var called = 0;
+			client.date(function(err, date) {
+				assert.equal(called++, 0);
 				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
 				assert.equal(client.state, 'connected');
+			});
+			client.date(function(err, date) {
+				assert.equal(called++, 1);
+				assert.equal(date.toString(), (new Date('2012-02-04 06:08:10')).toString());
+				assert.equal(client.state, 'connected');
 				closeTest(client, server, cb);
-			}));
+			});
+			assert.equal(client.state, 'connecting');
 		}
 	], done);
 });
