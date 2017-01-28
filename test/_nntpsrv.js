@@ -126,7 +126,7 @@ NNTPServer.prototype = {
 };
 
 function NNTPConnection(opts, server, conn) {
-	this.dataQueue = [];
+	this.dataQueue = '';
 	this.opts = opts;
 	this.server = server;
 	this.conn = conn;
@@ -144,44 +144,38 @@ NNTPConnection.prototype = {
 	
 	onData: function(chunk) {
 		// grab incomming lines
-		var data = chunk.toString();
+		this.dataQueue += chunk.toString();
 		if(this.postMode) {
-			return this.onPostData(data);
+			return this.onPostData();
 		}
 		var p;
-		while((p = data.indexOf('\r\n')) >= 0) {
-			var line = this.dataQueue.join('') + data.substr(0, p);
-			data = data.substr(p+2);
-			this.dataQueue = [];
+		while((p = this.dataQueue.indexOf('\r\n')) >= 0) {
+			var line = this.dataQueue.substr(0, p);
+			this.dataQueue = this.dataQueue.substr(p+2);
 			
 			var m = line.match(/^([A-Za-z]+) ?/);
 			if(!m) throw new Error('Unexpected message format: ' + line);
 			this.onRequest(m[1].toUpperCase(), line.substr(m[0].length));
 			
 			if(this.postMode) {
-				return this.onPostData(data);
+				return this.onPostData();
 			}
 		}
-		if(data.length) this.dataQueue.push(data);
 	},
-	onPostData: function(data) {
-		var p = data.indexOf('\r\n.\r\n');
+	onPostData: function() {
+		var p = this.dataQueue.indexOf('\r\n.\r\n');
 		if(p >= 0) {
 			// post received
 			var messageId;
-			if(messageId = this.addPost(this.dataQueue.join('') + data.substr(0, p))) {
+			if(messageId = this.addPost(this.dataQueue.substr(0, p))) {
 				this._respond(240, '<' + messageId + '> Article received ok');
 			} else {
 				this._respond(441, ''); // TODO: fix 
 			}
-			data = data.substr(p+5);
-			this.dataQueue = [];
+			this.dataQueue = this.dataQueue.substr(p+5);
 			this.postMode = false;
-			return this.onData(data);
-		} else {
-			this.dataQueue.push(data);
+			return this.onData('');
 		}
-		
 	},
 	onRequest: function(req, data) {
 		if(this.opts.requestHook) {

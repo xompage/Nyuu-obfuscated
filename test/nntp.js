@@ -492,7 +492,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 });
 
 [
-	{msg: 'half-open end request', resp: true, req: 'date', ef: 'end'},
+	{msg: 'half-open end request', resp: true, req: 'date', ef: 'end'}, // this test seems to fail with SSL enabled; maybe node has slightly different semantics with calling .end() and not receiving data afterwards
 	{msg: 'half-open end request (error)', resp: false, req: 'date', ef: 'end'},
 	{msg: 'half-open close request', resp: true, req: 'date', ef: 'close'},
 	{msg: 'half-open close request (error)', resp: false, req: 'date', ef: 'close'},
