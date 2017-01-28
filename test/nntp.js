@@ -40,6 +40,7 @@ var newFakeConn = function() {
 var tl = require('./_testlib');
 
 var DEBUG = false;
+var TEST_SSL = false;
 
 // TODO: consider throwing errors on unexpected warnings
 var nntpLastLog = {warn: null, info: null, debug: null};
@@ -66,7 +67,19 @@ NNTP.log = {
 // emulate a simple echo/expectation server
 function TestServer(onConn) {
 	this.data = new Buffer(0);
-	this.server = net.createServer(function(c) {
+	
+	var cOpts = {};
+	if(TEST_SSL) {
+		var readFile = function(f) {
+			return require('fs').readFileSync(__dirname + require('path').sep + f)
+		};
+		cOpts = {
+			key: readFile('_ssl.key'),
+			cert: readFile('_ssl.crt'),
+		};
+	}
+	
+	this.server = require(TEST_SSL ? 'tls' : 'net').createServer(cOpts, function(c) {
 		if(this._conn) throw new Error('Multiple connections received');
 		this._conn = c;
 		this.connectedTime = Date.now();
@@ -146,9 +159,10 @@ var newNNTP = function(opts) {
 		connect: {
 			host: '127.0.0.1',
 			port: lastServerPort,
-			highWaterMark: 0
+			highWaterMark: 0,
+			rejectUnauthorized: false
 		},
-		secure: false, // we won't bother testing SSL, since it's a minimal change on our side
+		secure: TEST_SSL,
 		user: null,
 		password: null,
 		timeout: 75,

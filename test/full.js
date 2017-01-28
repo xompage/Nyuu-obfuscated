@@ -35,7 +35,8 @@ var clientOpts = function(opts) {
 			connect: {
 				host: '127.0.0.1',
 				port: lastServerPort,
-				highWaterMark: 0
+				highWaterMark: 0,
+				rejectUnauthorized: false
 			},
 			secure: false, // set to 'true' to use SSL
 			user: 'joe',
@@ -93,7 +94,7 @@ var clientOpts = function(opts) {
 };
 
 var testSkel = function(files, opts, cb, ulHooks) {
-	var server = new NNTPServer({});
+	var server = new NNTPServer(opts.__server || {});
 	server.listen(0, function() {
 		lastServerPort = server.address().port;
 		var e = (opts.rawInput ? PostUploader : FileUploader).upload(files, clientOpts(opts), cb);
@@ -384,9 +385,12 @@ describe('Nyuu', function() {
 
 it('complex test', function(done) {
 	doTest(['lib/', 'help.txt'], {
+		__server: {ssl: true},
 		server: {
 			postConnections: 3,
-			checkConnections: 1
+			checkConnections: 1,
+			uploadChunkSize: 500,
+			secure: true
 		},
 		check: {
 			delay: 10,

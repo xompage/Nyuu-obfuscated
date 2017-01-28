@@ -12,7 +12,18 @@ function NNTPServer(opts) {
 	this.groups = ['limbs', 'rifles', 'bloodbath']; // list of available groups
 	this.connectHook = function(){};
 	
-	this.server = require(this.opts.ssl ? 'tls' : 'net').createServer(function(c) {
+	var cOpts = {};
+	if(this.opts.ssl) {
+		var readFile = function(f) {
+			return require('fs').readFileSync(__dirname + require('path').sep + f)
+		};
+		cOpts = {
+			key: readFile('_ssl.key'),
+			cert: readFile('_ssl.crt'),
+		};
+	}
+	
+	this.server = require(this.opts.ssl ? 'tls' : 'net').createServer(cOpts, function(c) {
 		var conn = new NNTPConnection(this.opts, this, c);
 		this.connectHook(conn);
 		conn._respond(opts.denyPost ? 201 : 200, 'host test server');
