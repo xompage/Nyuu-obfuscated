@@ -107,6 +107,8 @@ provide greatly improved SSL performance.
 Nyuu download packages can be found on [the releases
 page](<https://github.com/animetosho/Nyuu/releases>). Pre-packaged Windows
 builds with Node 4.x may also exist there if I can be bothered to provide them.
+Note that code from Git is considered to be unstable (or rather, less stable
+than release versions).
 
 Dependencies
 ------------
