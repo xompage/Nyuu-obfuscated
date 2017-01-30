@@ -894,57 +894,44 @@ var rpad = function(s, l, c) {
 	return s + repeatChar((c || ' '), l-s.length);
 };
 
-var logger, errorCount = 0;
 var getProcessIndicator = null;
 var writeNewline = function() {
 	process.stderr.write('\n');
 };
 var clrRow = stdErrProgress ? '\x1b[0G\x1B[0K' : '';
+var writeLog;
 if(process.stderr.isTTY) {
-	var writeLog = function(col, type, msg) {
+	// assume colours are supported
+	writeLog = function(col, type, msg) {
 		process.stderr.write(
-			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + ' ' + msg.toString() + '\x1B[39m\n'
+			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + '\x1B[39m ' + msg.toString() + '\n'
 			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
-	// assume colours are supported
-	logger = {
-		debug: function(msg) {
-			writeLog('36', '[DBG] ', msg);
-		},
-		info: function(msg) {
-			writeLog('32', '[INFO]', msg);
-		},
-		warn: function(msg) {
-			writeLog('33', '[WARN]', msg);
-		},
-		error: function(msg) {
-			writeLog('31', '[ERR] ', msg);
-			errorCount++;
-		}
-	};
 } else {
-	var writeLog = function(type, msg) {
+	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + logTimestamp('') + type + ' ' + msg.toString() + '\n'
+			+ (getProcessIndicator ? getProcessIndicator() : '')
 		);
 	};
-	logger = {
-		debug: function(msg) {
-			writeLog('[DBG] ', msg);
-		},
-		info: function(msg) {
-			writeLog('[INFO]', msg);
-		},
-		warn: function(msg) {
-			writeLog('[WARN]', msg);
-		},
-		error: function(msg) {
-			writeLog('[ERR] ', msg);
-			errorCount++;
-		}
-	};
 }
+var errorCount = 0;
+var logger = {
+	debug: function(msg) {
+		writeLog('36', '[DBG ]', msg);
+	},
+	info: function(msg) {
+		writeLog('32', '[INFO]', msg);
+	},
+	warn: function(msg) {
+		writeLog('33', '[WARN]', msg);
+	},
+	error: function(msg) {
+		writeLog('31', '[ERR ]', msg);
+		errorCount++;
+	}
+};
 
 var isNode010 = process.version.match(/^v0\.10\./);
 
