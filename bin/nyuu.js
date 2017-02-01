@@ -1300,11 +1300,13 @@ fuploader.once('start', function(files, uploader) {
 							});
 							resp.end('Invalid URL');
 						}
+						req.socket.unref();
 					});
 				} else {
 					server = require('net').createServer(function(conn) {
 						writeState(conn);
 						conn.end();
+						conn.unref();
 					});
 				}
 				server.listen(prg.port, prg.host, function() {
