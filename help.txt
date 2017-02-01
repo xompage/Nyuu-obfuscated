@@ -308,6 +308,7 @@ UI Options:
   -?,  --help                Display a summarized list of options (flag option)
        --help-full           Display this help screen (flag option)
        --version             Print application version number (flag option)
+       --package-info        Print detailed package/NodeJS info (flag option)
 
 Input Files:
 

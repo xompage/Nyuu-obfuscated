@@ -402,6 +402,9 @@ var optMap = {
 	version: {
 		type: 'bool'
 	},
+	'package-info': {
+		type: 'bool'
+	},
 	'log-level': {
 		type: 'int',
 		alias: 'l'
@@ -468,6 +471,41 @@ if(argv.help) {
 }
 if(argv.version) {
 	console.error(require('../package.json').version);
+	process.exit(0);
+}
+if(argv['package-info']) {
+	var pc = require('../package.json');
+	var parsePackage = function(p) {
+		var r = {};
+		['version','description','license','author','homepage'].forEach(function(e) {
+			if(e in p) r[e] = p[e];
+		});
+		return r;
+	};
+	
+	// can't search package.json for dependencies (pc.dependencies) and use a loop, because nexe won't include it; TODO: fix this
+	var modules = {
+		nyuu: parsePackage(pc),
+		async: parsePackage(require('../node_modules/async/package.json')),
+		minimist: parsePackage(require('../node_modules/minimist/package.json')),
+		yencode: parsePackage(require('../node_modules/yencode/package.json')),
+	};
+	try {
+		modules.xz = parsePackage(require('../node_modules/xz/package.json'));
+	} catch(x) {}
+	var m = {
+		'Packages': modules,
+		'Node Component Versions': process.versions,
+		'Architecture': {arch: process.arch, platform: process.platform},
+		//'Node Release': process.release,
+		//'Node Features': process.features,
+		'Node Compilation Config': process.config
+	};
+	
+	for(var i in m) {
+		console.error('\n' + i + ':');
+		process.stderr.write(require('util').inspect(m[i], {colors: process.stderr.isTTY}) + '\n');
+	}
 	process.exit(0);
 }
 
