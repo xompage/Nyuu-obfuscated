@@ -1,10 +1,13 @@
 {
-  "name": "Nyuu",
+  "name": "nyuu",
   "version": "0.3.1",
   "description": "Flexible usenet binary poster",
   "keywords": [
     "usenet",
-    "nntp"
+    "nntp",
+    "nzb",
+    "usenet-uploader",
+    "usenet-poster"
   ],
   "license": "CC0-1.0",
   "author": "Anime Tosho",

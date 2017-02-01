@@ -96,6 +96,45 @@ power, overloaded servers with \>= 1Gbps connections
 Installation & Requirements
 ===========================
 
+Pre-Built Binaries
+------------------
+
+Pre-packaged Windows builds with Node 4.x may be found on [the releases
+page](<https://github.com/animetosho/Nyuu/releases>) if I can be bothered to
+provide them.
+
+Install Via NPM
+---------------
+
+If NPM is installed (usually comes bundled with
+[node.js](<https://nodejs.org/en/download/>)), the following command can be used
+to install Nyuu:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+npm install -g nyuu --no-optional --production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You’ll then be able to run Nyuu via the **nyuu** command.
+
+If the **npm** command isn’t available, it can probably be installed via your
+package manager (`apt-get install npm` for Debian), or see the following section
+titled “Node.js” for more details.
+
+You can then later uninstall Nyuu via:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+npm uninstall nyuu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install From Source
+-------------------
+
+Note that code from Git is considered to be unstable (or rather, less stable
+than release versions). Stable packages can be found on [the releases
+page](<https://github.com/animetosho/Nyuu/releases>).
+
+### Node.js
+
 Nyuu should run on node.js 0.10.x and later. Recent Linux distributions should
 have *nodejs* in their repositories, otherwise, see [installing via package
 manager](<https://nodejs.org/en/download/package-manager/>) or
@@ -104,14 +143,7 @@ builds, they [can be found here](<https://nodejs.org/en/download/stable/>).
 Although node.js 0.10.x is supported, newer versions of Node (\>=4 recommended)
 provide greatly improved SSL performance.
 
-Nyuu download packages can be found on [the releases
-page](<https://github.com/animetosho/Nyuu/releases>). Pre-packaged Windows
-builds with Node 4.x may also exist there if I can be bothered to provide them.
-Note that code from Git is considered to be unstable (or rather, less stable
-than release versions).
-
-Dependencies
-------------
+### Dependencies
 
 If you have NPM installed (may come with your install of NodeJS, or you may need
 to install it like you did with NodeJS if your package system doesn’t include
@@ -155,8 +187,7 @@ Nyuu/
 package.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Executable
-----------
+### Executable
 
 Once dependencies have been installed, Nyuu can be run via `node bin/nyuu` or
 `nodejs bin/nyuu`. If you wish to just use `nyuu` instead, you need to link to
@@ -180,19 +211,7 @@ directory, with the following contents:
 
 (obviously, fix the paths to what they actually are)
 
-Default Configuration
----------------------
-
-As entering long command lines may be tiresome, you may use a config file with
-Nyuu via the `--config` or `-C` option. You may use the *config-sample.json*
-file as reference to what a config file should be like.
-
-If a config file isn't specified, Nyuu will also search the `NYUU_CONFIG`
-environment variable for a default configuration (saving you from needing to
-specify this file on every run, if you set the environment up in your shell).
-
-Optional Modules
-----------------
+### Optional Modules
 
 You may have noticed the `--no-optional` flag for NPM above. You can remove that
 flag when doing `npm install` to enable additional features, if you need them.
@@ -218,7 +237,7 @@ Building Binary
 
 Compiling Nyuu into a single binary can be done via
 [nexe](<https://github.com/nexe/nexe>). There is a little complication with
-bundling the *yencode *module, but a rather fragile script has been supplied in
+bundling the *yencode* module, but a rather fragile script has been supplied in
 *nexe/build.js* to help with the process. The following general steps need to be
 taken:
 
@@ -257,6 +276,17 @@ Usage
 
 For command line usage, [see here](<help.txt>), [or here](<help-short.txt>) for
 a summarized list of options.
+
+Default Configuration
+---------------------
+
+As entering long command lines may be tiresome, you may use a config file with
+Nyuu via the `--config` or `-C` option. You may use the *config-sample.json*
+file as reference to what a config file should be like.
+
+If a config file isn't specified, Nyuu will also search the `NYUU_CONFIG`
+environment variable for a default configuration (saving you from needing to
+specify this file on every run, if you set the environment up in your shell).
 
 Planned Features
 ================
