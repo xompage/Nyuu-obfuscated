@@ -201,6 +201,9 @@ The following modules have been marked optional:
 -   [xz](<https://www.npmjs.com/package/xz>): enables NZBs to be compressed
     using xz via the `--nzb-compress xz` option
 
+Development
+===========
+
 Running Tests
 -------------
 
@@ -209,6 +212,45 @@ run simply by using the `mocha` command inside Nyuu’s root directory.
 Note that some test cases test functionality of timeouts; to reduce time it
 takes to run these tests, timeouts are set relatively small, which means that a
 slow computer may not be able to service them as expected.
+
+Building Binary
+---------------
+
+Compiling Nyuu into a single binary can be done via
+[nexe](<https://github.com/nexe/nexe>). There is a little complication with
+bundling the *yencode *module, but a rather fragile script has been supplied in
+*nexe/build.js* to help with the process. The following general steps need to be
+taken:
+
+1.  Ensure that *nexe* is installed (doesn’t need to be globally installed) and
+    [its requirements](<https://github.com/nexe/nexe#building-requirements>) met
+
+2.  Download a Node.js source package. The script has mostly been tested with
+    Node 4.7.x, it may work with other versions
+
+3.  The required Nyuu libraries need to be installed into the *node\_modules*
+    folder
+
+4.  Inside the *nexe* folder (the one containing *build.js*), create the
+    following two folders: *node* and *yencode-src*
+
+5.  Inside the *node* folder, create a folder with the version number of the
+    package you downloaded in step 2, for example “4.7.2”. Inside *this* folder,
+    create one named “\_” and place the downloaded sources in this folder. After
+    doing this, the file *nexe/node/x.x.x/\_/node.gyp* should exist, where
+    *x.x.x* is the node version number
+
+6.  Inside the *yencode-src* folder, copy the source code for the *yencode*
+    module
+
+7.  Edit *nexe/build.js*; options that are likely to be edited are at the top of
+    the file. You’ll likely need to change *nodeVer* to be the version of node
+    you’re using
+
+8.  In the *nexe* folder, run *build.js*. This script patches node to embed the
+    yencode module, and customises a few compiler options, then calls nexe to
+    build the final executable. If it worked, you should get a binary named
+    *nyuu* or *nyuu.exe* in the nexe folder
 
 Usage
 =====
