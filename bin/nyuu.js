@@ -862,7 +862,7 @@ if(argv['log-time']) {
 }
 
 var progress = [];
-var stdErrProgress = false;
+var stdErrProgress = false, usingProgressIndicator = false;
 if(argv.progress) {
 	argv.progress.forEach(function(str) {
 		var m = str.match(/^([a-z]+)(:|$)/i);
@@ -875,8 +875,12 @@ if(argv.progress) {
 			break;
 			case 'stderr':
 			case 'stderrx':
-				progress.push({type: type});
 				stdErrProgress = true;
+			case 'stdout':
+			case 'stdoutx':
+				if(usingProgressIndicator) error('Can only specify one of stderr/x and stdout/x');
+				usingProgressIndicator = true;
+				progress.push({type: type});
 				
 				if(argv['preload-modules'])
 					require('../lib/progrec');
@@ -947,14 +951,14 @@ if(process.stderr.isTTY) {
 	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + '\x1B[39m ' + msg.toString() + '\n'
-			+ (getProcessIndicator ? getProcessIndicator() : '')
+			+ (getProcessIndicator && stdErrProgress ? getProcessIndicator() : '')
 		);
 	};
 } else {
 	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + logTimestamp('') + type + ' ' + msg.toString() + '\n'
-			+ (getProcessIndicator ? getProcessIndicator() : '')
+			+ (getProcessIndicator && stdErrProgress ? getProcessIndicator() : '')
 		);
 	};
 }
@@ -1140,6 +1144,8 @@ fuploader.once('start', function(files, uploader) {
 			break;
 			case 'stderr':
 			case 'stderrx':
+			case 'stdout':
+			case 'stdoutx':
 				if(getProcessIndicator) break; // no need to double output =P
 				var ProgressRecorder = require('../lib/progrec');
 				var byteSamples = new ProgressRecorder(180);
@@ -1167,7 +1173,7 @@ fuploader.once('start', function(files, uploader) {
 					else
 						eta = '-';
 					
-					if(prg.type == 'stderr') {
+					if(prg.type == 'stderr' || prg.type == 'stdout') {
 						var LINE_WIDTH = 35;
 						var barSize = Math.floor(chkPerc*LINE_WIDTH);
 						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
@@ -1186,10 +1192,11 @@ fuploader.once('start', function(files, uploader) {
 						return '\x1b[0G\x1B[0K' + ret;
 					}
 				};
+				var prgTarget = prg.type.substr(0, 6);
 				var seInterval = setInterval(function() {
 					byteSamples.add(uploader.bytesPosted);
 					progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
-					process.stderr.write(getProcessIndicator());
+					process[prgTarget].write(getProcessIndicator());
 				}, 1000);
 				process.on('finished', function() {
 					clearInterval(seInterval);
@@ -1371,7 +1378,7 @@ fuploader.once('start', function(files, uploader) {
 		var time = Date.now() - startTime;
 		if(err) {
 			Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
-			msg = 'Posted ' + uploader.articlesPosted + ' article(s)';
+			msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
 			var unchecked = uploader.articlesPosted - uploader.articlesChecked;
 			if(unchecked)
 				msg += ' (' + unchecked + ' unchecked)';

@@ -275,6 +275,8 @@ UI Options:
                                  stderr: output a progress indicator to stderr
                                  stderrx: as above, but alternative format with
                                           more information
+                                 stdout: same as stderr but output to stdout
+                                 stdoutx: same as stderrx but output to stdout
                                  log: output log entries every 60s showing
                                       progress. Interval can be changed via the
                                       parameter
