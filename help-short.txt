@@ -34,7 +34,7 @@ Post Check Options:
 
   -k1, --check-connections=1 Enable post checking (flag option)
        --check-tries         Maximum number of check attempts to perform.
-                             A value of 0 disables post checking. (default 3)
+                             A value of 0 disables post checking. (default 2)
        --check-delay         Initial delay after posting before performing
                              first check (default 5s)
        --check-retry-delay   Delay for check retries, if a check fails

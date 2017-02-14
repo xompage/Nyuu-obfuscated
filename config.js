@@ -31,7 +31,7 @@ servers: [
 		timeout: 30000, // 30000ms = 30 seconds
 		connTimeout: 30000, // 30 seconds
 		postTimeout: 150000, // 2.5 minutes
-		reconnectDelay: 5000, // 5 seconds
+		reconnectDelay: 15000, // 15 seconds
 		connectRetries: 1,
 		requestRetries: 5, // how many times to retry an interrupted request
 		postRetries: 1, // how many times to retry if server returns 441 response to posted article
@@ -56,7 +56,7 @@ servers: [
 check: {
 	delay: 5000, // (in ms) initial delay for performing check
 	recheckDelay: 30000, // (in ms) delay retries by this amount of time; not used if tries<2
-	tries: 3, // number of check attempts; should be 0 if not performing post checks
+	tries: 2, // number of check attempts; should be 0 if not performing post checks
 	group: '', // if set, will switch checking connections to this group; some servers seem to want one when STATing posts, otherwise they fail to show them; if set, should be a valid group you never post to, eg "bit.test"
 	postRetries: 1, // maximum number of post retry attempts after a post check failure; set to 0 to never retry posting
 	queueCache: null, // maximum number of cached posts in the post-check queue; if this number is exceeded, posts are dropped from cache if possible; if posts cannot be dropped from cache, this value acts like queueBuffer and will pause uploading when full. Caching is only useful if posts need to be re-posted due to a failure condition, in which case, uncached posts need to be re-generated off disk; default 5 or min(connections*8,100) if unseekable streams are used

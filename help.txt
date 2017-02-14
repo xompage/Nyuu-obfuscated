@@ -37,7 +37,7 @@ Upload Server Options:
        --connect-timeout     Connect timeout (default 30s)
        --post-timeout        Timeout on uploading a post (default 150s)
        --connect-retries     Number of connection retry attempts (default 1)
-       --reconnect-delay     Delay connection retries (default 5s)
+       --reconnect-delay     Delay connection retries (default 15s)
        --request-retries     Number of request retry attempts (default 5)
        --post-retries        Number of post retry attempts in response to 441
                              errors (default 1)
@@ -107,7 +107,7 @@ Post Check Options:
                              numbers of connections are only useful if post
                              checking is bottlenecking the rest of the process.
        --check-tries         Maximum number of check attempts to perform.
-                             A value of 0 disables post checking. (default 3)
+                             A value of 0 disables post checking. (default 2)
        --check-delay         Initial delay after posting before performing
                              first check (default 5s)
        --check-retry-delay   Delay for check retries, if a check fails
@@ -261,7 +261,7 @@ UI Options:
 
   -l,  --log-level           Controls the output verbosity, value can be:
                                  0: completely silent (if command parsed)
-                                 1: only show fatal errors
+                                 1: only show errors
                                  2: show warnings
                                  3: show information (default)
                                  4: show debugging info
