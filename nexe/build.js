@@ -106,15 +106,15 @@ if(!tNode.msvs_settings) {
 	}
 }
 if(!tNode.cxxflags) {
-	doPatch(tNodeMatch, "'cxxflags': ['-Os','-msse2','-static','-flto'],");
+	doPatch(tNodeMatch, "'cxxflags': ['-Os','-msse2','-flto'],");
 } else if(tNode.cxxflags.indexOf('-Os') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'-Os','-msse2','-static','-flto',");
+	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'-Os','-msse2','-flto',");
 }
 
 if(!tNode.ldflags) {
-	doPatch(tNodeMatch, "'ldflags': ['-s','-static','-flto'],");
+	doPatch(tNodeMatch, "'ldflags': ['-s','-flto'],");
 } else if(tNode.ldflags.indexOf('-s') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s','-static','-flto',");
+	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s','-flto',");
 }
 
 
@@ -143,7 +143,7 @@ var patchGypCompiler = function(file, targets) {
 	
 	if(!gyp.target_defaults) {
 		targets = targets || 'targets';
-		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['-Os','-msse2','-static','-flto'], 'ldflags': ['-s','-static','-flto']}, '"+targets+"':");
+		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['-Os','-msse2','-flto'], 'ldflags': ['-s','-flto']}, '"+targets+"':");
 	} else {
 		// TODO: other possibilities
 		if(!gyp.target_defaults.msvs_settings)
@@ -151,11 +151,11 @@ var patchGypCompiler = function(file, targets) {
 		else if(!gyp.target_defaults.msvs_settings.VCCLCompilerTool || !gyp.target_defaults.msvs_settings.VCLinkerTool || !gyp.target_defaults.msvs_settings.VCCLCompilerTool.EnableEnhancedInstructionSet)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.cxxflags)
-			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['-Os','-msse2','-static','-flto'],");
+			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['-Os','-msse2','-flto'],");
 		else if(gyp.target_defaults.cxxflags.indexOf('-flto') < 0)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.ldflags)
-			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'ldflags': ['-s','-static','-flto'],");
+			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'ldflags': ['-s','-flto'],");
 		else if(gyp.target_defaults.ldflags.indexOf('-flto') < 0)
 			throw new Error('To be implemented');
 	}
@@ -224,6 +224,7 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	    output: './nyuu' + (require('os').platform() == 'win32' ? '.exe':''), // where to output the compiled binary
 	    nodeVersion: nodeVer, // node version
 	    nodeTempDir: nexeBase, // where to store node source.
+	    // --without-snapshot
 	    nodeConfigureArgs: ['--fully-static', '--without-dtrace', '--without-etw', '--without-perfctr', '--without-npm', '--with-intl=none'], // for all your configure arg needs.
 	    nodeMakeArgs: makeArgs, // when you want to control the make process.
 	    nodeVCBuildArgs: ["nosign", vcBuildArch], // when you want to control the make process for windows.
