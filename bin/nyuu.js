@@ -497,6 +497,9 @@ if(argv['package-info']) {
 	try {
 		modules.xz = parsePackage(require('../node_modules/xz/package.json'));
 	} catch(x) {}
+	try {
+		modules.nexe = parsePackage(require('../node_modules/nexe/package.json'));
+	} catch(x) {}
 	var m = {
 		'Packages': modules,
 		'Node Component Versions': process.versions,
