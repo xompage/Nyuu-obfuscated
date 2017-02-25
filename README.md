@@ -15,12 +15,6 @@ It does require one compiled module,
 [yencode](<https://animetosho.org/app/node-yencode>), for ultra fast yEnc and
 CRC32 calculation.
 
- 
-
-Note that Nyuu is currently still under heavy development and many features may
-not work properly or even be implemented. As with any other experimental
-subject, use precaution.
-
 Features
 ========
 
