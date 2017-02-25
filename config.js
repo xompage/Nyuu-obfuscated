@@ -88,7 +88,7 @@ postHeaders: {
 	
 	// optional headers
 	//Organization: '',
-	'User-Agent': 'Nyuu/' + require('./package.json').version,
+	'User-Agent': 'Nyuu/' + (global.__nyuu_pkg || require('./package.json')).version,
 	// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm or http://www.cs.tut.fi/~jkorpela/headers.html
 },
 // postHeaders can also, itself, be a function, in which case, it is called with (name, size, num, numTotal) as arguments, and must return an object like the above

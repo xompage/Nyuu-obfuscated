@@ -3,7 +3,7 @@
 "use strict";
 process.title = 'Nyuu';
 
-var fs;
+var fs = require('fs');
 var util = require('../lib/util');
 var error = function(msg) {
 	console.error(msg);
@@ -459,7 +459,7 @@ for(var k in optMap) {
 
 
 var argv = require('minimist')(process.argv.slice(2), mOpts);
-
+var isNode010 = process.version.match(/^v0\.10\./);
 
 
 if(argv['help-full'] || argv.help) {
@@ -468,7 +468,7 @@ if(argv['help-full'] || argv.help) {
 		// for embedding help text
 		helpText = require('./help.json')[argv['help-full'] ? 'full':'short'];
 	} catch(x) {
-		helpText = require('fs').readFileSync(__dirname + '/../help' + (argv['help-full'] ? '':'-short') + '.txt').toString();
+		helpText = fs.readFileSync(__dirname + '/../help' + (argv['help-full'] ? '':'-short') + '.txt').toString();
 	}
 	console.error(helpText.replace(/^Nyuu(\r?\n)/, 'Nyuu v' + require('../package.json').version + '$1'));
 	process.exit(0);
@@ -552,11 +552,68 @@ var parseTime = function(s) {
 	return false;
 };
 
+
+var evalConfig = function(data, filename) {
+	var sandbox = {};
+	for(var k in global)
+		sandbox[k] = global[k];
+	sandbox.module = {
+		id: filename,
+		exports: {},
+		parent: module,
+		filename: filename,
+		children: [],
+		paths: module.paths
+	};
+	sandbox.exports = sandbox.module.exports;
+	sandbox.require = require;
+	sandbox.global = sandbox;
+	
+	// add some handy shortcuts (like REPL)
+	require('repl')._builtinLibs.forEach(function(m) {
+		Object.defineProperty(sandbox, m, {
+			get: function() {
+				return sandbox[m] = require(m);
+			},
+			set: function(val) {
+				delete sandbox[m];
+				sandbox[m] = val;
+			},
+			configurable: true
+		});
+	});
+	sandbox.__nyuu_pkg = require('../package.json'); // kinda necessary in nexe builds, since package.json doesn't exist there
+	
+	require('vm').runInNewContext(data, sandbox, isNode010 ? filename : {filename: filename});
+	return sandbox.module.exports;
+};
+
 var ulOpts = require('../config.js');
 if(argv.config || process.env.NYUU_CONFIG) {
 	// TODO: allow proc:// or json:// ?
-	var cOpts = require(require('fs').realpathSync(argv.config || process.env.NYUU_CONFIG));
-	if(cOpts.isFullConfig) {
+	var confFile = argv.config || process.env.NYUU_CONFIG;
+	var confData = fs.readFileSync(confFile).toString();
+	
+	// try to determine type of config file from heuristics
+	var confType;
+	if(confFile.match(/\.json$/i))
+		confType = 'json';
+	else if(confFile.match(/\.js$/i))
+		confType = 'js';
+	else if(confData.trim().substr(0, 1) == '{')
+		confType = 'json';
+	else if(confData.match(/(^|[^a-zA-Z0-9])exports[^a-zA-Z0-9]/))
+		confType = 'js';
+	
+	var cOpts;
+	if(confType == 'json')
+		cOpts = JSON.parse(confData);
+	else if(confType == 'js')
+		cOpts = evalConfig(confData, confFile);
+	else
+		error('Invalid config data supplied');
+	
+	if(cOpts.isFullConfig && confType == 'js') {
 		if(cOpts.servers) {
 			// for the default setup of one upload server, but multiple specified in custom config, duplicate the default setup for each custom server
 			if(ulOpts.servers.length == 1 && cOpts.servers.length > 1) {
@@ -770,7 +827,7 @@ if(checkOverrides && argv['check-connections'] !== 0 && (defNumConnCheck || argv
 
 if(argv['dump-failed-posts']) {
 	try {
-		if(require('fs').statSync(argv['dump-failed-posts']).isDirectory()) {
+		if(fs.statSync(argv['dump-failed-posts']).isDirectory()) {
 			// if supplied a folder, append a directory separator if not supplied
 			var sep = require('path').sep;
 			if(ulOpts.dumpPostLoc.substr(-1) != sep)
@@ -790,8 +847,6 @@ if(argv['copy-input']) {
 	var copyProc = copyTarget.match(/^proc:\/\//i);
 	if(copyProc)
 		copyTarget = copyTarget.substr(7);
-	else
-		fs = fs || require('fs');
 	
 	ulOpts.inputCopy = function(filename, size) {
 		if(copyIncl && !filename.match(copyIncl)) return;
@@ -985,8 +1040,6 @@ var logger = {
 		errorCount++;
 	}
 };
-
-var isNode010 = process.version.match(/^v0\.10\./);
 
 if(verbosity < 4) logger.debug = function(){};
 if(verbosity < 3) logger.info = function(){};
