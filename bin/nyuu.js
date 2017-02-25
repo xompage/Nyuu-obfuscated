@@ -625,7 +625,9 @@ for(var k in argv) {
 					error('Missing value for `' + k + '`');
 				}
 			});
-		} else
+		} else if(v === null)
+			v = [];
+		else if(o.type != 'map' && typeof v != 'object')
 			v = [v];
 	}
 	switch(o.type) {
@@ -660,16 +662,18 @@ for(var k in argv) {
 		
 		case 'map':
 			// create map
-			var tmp = {};
-			v.forEach(function(h) {
-				var m;
-				if(m = h.match(/^(.+?)[=:](.*)$/)) {
-					tmp[m[1].trim()] = m[2].trim();
-				} else {
-					error('Invalid format for `' + k + '`');
-				}
-			});
-			v = tmp;
+			if(Array.isArray(v)) {
+				var tmp = {};
+				v.forEach(function(h) {
+					var m;
+					if(m = h.match(/^(.+?)[=:](.*)$/)) {
+						tmp[m[1].trim()] = m[2].trim();
+					} else {
+						error('Invalid format for `' + k + '`');
+					}
+				});
+				v = tmp;
+			} // otherwise v already is an object
 			break;
 	}
 	
