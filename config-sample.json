@@ -7,13 +7,13 @@
 	"password":           "",
 	"connections":        3,
 	
+	"article-size":       "700K",
 	"comment":            "",
 	"from":               "Snazzy Poster <me@localhost>",
 	"groups":             "alt.binaries.test",
-	"header":             [],
 	
 	"check-connections":  0,
-	"check-tries":        3,
+	"check-tries":        2,
 	"check-delay":        "5s",
 	"check-retry-delay":  "30s",
 	"check-post-tries":   1,
@@ -22,7 +22,6 @@
 	
 	"out":                null,
 	"overwrite":          false,
-	"meta":               [],
 	
 	"quiet":              false
 }
