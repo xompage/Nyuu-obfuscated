@@ -950,7 +950,9 @@ if(argv.progress) {
 			case 'tcp':
 			case 'http':
 				var o = {type: type, port: 0};
-				if(m = arg.match(/^([a-z0-9\-.]*|\[[a-f0-9:]+\]):(\d*)$/i)) {
+				if(arg.substr(0, 5) == 'unix:') {
+					o.socket = arg.substr(5);
+				} else if(m = arg.match(/^([a-z0-9\-.]*|\[[a-f0-9:]+\]):(\d*)$/i)) {
 					if(m[1].length) {
 						if(m[1].substr(0, 1) == '[')
 							o.host = m[1].substr(1, m[1].length-2);
@@ -1418,14 +1420,20 @@ fuploader.once('start', function(files, uploader) {
 						conn.unref();
 					});
 				}
-				server.listen(prg.port, prg.host, function() {
-					var addr = server.address();
-					if(addr.family == 'IPv6')
-						addr = '[' + addr.address + ']:' + addr.port;
-					else
-						addr = addr.address + ':' + addr.port;
-					Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
-				});
+				if(prg.socket) {
+					server.listen(prg.socket, function() {
+						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening at ' + prg.socket);
+					});
+				} else {
+					server.listen(prg.port, prg.host, function() {
+						var addr = server.address();
+						if(addr.family == 'IPv6')
+							addr = '[' + addr.address + ']:' + addr.port;
+						else
+							addr = addr.address + ':' + addr.port;
+						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
+					});
+				}
 				process.on('finished', function() {
 					server.close();
 				});
