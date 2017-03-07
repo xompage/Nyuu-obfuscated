@@ -153,6 +153,8 @@ subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; }
 dumpPostLoc: '', // dump all failed articles to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
 
 
+// only used for raw post uploading; delete successfully uploaded post files
+deleteRawPosts: false,
 
 isFullConfig: true // leave here to indicate that this is a full config file, as opposed to the simplified config file
 };
