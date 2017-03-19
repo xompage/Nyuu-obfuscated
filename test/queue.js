@@ -225,4 +225,39 @@ it('should flush add requests when asked to', function(done) {
 	done();
 });
 
+// TODO: improve this test case
+it('should handle reserved space', function(done) {
+	var q = new Queue(2);
+	q.reserve();
+	var add1 = false, add2 = false, add3 = false;
+	q.add(1, function() {
+		add1 = true;
+		q.add(2, function() {
+			add2 = true;
+			q.add(3, function() {
+				add3 = true;
+			});
+		});
+	});
+	
+	setImmediate(function() {
+		assert.equal(add1, true);
+		assert.equal(add2, false);
+		q.fulfill(4, function() {
+			// add2 likely added at this point, but add3 shouldn't be
+			assert.equal(add3, false); // should be added before add3 is resolved
+		});
+		q.take(function(n) {
+			assert.equal(n, 1);
+			q.take(function(n) {
+				assert.equal(n, 2);
+				q.take(function(n) {
+					assert.equal(n, 4);
+					done();
+				});
+			});
+		});
+	});
+});
+
 });
