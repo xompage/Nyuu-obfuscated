@@ -259,5 +259,43 @@ it('should handle reserved space', function(done) {
 		});
 	});
 });
+it('should handle reserved queueing', function(done) {
+	var q = new Queue(2);
+	q.reserve(); // over-reserve here a bit
+	q.reserve();
+	q.reserve();
+	q.reserve();
+	q.reserve();
+	q.reserve();
+	
+	var add1 = false, add2 = false, add3 = false;
+	q.fulfill(1, function() {
+		add1 = true;
+	});
+	q.fulfill(2, function() {
+		add2 = true;
+	});
+	q.fulfill(3, function() {
+		add3 = true;
+	});
+	
+	setImmediate(function() {
+		assert.equal(add1, true);
+		assert.equal(add2, true);
+		assert.equal(add3, false);
+		
+		q.take(function(n) {
+			assert.equal(n, 1);
+			q.take(function(n) {
+				assert.equal(n, 2);
+				assert.equal(add3, true);
+				q.take(function(n) {
+					assert.equal(n, 3);
+					done();
+				});
+			});
+		});
+	});
+});
 
 });
