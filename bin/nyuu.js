@@ -1421,6 +1421,12 @@ fuploader.once('start', function(files, uploader) {
 						conn.unref();
 					});
 				}
+				server.on('error', function(err) {
+					Nyuu.log.warn('StatusServer ' + err.toString());
+				});
+				server.once('listening', process.on.bind(process, 'finished', function() {
+					server.close();
+				}));
 				if(prg.socket) {
 					server.listen(prg.socket, function() {
 						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening at ' + prg.socket);
@@ -1435,9 +1441,6 @@ fuploader.once('start', function(files, uploader) {
 						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
 					});
 				}
-				process.on('finished', function() {
-					server.close();
-				});
 			break;
 		}
 	});
