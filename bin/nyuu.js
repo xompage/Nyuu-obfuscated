@@ -1272,7 +1272,6 @@ fuploader.once('start', function(files, uploader) {
 					var now = Date.now();
 					
 					// TODO: JSON output etc
-					var pqLen = uploader.queue.queue.length + uploader.queue.reserved;
 					conn.write([
 						'Time: ' + (new Date(now)),
 						'Start time: ' + (new Date(startTime)),
@@ -1287,7 +1286,7 @@ fuploader.once('start', function(files, uploader) {
 						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
 						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
 						'',
-						'Post queue size: ' + pqLen + ' (' + toPercent(Math.min(pqLen/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
+						'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
 						'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
 						'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
 						'Re-read queue size: ' + uploader.reloadQueue.queue.length,
