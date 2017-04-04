@@ -687,7 +687,7 @@ for(var k in argv) {
 			});
 		} else if(v === null)
 			v = [];
-		else if(o.type != 'map' && typeof v != 'object')
+		else if(o.type != 'map' || typeof v != 'object')
 			v = [v];
 	}
 	switch(o.type) {
