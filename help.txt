@@ -1,5 +1,6 @@
 Nyuu
------------
+Flexible binary usenet poster
+-----------------------------
 
 Usage: nyuu [options] file1 file2 ...
 
