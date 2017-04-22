@@ -434,7 +434,7 @@ for(var k in servOptMap) {
 	var o = servOptMap[k];
 	optMap[k] = o;
 	if(!o.postOnly) {
-		var o2 = util.clone(o);
+		var o2 = util.extend({}, o);
 		delete o2.alias;
 		if(o2.checkAlias) o2.alias = o2.checkAlias;
 		optMap['check-' + k] = o2;
@@ -506,9 +506,7 @@ if(argv['package-info']) {
 
 
 var evalConfig = function(data, filename) {
-	var sandbox = {};
-	for(var k in global)
-		sandbox[k] = global[k];
+	var sandbox = util.extend({}, global);
 	sandbox.module = {
 		id: filename,
 		exports: {},
@@ -754,10 +752,7 @@ if(argv.header) {
 }
 
 // map custom meta tags
-if(argv.meta) {
-	for(var k in argv.meta)
-		ulOpts.nzb.metaData[k] = argv.meta[k];
-}
+if(argv.meta) util.extend(ulOpts.nzb.metaData, argv.meta);
 
 if(argv['preload-modules']) {
 	require('net'); // tls requires it, so may as well...
