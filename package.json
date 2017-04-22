@@ -17,6 +17,7 @@
   },
   "main": "lib/fileuploader.js",
   "bin": "bin/nyuu.js",
+  "preferGlobal": true,
   "engines": {
     "node": ">=0.10"
   },
@@ -30,7 +31,6 @@
     "nexe" : "*"
   },
   "optionalDependencies" : {
-    "xz" : "*"
   },
   "bugs": {
     "url": "https://github.com/animetosho/nyuu/issues"

@@ -105,7 +105,7 @@ If NPM is installed (usually comes bundled with
 to install Nyuu:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install -g nyuu --no-optional --production
+npm install -g nyuu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You’ll then be able to run Nyuu via the **nyuu** command.
@@ -145,7 +145,7 @@ them together), the following command (executed inside the Nyuu directory) is
 all you need to set up the dependencies:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install --no-optional --production
+npm install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don’t want to use NPM, you can use your package manager instead if it has
@@ -207,9 +207,7 @@ directory, with the following contents:
 
 ### Optional Modules
 
-You may have noticed the `--no-optional` flag for NPM above. You can remove that
-flag when doing `npm install` to enable additional features, if you need them.
-The following modules have been marked optional:
+Nyuu optionally supports the following modules:
 
 -   [xz](<https://www.npmjs.com/package/xz>): enables NZBs to be compressed
     using xz via the `--nzb-compress xz` option
