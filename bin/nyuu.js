@@ -442,23 +442,12 @@ for(var k in servOptMap) {
 }
 
 
-// build minimist's option map
-var mOpts = {string: [], boolean: [], alias: {}, default: {}};
-for(var k in optMap) {
-	var o = optMap[k];
-	if(o.type == 'bool') {
-		mOpts.boolean.push(k);
-		mOpts.default[k] = null; // prevent minimist from setting this as false
-	} else
-		mOpts.string.push(k);
-	
-	if(o.alias) {
-		mOpts.alias[o.alias] = k;
-	}
+var argv;
+try {
+	argv = require('../lib/arg_parser.js')(process.argv.slice(2), optMap);
+} catch(x) {
+	error(x.message);
 }
-
-
-var argv = require('minimist')(process.argv.slice(2), mOpts);
 var isNode010 = process.version.match(/^v0\.10\./);
 
 
@@ -491,7 +480,6 @@ if(argv['package-info']) {
 	var modules = {
 		nyuu: parsePackage(pc),
 		async: parsePackage(require('../node_modules/async/package.json')),
-		minimist: parsePackage(require('../node_modules/minimist/package.json')),
 		yencode: parsePackage(require('../node_modules/yencode/package.json')),
 	};
 	try {
@@ -515,42 +503,6 @@ if(argv['package-info']) {
 	}
 	process.exit(0);
 }
-
-var parseSize = function(s) {
-	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s);
-	var parts;
-	if(parts = s.match(/^([0-9.]+)([kKmMgGtTpPeE])$/)) {
-		var num = +(parts[1]);
-		switch(parts[2].toUpperCase()) {
-			case 'E': num *= 1024;
-			case 'P': num *= 1024;
-			case 'T': num *= 1024;
-			case 'G': num *= 1024;
-			case 'M': num *= 1024;
-			case 'K': num *= 1024;
-		}
-		if(isNaN(num)) return false;
-		return Math.floor(num);
-	}
-	return false;
-};
-var parseTime = function(s) {
-	if(typeof s == 'number' || (s|0) || s === '0') return Math.floor(s*1000);
-	var parts;
-	if(parts = s.match(/^([0-9.]+)([mM]?[sS]|[mMhHdDwW])$/)) {
-		var num = +(parts[1]);
-		switch(parts[2].toLowerCase()) {
-			case 'w': num *= 7;
-			case 'd': num *= 24;
-			case 'h': num *= 60;
-			case 'm': num *= 60;
-			case 's': num *= 1000;
-		}
-		if(isNaN(num)) return false;
-		return Math.floor(num);
-	}
-	return false;
-};
 
 
 var evalConfig = function(data, filename) {
@@ -632,12 +584,15 @@ if(argv.config || process.env.NYUU_CONFIG) {
 		util.deepMerge(ulOpts, cOpts);
 	} else {
 		// simple config format, just set unset CLI args
-		var verbosityOnCli = (argv.quiet || argv.verbose);
+		cOpts = require('../lib/arg_parser.js')(cOpts, optMap);
+		
+		// allow --quiet or --verbose to override whatever is specified in the config, without error
+		if(argv.quiet || argv.verbose) {
+			delete cOpts.quiet;
+			delete cOpts.verbose;
+		}
 		for(var k in cOpts) {
-			// allow --quiet or --verbose to override whatever is specified in the config, without error
-			if(verbosityOnCli && (k == 'quiet' || k == 'verbose')) continue;
-			
-			if(!(k in argv) || argv[k] === null)
+			if(!(k in argv))
 				argv[k] = cOpts[k];
 		}
 	}
@@ -655,91 +610,9 @@ var setPathedVal = function(base, key, val) {
 };
 
 for(var k in argv) {
-	if(k == '_') continue;
-	var v = argv[k];
-	
-	if(k in mOpts.alias) continue; // ignore minimist's annoying behaviour of setting aliased options
-	if(!(k in optMap))
-		error('Unknown option `' + k + '`');
-	
 	var o = optMap[k];
-	var isArray = Array.isArray(v);
-	if(o.type == 'bool' && v === null) continue; // hack to get around minimist forcing unset values to be false
-	if(o.type != 'bool') {
-		// handle set and '--no-' syntax for non-bool values
-		if(v === true || v === '') {
-			if(o.ifSetDefault !== undefined)
-				v = o.ifSetDefault;
-			else
-				error('No value supplied for `' + k + '`');
-		} else if(v === false) {
-			continue; // explicitly unset
-		}
-	}
-	if(['list','array','map'].indexOf(o.type) === -1) {
-		if(isArray) error('Multiple values supplied for `' + k + '`!');
-	} else {
-		if(isArray) {
-			v.forEach(function(vv) {
-				if(vv === true || vv === false || vv === '' || v === null) {
-					error('Missing value for `' + k + '`');
-				}
-			});
-		} else if(v === null)
-			v = [];
-		else if(o.type != 'map' || typeof v != 'object')
-			v = [v];
-	}
-	switch(o.type) {
-		case 'int':
-			v = v|0;
-			if(v < 0) error('Invalid number specified for `' + k + '`');
-			break;
-		
-		case '-int':
-			v = v|0;
-			break;
-		
-		case 'size':
-			v = parseSize(v);
-			if(!v) error('Invalid size specified for `' + k + '`');
-			break;
-		
-		case 'time':
-			v = parseTime(v);
-			if(v === false) error('Invalid time specified for `' + k + '`');
-			break;
-		
-		case 'list':
-			var tmp = [];
-			v.forEach(function(e) {
-				tmp = tmp.concat(e.split(',').map(function(s) {
-					return s.trim().toLowerCase();
-				}));
-			});
-			v = tmp;
-			break;
-		
-		case 'map':
-			// create map
-			if(Array.isArray(v)) {
-				var tmp = {};
-				v.forEach(function(h) {
-					var m;
-					if(m = h.match(/^(.+?)[=:](.*)$/)) {
-						tmp[m[1].trim()] = m[2].trim();
-					} else {
-						error('Invalid format for `' + k + '`');
-					}
-				});
-				v = tmp;
-			} // otherwise v already is an object
-			break;
-	}
-	
-	argv[k] = v;
-	if(o.map)
-		setPathedVal(ulOpts, o.map, o.fn ? o.fn(v, ulOpts) : v);
+	if(o && o.map)
+		setPathedVal(ulOpts, o.map, argv[k]);
 }
 
 

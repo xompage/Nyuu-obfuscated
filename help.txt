@@ -187,8 +187,6 @@ NZB Output Options:
 
   -o,  --out                 If supplied, will write NZB to this file
                              Can be '-' which writes the NZB to stdout
-                             Note: due to a bug in minimist, `--out -` will not
-                             work, use `-o-` instead.
                              You can also pipe this into the stdin of another
                              process by prefixing a command with `proc://`, for
                              example: `-o 'proc://cat>out.nzb'`, which is the

@@ -149,16 +149,15 @@ npm install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don’t want to use NPM, you can use your package manager instead if it has
-all the necessary packages - on Debian 9 / Ubuntu 15.10:
+all the necessary packages - on Debian 8 / Ubuntu 14.04:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-apt-get install node-minimist node-async
+apt-get install node-async
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can grab the dependencies manually: create a directory named
 *node\_modules* in the Nyuu directory. Inside of which, place
-[async](<https://github.com/caolan/async/releases>) and
-[minimist](<https://github.com/substack/minimist/releases>).
+[async](<https://github.com/caolan/async/releases>).
 
 For yencode, you’ll need to place it in the *node\_modules* directory as well,
 then follow [the installation
@@ -174,8 +173,6 @@ Nyuu/
 - node_modules/
   - async/
     - package.json
-  - minimist/
-    - index.js
   - yencode/
     - index.js
 package.json

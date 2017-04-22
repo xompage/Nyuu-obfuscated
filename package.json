@@ -23,7 +23,6 @@
   },
   "dependencies" : {
     "async" : "1.*",
-    "minimist": "*",
     "yencode" : ">=1.0.6"
   },
   "devDependencies" : {
