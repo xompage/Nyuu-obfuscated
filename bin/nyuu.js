@@ -859,7 +859,7 @@ if(argv.progress) {
 
 var repeatChar = function(c, l) {
 	if(c.repeat) return c.repeat(l);
-	var buf = new Buffer(l);
+	var buf = (Buffer.allocUnsafe || Buffer)(l);
 	buf.fill(c);
 	return buf.toString();
 };
