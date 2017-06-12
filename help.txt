@@ -71,7 +71,7 @@ Article/Post Options:
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
                              Default is similar to the following:
-                                 [{files}/{filenum}] - "{filename}" yEnc ({part}/{parts}) {filesize}
+                                 [{filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize}
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>'
   -g,  --groups              Shortcut for `-H Newsgroups=...`
