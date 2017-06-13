@@ -944,7 +944,7 @@ var fuploader = Nyuu.upload(argv._.map(function(file) {
 			error('Invalid syntax for process input: ' + file);
 		var ret = {
 			name: m[0],
-			size: m[1]|0,
+			size: Math.floor(m[1]),
 			stream: function(cmd) {
 				return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
 			}.bind(null, m[2])
