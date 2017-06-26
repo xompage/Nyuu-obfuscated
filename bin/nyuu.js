@@ -319,6 +319,14 @@ var optMap = {
 			return v;
 		}
 	},
+	'input-file': {
+		type: 'array',
+		alias: 'i'
+	},
+	'input-file0': {
+		type: 'array',
+		alias: '0'
+	},
 	'disk-req-size': {
 		type: 'size',
 		map: 'diskReqSize'
@@ -767,7 +775,6 @@ if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
 	ulOpts.keepMessageId = true;
 
 // custom validation rules
-if(!argv._.length)                  error('Must supply at least one input file');
 // TODO: more validation
 
 if(argv.quiet && argv.verbose)
@@ -933,413 +940,474 @@ var displayCompleteMessage = function(err) {
 
 var Nyuu = argv['input-raw-posts'] ? require('../lib/postuploader') : require('../');
 Nyuu.setLogger(logger);
-var fuploader = Nyuu.upload(argv._.map(function(file) {
-	// TODO: consider supporting deferred filesize gathering?
-	var m = file.match(/^procjson:\/\/(.+?,.+?,.+)$/i);
-	if(m) {
-		if(m[1].substr(0, 1) != '[')
-			m[1] = '[' + m[1] + ']';
-		m = JSON.parse(m[1]);
-		if(!Array.isArray(m) || m.length != 3)
-			error('Invalid syntax for process input: ' + file);
-		var ret = {
-			name: m[0],
-			size: Math.floor(m[1]),
-			stream: function(cmd) {
-				return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
-			}.bind(null, m[2])
-		};
-		if(!ret.size)
-			error('Invalid size specified for process input: ' + file);
-		if(argv['preload-modules']) {
-			require('../lib/procman');
-			require('../lib/streamreader');
-		}
-		return ret;
-	} else {
-		if(argv['preload-modules'])
-			require('../lib/filereader');
-	}
-	return file;
-}), ulOpts, function(err) {
-	if(getProcessIndicator)
-		process.removeListener('exit', writeNewline);
-	getProcessIndicator = null;
-	process.emit('finished');
-	if(err) {
-		displayCompleteMessage(err);
-		process.exitCode = 33;
-	} else {
-		displayCompleteMessage();
-		process.exitCode = errorCount ? 32 : 0;
-	}
-	(function(cb) {
-		if(processes && processes.running) {
-			var procWarnTO = setTimeout(function() {
-				if(!processes.running) return;
-				Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
-			}, 1000).unref();
-			processes.onEnd(function() {
-				clearTimeout(procWarnTO);
-				cb();
-			});
-		} else cb();
-	})(function() {
-		if(isNode010 && process.exitCode) {
-			// hack for lack of .exitCode support on node 0.10
-			process.on('exit', function() {
-				process.exit(process.exitCode);
-			});
-		}
-		setTimeout(function() {
-			if(process._getActiveHandles) { // undocumented function, but seems to always work
-				var ah = process._getActiveHandles();
-				var hTypes = {};
-				ah.forEach(function(h) {
-					var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
-					if(cn in hTypes)
-						hTypes[cn]++;
-					else
-						hTypes[cn] = 1;
-				});
-				var handleStr = '';
-				for(var hn in hTypes) {
-					handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
-				}
-				Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
-				if(verbosity >= 4) {
-					process.stderr.write(require('util').inspect(ah, {colors: process.stderr.isTTY}) + '\n');
-				}
-			} else
-				Nyuu.log.warn('Process did not terminate cleanly');
-			process.exit();
-		}, 5000).unref();
-	});
-});
 
-// display some stats
-var friendlySize = function(s) {
-	var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
-	for(var i=0; i<units.length; i++) {
-		if(s < 10000) break;
-		s /= 1024;
+var filesToUpload = argv._;
+
+(function(cb) {
+	var fileLists = [];
+	if(argv['input-file']) {
+		fileLists = argv['input-file'].map(function(f) {
+			return [f, true];
+		});
 	}
-	return (Math.round(s *100)/100) + ' ' + units[i];
-};
-var decimalPoint = ('' + 1.1).replace(/1/g, '');
-var friendlyTime = function(t, compact) {
-	var days = (t / 86400000) | 0;
-	t %= 86400000;
-	var seg = [];
-	var sect = [3600000, 60000, 1000];
-	if(compact && t < 3600000)
-		sect.shift();
-	sect.forEach(function(s) {
-		seg.push(lpad('' + ((t / s) | 0), 2, '0'));
-		t %= s;
-	});
-	var ret = (days ? days + 'd,' : '') + seg.join(':');
-	if(!compact)
-		ret += decimalPoint + lpad(t + '', 3, '0');
-	return ret;
-};
-var toPercent = function(n) {
-	return (Math.round(n*10000)/100).toFixed(2) + '%';
-};
-var retArg = function(_) { return _; };
-fuploader.once('start', function(files, uploader) {
-	var totalSize = 0, totalPieces = 0, totalFiles = 0;
-	for(var filename in files) {
-		var sz = files[filename].size;
-		totalSize += sz;
-		totalPieces += Math.ceil(sz / ulOpts.articleSize);
-		totalFiles++;
+	if(argv['input-file0']) {
+		fileLists = fileLists.concat(argv['input-file0'].map(function(f) {
+			return [f, false];
+		}));
 	}
-	if(argv['input-raw-posts']) {
-		totalPieces = totalFiles;
-		Nyuu.log.info('Uploading ' + totalPieces + ' article(s) totalling about ' + friendlySize(totalSize));
-	} else
-		Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
 	
-	var startTime = Date.now();
-	progress.forEach(function(prg) {
-		switch(prg.type) {
-			case 'log':
-				var logInterval = setInterval(function() {
-					Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
-				}, prg.interval);
-				process.on('finished', function() {
-					clearInterval(logInterval);
+	if(fileLists) {
+		var stdInUsed = false;
+		require('async').map(fileLists, function(fl, cb) {
+			if(fl[0] == '-') {
+				if(stdInUsed) error('stdin was specified as input for multiple sources');
+				stdInUsed = true;
+				// read from stream
+				var data = '';
+				process.stdin.on('data', function(chunk) {
+					data += chunk.toString();
 				});
-			break;
-			case 'stderr':
-			case 'stderrx':
-			case 'stdout':
-			case 'stdoutx':
-				if(getProcessIndicator) break; // no need to double output =P
-				var ProgressRecorder = require('../lib/progrec');
-				var byteSamples = new ProgressRecorder(180);
-				var progressSamples = new ProgressRecorder(180);
-				byteSamples.add(0);
-				progressSamples.add(0);
-				getProcessIndicator = function() {
-					var chkPerc = uploader.articlesChecked / totalPieces,
-					    pstPerc = uploader.articlesPosted / totalPieces,
-					    totPerc = toPercent((chkPerc+pstPerc)/2);
-					
-					// calculate speed over last 4s
-					var speed = uploader.bytesPosted; // for first sample, just use current overall progress
-					var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
-					var advancement = completed;
-					if(byteSamples.count() >= 2) {
-						speed = byteSamples.average(4, 4*ulOpts.articleSize);
-						advancement = progressSamples.average(10, 20);
-					}
-					
-					var eta = (totalPieces - completed) / advancement;
-					eta = Math.round(eta)*1000;
-					if(!isNaN(eta) && isFinite(eta) && eta > 0)
-						eta = friendlyTime(eta, true);
-					else
-						eta = '-';
-					
-					if(prg.type == 'stderr' || prg.type == 'stdout') {
-						var LINE_WIDTH = 35;
-						var barSize = Math.floor(chkPerc*LINE_WIDTH);
-						var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
-						return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
-							' ' + friendlySize(speed) + '/s, ETA ' + eta
-						: '');
-					} else {
-						// extended display
-						var posted = '' + uploader.articlesChecked;
-						if(uploader.articlesChecked != uploader.articlesPosted)
-							posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-						var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
-						if(ret.length > 80)
-							// if too long, strip the raw post speed
-							ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
-						return '\x1b[0G\x1B[0K' + ret;
-					}
-				};
-				var prgTarget = prg.type.substr(0, 6);
-				var seInterval = setInterval(function() {
-					byteSamples.add(uploader.bytesPosted);
-					progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
-					process[prgTarget].write(getProcessIndicator());
-				}, 1000);
-				process.on('finished', function() {
-					clearInterval(seInterval);
+				process.stdin.once('end', function() {
+					cb(null, [fl[1], data]);
 				});
-				// if unexpected exit, force a newline to prevent some possible terminal corruption
-				process.on('exit', writeNewline);
-			break;
-			case 'tcp':
-			case 'http':
-				var writeState = function(conn) {
-					var now = Date.now();
-					
-					// TODO: JSON output etc
-					conn.write([
-						'Time: ' + (new Date(now)),
-						'Start time: ' + (new Date(startTime)),
-						'',
-						'Total articles: ' + totalPieces,
-						'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
-						'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-						'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
-						'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-						'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
-						'',
-						'Post connections active: ' + uploader.postConnections.filter(retArg).length,
-						'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
-						'',
-						'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
-						'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
-						'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
-						'Re-read queue size: ' + uploader.reloadQueue.queue.length,
-						'', ''
-					].join('\r\n'));
-					
-					var dumpConnections = function(conns) {
-						var i = 0;
-						conns.forEach(function(c) {
-							conn.write('Connection #' + (++i) + '\r\n');
-							if(c) {
-								conn.write([
-									'  State: ' + c.getCurrentActivity() + (c.lastActivity ? ' for ' + ((now - c.lastActivity)/1000) + 's' : ''),
-									'  Transfer: ' + friendlySize(c.bytesRecv) + ' down / ' + friendlySize(c.bytesSent) + ' up',
-									'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
-									'  Reconnects: ' + (c.numConnects-1),
-									'  Errors: ' + c.numErrors,
-									'', ''
-								].join('\r\n'));
-							} else {
-								conn.write('  State: finished\r\n\r\n')
-							}
-						});
+				process.stdin.once('error', cb);
+			} else if(/^proc:\/\//i.test(fl[0])) {
+				require('child_process').exec(fl[0].substr(7), {maxBuffer: 1048576*32}, function(err, stdout, stderr) {
+					cb(err, [fl[1], stdout]);
+				});
+			} else {
+				fs.readFile(fl[0], function(err, data) {
+					cb(err, [fl[1], data]);
+				});
+			}
+		}, function(err, dataPairs) {
+			if(err) return error(err);
+			dataPairs.forEach(function(data) {
+				if(Buffer.isBuffer(data[1]))
+					data[1] = data[1].toString();
+				if(data[0])
+					filesToUpload = filesToUpload.concat(
+						data[1].replace(/\r/g, '').split('\n').filter(function(l) {
+							return l !== '';
+						})
+					);
+				else
+					filesToUpload = filesToUpload.concat(data[1].split('\0'));
+			});
+			cb();
+		});
+	} else cb();
+})(function() {
+	if(!filesToUpload.length)                  error('Must supply at least one input file');
+	
+	var fuploader = Nyuu.upload(filesToUpload.map(function(file) {
+		// TODO: consider supporting deferred filesize gathering?
+		var m = file.match(/^procjson:\/\/(.+?,.+?,.+)$/i);
+		if(m) {
+			if(m[1].substr(0, 1) != '[')
+				m[1] = '[' + m[1] + ']';
+			m = JSON.parse(m[1]);
+			if(!Array.isArray(m) || m.length != 3)
+				error('Invalid syntax for process input: ' + file);
+			var ret = {
+				name: m[0],
+				size: Math.floor(m[1]),
+				stream: function(cmd) {
+					return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
+				}.bind(null, m[2])
+			};
+			if(!ret.size)
+				error('Invalid size specified for process input: ' + file);
+			if(argv['preload-modules']) {
+				require('../lib/procman');
+				require('../lib/streamreader');
+			}
+			return ret;
+		} else {
+			if(argv['preload-modules'])
+				require('../lib/filereader');
+		}
+		return file;
+	}), ulOpts, function(err) {
+		if(getProcessIndicator)
+			process.removeListener('exit', writeNewline);
+		getProcessIndicator = null;
+		process.emit('finished');
+		if(err) {
+			displayCompleteMessage(err);
+			process.exitCode = 33;
+		} else {
+			displayCompleteMessage();
+			process.exitCode = errorCount ? 32 : 0;
+		}
+		(function(cb) {
+			if(processes && processes.running) {
+				var procWarnTO = setTimeout(function() {
+					if(!processes.running) return;
+					Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
+				}, 1000).unref();
+				processes.onEnd(function() {
+					clearTimeout(procWarnTO);
+					cb();
+				});
+			} else cb();
+		})(function() {
+			if(isNode010 && process.exitCode) {
+				// hack for lack of .exitCode support on node 0.10
+				process.on('exit', function() {
+					process.exit(process.exitCode);
+				});
+			}
+			setTimeout(function() {
+				if(process._getActiveHandles) { // undocumented function, but seems to always work
+					var ah = process._getActiveHandles();
+					var hTypes = {};
+					ah.forEach(function(h) {
+						var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
+						if(cn in hTypes)
+							hTypes[cn]++;
+						else
+							hTypes[cn] = 1;
+					});
+					var handleStr = '';
+					for(var hn in hTypes) {
+						handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
+					}
+					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
+					if(verbosity >= 4) {
+						process.stderr.write(require('util').inspect(ah, {colors: process.stderr.isTTY}) + '\n');
+					}
+				} else
+					Nyuu.log.warn('Process did not terminate cleanly');
+				process.exit();
+			}, 5000).unref();
+		});
+	});
+	
+	// display some stats
+	var friendlySize = function(s) {
+		var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
+		for(var i=0; i<units.length; i++) {
+			if(s < 10000) break;
+			s /= 1024;
+		}
+		return (Math.round(s *100)/100) + ' ' + units[i];
+	};
+	var decimalPoint = ('' + 1.1).replace(/1/g, '');
+	var friendlyTime = function(t, compact) {
+		var days = (t / 86400000) | 0;
+		t %= 86400000;
+		var seg = [];
+		var sect = [3600000, 60000, 1000];
+		if(compact && t < 3600000)
+			sect.shift();
+		sect.forEach(function(s) {
+			seg.push(lpad('' + ((t / s) | 0), 2, '0'));
+			t %= s;
+		});
+		var ret = (days ? days + 'd,' : '') + seg.join(':');
+		if(!compact)
+			ret += decimalPoint + lpad(t + '', 3, '0');
+		return ret;
+	};
+	var toPercent = function(n) {
+		return (Math.round(n*10000)/100).toFixed(2) + '%';
+	};
+	var retArg = function(_) { return _; };
+	fuploader.once('start', function(files, uploader) {
+		var totalSize = 0, totalPieces = 0, totalFiles = 0;
+		for(var filename in files) {
+			var sz = files[filename].size;
+			totalSize += sz;
+			totalPieces += Math.ceil(sz / ulOpts.articleSize);
+			totalFiles++;
+		}
+		if(argv['input-raw-posts']) {
+			totalPieces = totalFiles;
+			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) totalling about ' + friendlySize(totalSize));
+		} else
+			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
+		
+		var startTime = Date.now();
+		progress.forEach(function(prg) {
+			switch(prg.type) {
+				case 'log':
+					var logInterval = setInterval(function() {
+						Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
+					}, prg.interval);
+					process.on('finished', function() {
+						clearInterval(logInterval);
+					});
+				break;
+				case 'stderr':
+				case 'stderrx':
+				case 'stdout':
+				case 'stdoutx':
+					if(getProcessIndicator) break; // no need to double output =P
+					var ProgressRecorder = require('../lib/progrec');
+					var byteSamples = new ProgressRecorder(180);
+					var progressSamples = new ProgressRecorder(180);
+					byteSamples.add(0);
+					progressSamples.add(0);
+					getProcessIndicator = function() {
+						var chkPerc = uploader.articlesChecked / totalPieces,
+						    pstPerc = uploader.articlesPosted / totalPieces,
+						    totPerc = toPercent((chkPerc+pstPerc)/2);
+						
+						// calculate speed over last 4s
+						var speed = uploader.bytesPosted; // for first sample, just use current overall progress
+						var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
+						var advancement = completed;
+						if(byteSamples.count() >= 2) {
+							speed = byteSamples.average(4, 4*ulOpts.articleSize);
+							advancement = progressSamples.average(10, 20);
+						}
+						
+						var eta = (totalPieces - completed) / advancement;
+						eta = Math.round(eta)*1000;
+						if(!isNaN(eta) && isFinite(eta) && eta > 0)
+							eta = friendlyTime(eta, true);
+						else
+							eta = '-';
+						
+						if(prg.type == 'stderr' || prg.type == 'stdout') {
+							var LINE_WIDTH = 35;
+							var barSize = Math.floor(chkPerc*LINE_WIDTH);
+							var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
+							return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
+								' ' + friendlySize(speed) + '/s, ETA ' + eta
+							: '');
+						} else {
+							// extended display
+							var posted = '' + uploader.articlesChecked;
+							if(uploader.articlesChecked != uploader.articlesPosted)
+								posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
+							var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (raw: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
+							if(ret.length > 80)
+								// if too long, strip the raw post speed
+								ret = ret.replace(/ \(raw\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+							return '\x1b[0G\x1B[0K' + ret;
+						}
 					};
-					if(uploader.postConnections.length) {
-						conn.write('===== Post Connections\' Status =====\r\n');
-						dumpConnections(uploader.postConnections);
-					}
-					if(uploader.checkConnections.length) {
-						conn.write('===== Check Connections\' Status =====\r\n');
-						dumpConnections(uploader.checkConnections);
-					}
-				};
-				
-				var server;
-				if(prg.type == 'http') {
-					var url = require('url');
-					server = require('http').createServer(function(req, resp) {
-						var path = url.parse(req.url).pathname.replace(/\/$/, '');
-						var m;
-						if(m = path.match(/^\/(post|check)queue\/?$/)) {
-							// dump post/check queue
-							var isCheckQueue = (m[1] == 'check');
-							resp.writeHead(200, {
-								'Content-Type': 'text/plain'
+					var prgTarget = prg.type.substr(0, 6);
+					var seInterval = setInterval(function() {
+						byteSamples.add(uploader.bytesPosted);
+						progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
+						process[prgTarget].write(getProcessIndicator());
+					}, 1000);
+					process.on('finished', function() {
+						clearInterval(seInterval);
+					});
+					// if unexpected exit, force a newline to prevent some possible terminal corruption
+					process.on('exit', writeNewline);
+				break;
+				case 'tcp':
+				case 'http':
+					var writeState = function(conn) {
+						var now = Date.now();
+						
+						// TODO: JSON output etc
+						conn.write([
+							'Time: ' + (new Date(now)),
+							'Start time: ' + (new Date(startTime)),
+							'',
+							'Total articles: ' + totalPieces,
+							'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
+							'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
+							'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
+							'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
+							'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
+							'',
+							'Post connections active: ' + uploader.postConnections.filter(retArg).length,
+							'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
+							'',
+							'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
+							'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
+							'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
+							'Re-read queue size: ' + uploader.reloadQueue.queue.length,
+							'', ''
+						].join('\r\n'));
+						
+						var dumpConnections = function(conns) {
+							var i = 0;
+							conns.forEach(function(c) {
+								conn.write('Connection #' + (++i) + '\r\n');
+								if(c) {
+									conn.write([
+										'  State: ' + c.getCurrentActivity() + (c.lastActivity ? ' for ' + ((now - c.lastActivity)/1000) + 's' : ''),
+										'  Transfer: ' + friendlySize(c.bytesRecv) + ' down / ' + friendlySize(c.bytesSent) + ' up',
+										'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
+										'  Reconnects: ' + (c.numConnects-1),
+										'  Errors: ' + c.numErrors,
+										'', ''
+									].join('\r\n'));
+								} else {
+									conn.write('  State: finished\r\n\r\n')
+								}
 							});
-							var dumpPost = function(post) {
-								var subj = post.getHeader('subject');
-								if(subj === null) subj = '[unknown, post evicted from cache]';
-								resp.write([
-									'Message-ID: ' + post.messageId,
-									'Subject: ' + subj,
-									'Body length: ' + post.postLen,
-									'Post attempts: ' + post.postTries,
-									''
-								].join('\r\n'));
-								if(isCheckQueue)
-									resp.write('Check attempts: ' + post.chkFailures + '\r\n');
-							};
-							uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
-								dumpPost(post);
-								resp.write('\r\n');
-							});
-							if(isCheckQueue && uploader.checkQueue.pendingAdds) {
-								resp.write('\r\n===== Delayed checks =====\r\n');
-								for(var k in uploader.checkQueue.queuePending) {
-									dumpPost(uploader.checkQueue.queuePending[k].data);
+						};
+						if(uploader.postConnections.length) {
+							conn.write('===== Post Connections\' Status =====\r\n');
+							dumpConnections(uploader.postConnections);
+						}
+						if(uploader.checkConnections.length) {
+							conn.write('===== Check Connections\' Status =====\r\n');
+							dumpConnections(uploader.checkConnections);
+						}
+					};
+					
+					var server;
+					if(prg.type == 'http') {
+						var url = require('url');
+						server = require('http').createServer(function(req, resp) {
+							var path = url.parse(req.url).pathname.replace(/\/$/, '');
+							var m;
+							if(m = path.match(/^\/(post|check)queue\/?$/)) {
+								// dump post/check queue
+								var isCheckQueue = (m[1] == 'check');
+								resp.writeHead(200, {
+									'Content-Type': 'text/plain'
+								});
+								var dumpPost = function(post) {
+									var subj = post.getHeader('subject');
+									if(subj === null) subj = '[unknown, post evicted from cache]';
+									resp.write([
+										'Message-ID: ' + post.messageId,
+										'Subject: ' + subj,
+										'Body length: ' + post.postLen,
+										'Post attempts: ' + post.postTries,
+										''
+									].join('\r\n'));
+									if(isCheckQueue)
+										resp.write('Check attempts: ' + post.chkFailures + '\r\n');
+								};
+								uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
+									dumpPost(post);
 									resp.write('\r\n');
+								});
+								if(isCheckQueue && uploader.checkQueue.pendingAdds) {
+									resp.write('\r\n===== Delayed checks =====\r\n');
+									for(var k in uploader.checkQueue.queuePending) {
+										dumpPost(uploader.checkQueue.queuePending[k].data);
+										resp.write('\r\n');
+									}
 								}
-							}
-							resp.end();
-						} else if(m = path.match(/^\/(check)queue\/([^/]+)\/?$/)) {
-							// search queue for target post
-							var q = uploader.checkQueue.queue;
-							var post;
-							for(var k in q) {
-								if(q[k].messageId == m[2]) {
-									post = q[k];
-									break;
-								}
-							}
-							if(!post) {
-								// check deferred queue too
-								var q = uploader.checkQueue.queuePending;
+								resp.end();
+							} else if(m = path.match(/^\/(check)queue\/([^/]+)\/?$/)) {
+								// search queue for target post
+								var q = uploader.checkQueue.queue;
+								var post;
 								for(var k in q) {
-									if(q[k].data.messageId == m[2]) {
-										post = q[k].data;
+									if(q[k].messageId == m[2]) {
+										post = q[k];
 										break;
 									}
 								}
-							}
-							if(post) {
-								if(post.data) {
-									// dump post from check queue
-									resp.writeHead(200, {
-										'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
-									});
-									resp.write(post.data);
+								if(!post) {
+									// check deferred queue too
+									var q = uploader.checkQueue.queuePending;
+									for(var k in q) {
+										if(q[k].data.messageId == m[2]) {
+											post = q[k].data;
+											break;
+										}
+									}
+								}
+								if(post) {
+									if(post.data) {
+										// dump post from check queue
+										resp.writeHead(200, {
+											'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
+										});
+										resp.write(post.data);
+									} else {
+										resp.writeHead(500, {
+											'Content-Type': 'text/plain'
+										});
+										resp.write('Specified post exists, but cannot be retrieved as it has been evicted from cache');
+									}
 								} else {
-									resp.writeHead(500, {
+									resp.writeHead(404, {
 										'Content-Type': 'text/plain'
 									});
-									resp.write('Specified post exists, but cannot be retrieved as it has been evicted from cache');
+									resp.write('Specified post not found in queue');
 								}
+								resp.end();
+							} else if(!path || path == '/') {
+								// dump overall status
+								resp.writeHead(200, {
+									'Content-Type': 'text/plain'
+								});
+								writeState(resp);
+								resp.end();
 							} else {
 								resp.writeHead(404, {
 									'Content-Type': 'text/plain'
 								});
-								resp.write('Specified post not found in queue');
+								resp.end('Invalid URL');
 							}
-							resp.end();
-						} else if(!path || path == '/') {
-							// dump overall status
-							resp.writeHead(200, {
-								'Content-Type': 'text/plain'
-							});
-							writeState(resp);
-							resp.end();
-						} else {
-							resp.writeHead(404, {
-								'Content-Type': 'text/plain'
-							});
-							resp.end('Invalid URL');
-						}
-						req.socket.unref();
+							req.socket.unref();
+						});
+					} else {
+						server = require('net').createServer(function(conn) {
+							writeState(conn);
+							conn.end();
+							conn.unref();
+						});
+					}
+					server.on('error', function(err) {
+						Nyuu.log.warn('StatusServer ' + err.toString());
 					});
-				} else {
-					server = require('net').createServer(function(conn) {
-						writeState(conn);
-						conn.end();
-						conn.unref();
-					});
-				}
-				server.on('error', function(err) {
-					Nyuu.log.warn('StatusServer ' + err.toString());
-				});
-				server.once('listening', process.on.bind(process, 'finished', function() {
-					server.close();
-				}));
-				if(prg.socket) {
-					server.listen(prg.socket, function() {
-						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening at ' + prg.socket);
-					});
-				} else {
-					server.listen(prg.port, prg.host, function() {
-						var addr = server.address();
-						if(addr.family == 'IPv6')
-							addr = '[' + addr.address + ']:' + addr.port;
-						else
-							addr = addr.address + ':' + addr.port;
-						Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
-					});
-				}
-			break;
-		}
-	});
-	
-	displayCompleteMessage = function(err) {
-		var msg = '';
-		var time = Date.now() - startTime;
-		if(err) {
-			Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
-			msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
-			var unchecked = uploader.articlesPosted - uploader.articlesChecked;
-			if(unchecked)
-				msg += ' (' + unchecked + ' unchecked)';
-			msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
-		} else {
-			msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
-			
-			if(errorCount)
-				msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
-		}
+					server.once('listening', process.on.bind(process, 'finished', function() {
+						server.close();
+					}));
+					if(prg.socket) {
+						server.listen(prg.socket, function() {
+							Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening at ' + prg.socket);
+						});
+					} else {
+						server.listen(prg.port, prg.host, function() {
+							var addr = server.address();
+							if(addr.family == 'IPv6')
+								addr = '[' + addr.address + ']:' + addr.port;
+							else
+								addr = addr.address + ':' + addr.port;
+							Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
+						});
+					}
+				break;
+			}
+		});
 		
-		Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
-	};
-	
-	process.once('SIGINT', function() {
-		Nyuu.log.warn('SIGINT received, aborting...');
-		uploader.cancel('Process aborted by user');
+		displayCompleteMessage = function(err) {
+			var msg = '';
+			var time = Date.now() - startTime;
+			if(err) {
+				Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
+				msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
+				var unchecked = uploader.articlesPosted - uploader.articlesChecked;
+				if(unchecked)
+					msg += ' (' + unchecked + ' unchecked)';
+				msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
+			} else {
+				msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
+				
+				if(errorCount)
+					msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+			}
+			
+			Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
+		};
+		
+		process.once('SIGINT', function() {
+			Nyuu.log.warn('SIGINT received, aborting...');
+			uploader.cancel('Process aborted by user');
+		});
 	});
-});
-fuploader.on('processing_file', function(file) {
-	Nyuu.log.info('Reading file ' + file.name + '...');
-})
-fuploader.once('read_complete', function() {
-	Nyuu.log.info('All file(s) read...');
+	fuploader.on('processing_file', function(file) {
+		Nyuu.log.info('Reading file ' + file.name + '...');
+	})
+	fuploader.once('read_complete', function() {
+		Nyuu.log.info('All file(s) read...');
+	});
 });

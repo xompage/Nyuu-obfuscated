@@ -322,6 +322,17 @@ Input Files:
                                  skip: ignore nested files (default)
                                  keep: upload all files in sub-directories
 
+  Alternatively, a list of files can be supplied, with the following options:
+
+  -i,  --input-file          Supply a list of files to be posted, separated
+                             by newlines. Can be `-` to read from stdin, or a
+                             command prefixed with proc:// to read from the
+                             stdout of specified process.
+                             Can be specified multiple times.
+  -0,  --input-file0         Same as the `--input-file` option, except files
+                             are separated by null characters instead of
+                             newlines.
+
   Nyuu also supports piping inputs from a command, however, as yEnc requires
   knowing exact file sizes in advance, this will need to be specified. The
   syntax for specifying a process input is as follows:
