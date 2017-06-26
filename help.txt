@@ -319,8 +319,12 @@ Input Files:
   to the following option:
 
   -r,  --subdirs             How directories should be handled, can be:
-                                 skip: ignore nested files (default)
+                                 skip: ignore nested files
+                                 include: include files in specified
+                                          directories without recursion
+                                          (default)
                                  keep: upload all files in sub-directories
+                                       (with recursion)
 
   Alternatively, a list of files can be supplied, with the following options:
 

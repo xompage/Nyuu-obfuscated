@@ -313,8 +313,8 @@ var optMap = {
 		map: 'subdirs',
 		ifSetDefault: 'keep',
 		fn: function(v) {
-			if(!v) return 'skip';
-			if(['skip','keep'].indexOf(v) < 0)
+			if(!v) return 'include';
+			if(['skip','keep','include'].indexOf(v) < 0)
 				error('Invalid option supplied for `subdirs`');
 			return v;
 		}

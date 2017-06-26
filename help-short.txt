@@ -72,8 +72,8 @@ Input Files:
   specified as well, in which case all files inside are processed according
   to the following option:
 
-  -r,  --subdirs=keep        Upload all files in directories, otherwise
-                             directories are completely ignored.
+  -r,  --subdirs=keep        Upload all files in directories, recursively.
+                             Otherwise, nested directories are skipped.
 
 ------------------
 Examples

@@ -140,7 +140,7 @@ diskBufferSize: 1, // number of chunks to buffer
 articleQueueBuffer: null, // number of buffered articles; default is min(round(numConnections*0.5),25)
 
 /** Other Options **/
-subdirs: 'skip', // can be 'skip' or 'keep'; note that it affects directly passed directories too
+subdirs: 'include', // can be 'skip', 'include' or 'keep'; note that it affects directly passed directories too
 // if above setting is 'keep', filenames will be transformed according to the following setting
 // the default is to keep the filename component only, which essentially flattens all files into a single directory
 // this is similar to how other clients handle folders
