@@ -1,9 +1,9 @@
-var nodeVer = '4.7.3';
+var nodeVer = '4.8.3';
 var nexeBase = '.';
 var nodeSrc = nexeBase + '/node/' + nodeVer + '/_/'; // TODO: auto search folder
 var yencSrc = './yencode-src/';
 var python = 'python';
-var makeArgs = ["-j", "4"];
+var makeArgs = ["-j", "1"];
 var vcBuildArch = "x86"; // x86 or x64
 
 var fs = require('fs');
