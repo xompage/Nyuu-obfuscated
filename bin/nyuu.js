@@ -808,7 +808,7 @@ if(argv.progress) {
 		var arg = str.substr(m[0].length);
 		switch(type) {
 			case 'log':
-				progress.push({type: 'log', interval: parseTime(arg) || 60});
+				progress.push({type: 'log', interval: require('../lib/arg_parser.js').parseTime(arg) || 60});
 			break;
 			case 'stderr':
 			case 'stderrx':
