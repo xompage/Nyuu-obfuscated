@@ -116,7 +116,7 @@ var doTest = function(files, opts, cb) {
 describe('Nyuu', function() {
 
 ['', ' (raw input)'].forEach(function(ulType) {
-	var files = [ulType ? 'test/dummypost.txt' : 'help.txt'];
+	var files = [ulType ? 'test/dummypost.bin' : 'help.txt'];
 	it('basic test' +ulType, function(done) {
 		doTest(files, {
 			server: {
