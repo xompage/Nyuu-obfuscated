@@ -376,7 +376,7 @@ var optMap = {
 		type: 'list',
 		alias: 'e',
 		map: 'skipErrors',
-		ifSetDefault: 'all',
+		ifSetDefault: true,
 		fn: function(v) {
 			if(!v) return false;
 			if(v.indexOf('all') >= 0)
