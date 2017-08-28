@@ -70,6 +70,8 @@ Article/Post Options:
                                  {part}      Article part number
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
+                                 {timestamp} Unix timestamp of post
+                                 {rand:N}    Random text, N characters long
                              Default is similar to the following:
                                  [{filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize}
   -f,  --from                Shortcut for `-H From=...`
@@ -86,6 +88,9 @@ Article/Post Options:
                              use the time at which each post is encoded. This
                              differs from 'now' in that it is not a fixed
                              timestamp across the whole run.
+       --message-id          Format of generated Message-ID. See `--subject`
+                             for available placeholders.
+                             Default is similar to: {rand:24}-{timestamp}@nyuu
        --keep-message-id     Don't randomize Message-ID every time the post is
                              submitted. (flag option)
   -H,  --header              Specify an NNTP header in either of these forms:

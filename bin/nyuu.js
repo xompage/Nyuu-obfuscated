@@ -149,6 +149,30 @@ var servOptMap = {
 	},
 };
 
+var articleHeaderFn = function(v) {
+	if(!v) return;
+	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
+		return v.replace(/\{(filenum|files|filename|filesize|parts?|size|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
+			switch(token.toLowerCase()) {
+				case 'filenum': return filenum;
+				case 'files': return filenumtotal;
+				case 'filename': return filename;
+				case 'filesize': return filesize;
+				case 'part': return part;
+				case 'parts': return parts;
+				case 'size': return size;
+				case 'timestamp': return post.genTime;
+				default:
+					// rand:
+					var rnd = '';
+					var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+					while(a1--)
+						rnd += chars[(Math.random() * chars.length) | 0];
+					return rnd;
+			}
+		});
+	};
+};
 var optMap = {
 	/*'check-reuse-conn': {
 		type: 'bool',
@@ -226,22 +250,7 @@ var optMap = {
 		type: 'string',
 		alias: 's',
 		map: 'postHeaders/Subject',
-		fn: function(v) {
-			if(!v) return;
-			return function(filenum, filenumtotal, filename, filesize, part, parts, size) {
-				return v.replace(/\{(filenum|files|filename|filesize|parts?|size)\}/ig, function(m, token) {
-					switch(token.toLowerCase()) {
-						case 'filenum': return filenum;
-						case 'files': return filenumtotal;
-						case 'filename': return filename;
-						case 'filesize': return filesize;
-						case 'part': return part;
-						case 'parts': return parts;
-						case 'size': return size;
-					}
-				});
-			};
-		}
+		fn: articleHeaderFn
 	},
 	from: {
 		type: 'string',
@@ -252,6 +261,11 @@ var optMap = {
 		type: 'string',
 		alias: 'g',
 		map: 'postHeaders/Newsgroups'
+	},
+	'message-id': {
+		type: 'string',
+		map: 'postHeaders/Message-ID',
+		fn: articleHeaderFn
 	},
 	out: {
 		type: 'string',
@@ -866,7 +880,7 @@ if(argv.progress) {
 
 var repeatChar = function(c, l) {
 	if(c.repeat) return c.repeat(l);
-	var buf = (Buffer.allocUnsafe || Buffer)(l);
+	var buf = Buffer(l);
 	buf.fill(c);
 	return buf.toString();
 };

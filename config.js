@@ -72,14 +72,15 @@ articleSize: 716800, // in bytes, must be a multiple of 2
 bytesPerLine: 128, // in bytes, note: as per yEnc specifications, it's possible to exceed this number
 
 postDate: null, // if set, override timestamps used for Message-ID header, Date header and NZB timestamps
-keepMessageId: false, // if true, don't randomize Message-ID header every time the post is submitted
+keepMessageId: false, // if true, don't randomize Message-ID header every time the post is submitted; if custom function supplied for Message-ID, it is called when it is to be regenerated
 comment: '', // subject pre-comment
 comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 
 // if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts, chunkSize)
 postHeaders: {
-	// required headers; do NOT set Message-ID as this is auto-generated
+	// required headers
+	'Message-ID': null, // default: auto-generated
 	Subject: null, // if null, a default Subject is used
 	From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + ((process.env.USER || process.env.USERNAME || '').replace(/[" (),:;<>@]/g, '') || 'user') + '@' + (require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '').match(/^([a-z0-9][a-z0-9\-]*\.)*[a-z0-9][a-z0-9\-]*$/i) || ['nyuu.uploader'])[0] + '>', // 'A Poster <a.poster@example.com>'
 	Newsgroups: 'alt.binaries.test', // comma seperated list
