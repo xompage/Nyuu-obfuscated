@@ -149,10 +149,11 @@ var servOptMap = {
 	},
 };
 
+// NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
 var articleHeaderFn = function(v) {
 	if(!v) return;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
-		return v.replace(/\{(filenum|files|filename|filesize|parts?|size|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
+		return v.replace(/\{(filenum|files|filename|filesize|parts?|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
 				case 'files': return filenumtotal;
@@ -160,6 +161,9 @@ var articleHeaderFn = function(v) {
 				case 'filesize': return filesize;
 				case 'part': return part;
 				case 'parts': return parts;
+				// ugly hack which relies on placement of the options
+				case 'comment': return argv.comment;
+				case 'comment2': return argv.comment2;
 				case 'size': return size;
 				case 'timestamp': return post.genTime;
 				default:

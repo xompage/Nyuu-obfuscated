@@ -54,10 +54,8 @@ Article/Post Options:
   -a,  --article-size        Target size of each news post (default 700K). Note
                              that yEnc makes the actual size larger.
        --article-line-size   Max bytes per line (default 128)
-  -t,  --comment             Comment to insert before post subject. Ignored if
-                             `--subject` is specified
-       --comment2            Comment to append after post subject. Ignored if
-                             `--subject` is specified
+  -t,  --comment             Comment to insert before post subject
+       --comment2            Comment to append after post subject
   -F,  --group-files         Group files by filename, similar to how indexers
                              would see them. This only affects the file counter
                              placed in the subject (flag option)
@@ -70,10 +68,15 @@ Article/Post Options:
                                  {part}      Article part number
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
+                                 {comment}   Value from `--comment`
+                                 {comment2}  Value from `--comment2`
                                  {timestamp} Unix timestamp of post
                                  {rand:N}    Random text, N characters long
                              Default is similar to the following:
-                                 [{filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize}
+                                 {comment} [{0filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
+                             Note that {timestamp} and {rand:N} are different
+                             for every post. They are not intended to be used
+                             with `--subject`, but for `--message-id` instead.
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>', where
                              these values are sourced from the local system.
