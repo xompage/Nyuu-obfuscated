@@ -82,7 +82,7 @@ postHeaders: {
 	// required headers
 	'Message-ID': null, // default: auto-generated
 	Subject: null, // if null, a default Subject is used
-	From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + ((process.env.USER || process.env.USERNAME || '').replace(/[" (),:;<>@]/g, '') || 'user') + '@' + (require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '').match(/^([a-z0-9][a-z0-9\-]*\.)*[a-z0-9][a-z0-9\-]*$/i) || ['nyuu.uploader'])[0] + '>', // 'A Poster <a.poster@example.com>'
+	From: (process.env.USER || process.env.USERNAME || 'user').replace(/[<>]/g, '') + ' <' + ((process.env.USER || process.env.USERNAME || '').replace(/[" (),:;<>@]/g, '') || 'user') + '@' + (require('os').hostname().replace(/[^a-z0-9_.\-]/ig, '').match(/^([a-z0-9][a-z0-9\-]*\.)*[a-z0-9][a-z0-9\-]*$/i) || ['nyuu.uploader'])[0].replace(/^([^.])+$/, '$1.localdomain') + '>', // 'A Poster <a.poster@example.com>'
 	Newsgroups: 'alt.binaries.test', // comma seperated list
 	Date: null, // if null, value is auto-generated from when post is first generated
 	Path: '',
