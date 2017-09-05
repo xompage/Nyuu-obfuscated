@@ -27,7 +27,8 @@ Article/Post Options:
   -a,  --article-size        Target size of each news post (default 700K)
   -t,  --comment             Comment to insert before post subject
   -f,  --from                Name and email of uploader.
-                             Defaults to 'username <username@host>'
+                             Defaults to 'username <username@host>', where
+                             these values are sourced from the local system.
   -g,  --groups              Comma separated list of groups to post to.
                              Defaults to alt.binaries.test
 
