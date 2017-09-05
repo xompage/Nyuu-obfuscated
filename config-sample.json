@@ -9,7 +9,7 @@
 	
 	"article-size":       "700K",
 	"comment":            "",
-	"from":               "Snazzy Poster <me@localhost>",
+	"from":               "Snazzy Poster <me@localhost.localdomain>",
 	"groups":             "alt.binaries.test",
 	
 	"check-connections":  0,
