@@ -16,6 +16,22 @@ var processStart = function() {
 	return processes.start.apply(processes, arguments);
 };
 
+var repeatChar = function(c, l) {
+	if(c.repeat) return c.repeat(l);
+	var buf = Buffer(l);
+	buf.fill(c);
+	return buf.toString();
+};
+var lpad = function(s, l, c) {
+	if(s.length > l) return s;
+	return repeatChar((c || ' '), l-s.length) + s;
+};
+var rpad = function(s, l, c) {
+	if(s.length > l) return s;
+	return s + repeatChar((c || ' '), l-s.length);
+};
+
+
 var servOptMap = {
 	host: {
 		type: 'string',
@@ -153,13 +169,15 @@ var servOptMap = {
 var articleHeaderFn = function(v) {
 	if(!v) return;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
-		return v.replace(/\{(filenum|files|filename|filesize|parts?|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
+		return v.replace(/\{(0?filenum|files|filename|filesize|0?part|parts|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
+				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
 				case 'files': return filenumtotal;
 				case 'filename': return filename;
 				case 'filesize': return filesize;
 				case 'part': return part;
+				case '0part': return lpad(''+part, (''+parts).length, '0');
 				case 'parts': return parts;
 				// ugly hack which relies on placement of the options
 				case 'comment': return argv.comment;
@@ -881,21 +899,6 @@ if(argv.progress) {
 	progress.push({type: 'stderr'});
 	stdErrProgress = true;
 }
-
-var repeatChar = function(c, l) {
-	if(c.repeat) return c.repeat(l);
-	var buf = Buffer(l);
-	buf.fill(c);
-	return buf.toString();
-};
-var lpad = function(s, l, c) {
-	if(s.length > l) return s;
-	return repeatChar((c || ' '), l-s.length) + s;
-};
-var rpad = function(s, l, c) {
-	if(s.length > l) return s;
-	return s + repeatChar((c || ' '), l-s.length);
-};
 
 var getProcessIndicator = null;
 var writeNewline = function() {

@@ -62,10 +62,14 @@ Article/Post Options:
   -s,  --subject             Subject to use for posts. The following
                              placeholders are available:
                                  {filenum}   Current file number in collection
+                                 {0filenum}  Current file number in collection,
+                                             pre-padded with 0's
                                  {files}     Number of files in collection
                                  {filename}  File's name
                                  {filesize}  File's size in bytes
                                  {part}      Article part number
+                                 {0part}     Article part number, pre-padded
+                                             with 0's to be as long as {parts}
                                  {parts}     Number of articles for the file
                                  {size}      File chunk size (before yEnc)
                                  {comment}   Value from `--comment`
