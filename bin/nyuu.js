@@ -180,8 +180,8 @@ var articleHeaderFn = function(v) {
 				case '0part': return lpad(''+part, (''+parts).length, '0');
 				case 'parts': return parts;
 				// ugly hack which relies on placement of the options
-				case 'comment': return argv.comment;
-				case 'comment2': return argv.comment2;
+				case 'comment': return argv.comment || '';
+				case 'comment2': return argv.comment2 || '';
 				case 'size': return size;
 				case 'timestamp': return post.genTime;
 				default:
