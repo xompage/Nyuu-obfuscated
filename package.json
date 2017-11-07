@@ -22,7 +22,7 @@
     "node": ">=0.10"
   },
   "dependencies" : {
-    "async" : "1.*",
+    "async" : "0.2.0 - 2.9999.9999",
     "yencode" : ">=1.0.6"
   },
   "devDependencies" : {
