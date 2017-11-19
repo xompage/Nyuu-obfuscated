@@ -948,6 +948,15 @@ if(verbosity < 1) {
 	process.once('uncaughtException', function(err) {
 		process.exit(isNode010 ? 8 : 1);
 	});
+} else {
+	process.once('uncaughtException', function(err) {
+		if(getProcessIndicator)
+			process.removeListener('exit', writeNewline);
+		getProcessIndicator = null;
+		process.emit('finished');
+		logger.error('Unexpected fatal exception encountered, stack trace below');
+		throw err; // this seems to change the exit code a bit :/
+	});
 }
 
 var displayCompleteMessage = function(err) {
