@@ -165,33 +165,175 @@ var servOptMap = {
 	},
 };
 
+function UserScriptError(message, area) {
+	var r = Error.call(this, message);
+	r.name = 'UserScriptError';
+	r.area = area;
+	return r;
+}
+UserScriptError.prototype = Object.create(Error.prototype, {
+	constructor: UserScriptError
+});
+var evalStr = function(str, sb, area) {
+	var proc = {}, pth = {};
+	['version','versions','arch','platform','release','argv','env','pid'].forEach(function(k) {
+		if(process[k])
+			proc[k] = JSON.parse(JSON.stringify(process[k]));
+	});
+	// add some String polyfills if unsupported by Node, just because they're useful
+	// polyfills stolen from MDN
+	proc.__polyfillString = function(p) {
+		var polyfills = {
+			includes: function includes(search, start) {
+				if (typeof start !== 'number') {
+					start = 0;
+				}
+				if (start + search.length > this.length) {
+					return false;
+				} else {
+					return this.indexOf(search, start) !== -1;
+				}
+			},
+			padStart: function padStart(targetLength,padString) {
+				targetLength = targetLength>>0;
+				padString = String(padString || ' ');
+				if (this.length > targetLength) {
+					return String(this);
+				}
+				else {
+					targetLength = targetLength-this.length;
+					if (targetLength > padString.length) {
+						padString += padString.repeat(targetLength/padString.length);
+					}
+					return padString.slice(0,targetLength) + String(this);
+				}
+			},
+			padEnd: function padEnd(targetLength,padString) {
+				targetLength = targetLength>>0;
+				padString = String(padString || ' ');
+				if (this.length > targetLength) {
+					return String(this);
+				}
+				else {
+					targetLength = targetLength-this.length;
+					if (targetLength > padString.length) {
+						padString += padString.repeat(targetLength/padString.length);
+					}
+					return String(this) + padString.slice(0,targetLength);
+				}
+			},
+			startsWith: function startsWith(searchString, position){
+				return this.substr(position || 0, searchString.length) === searchString;
+			},
+			endsWith: function endsWith(searchStr, Position) {
+				if (!(Position < this.length))
+					Position = this.length;
+				else
+					Position |= 0;
+				return this.substr(Position - searchStr.length, searchStr.length) === searchStr;
+			},
+			repeat: function repeat(count) {
+				if (this == null) {
+					throw new TypeError('can\'t convert ' + this + ' to object');
+				}
+				var str = '' + this;
+				count = +count;
+				if (count != count) {
+					count = 0;
+				}
+				if (count < 0) {
+					throw new RangeError('repeat count must be non-negative');
+				}
+				if (count == Infinity) {
+					throw new RangeError('repeat count must be less than infinity');
+				}
+				count = Math.floor(count);
+				if (str.length == 0 || count == 0) {
+					return '';
+				}
+				if (str.length * count >= 1 << 28) {
+					throw new RangeError('repeat count must not overflow maximum string size');
+				}
+				var rpt = '';
+				for (var i = 0; i < count; i++) {
+					rpt += str;
+				}
+				return rpt;
+			}
+		};
+		for(var k in polyfills)
+			if(!p[k])
+				p[k] = polyfills[k];
+	};
+	var path = require('path');
+	for(var k in path) {
+		if(typeof path[k] == 'function')
+			pth[k] = path[k].bind();
+		else if(typeof path[k] != 'object')
+			pth[k] = path[k];
+	}
+	var sandbox = Object.assign({
+		process: proc,
+		path: pth,
+		hash: function(type, data, encoding, inputEncoding) {
+			return require('crypto').createHash(type).update(data, inputEncoding || 'binary').digest(encoding || 'hex');
+		},
+		random_string: function(len) {
+			var rnd = '';
+			if(len === undefined)
+				len = 20;
+			else
+				len = +len;
+			if(len < 0)
+				throw new RangeError('length must be non-negative');
+			if(len == Infinity)
+				throw new RangeError('length must be less than infinity');
+			len = Math.floor(len);
+			var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+			while(len--)
+				rnd += chars[(Math.random() * chars.length) | 0];
+			return rnd;
+		}
+	}, sb || {});
+	
+	try {
+		return require('vm').runInNewContext('process.__polyfillString(String.prototype);delete process.__polyfillString;\n'+str, sandbox, isNode010 ? '<'+area+'>' : {filename: '<'+area+'>', timeout: 100});
+	} catch(x) {
+		throw new UserScriptError(x.toString(), area);
+	}
+};
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
-var articleHeaderFn = function(v) {
+var articleHeaderFn = function(area, v) {
 	if(!v) return;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
 		return v.replace(/\{(0?filenum|files|filename|filesize|0?part|parts|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
-				case 'filenum': return filenum;
-				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
-				case 'files': return filenumtotal;
-				case 'filename': return filename;
-				case 'filesize': return filesize;
-				case 'part': return part;
-				case '0part': return lpad(''+part, (''+parts).length, '0');
-				case 'parts': return parts;
-				// ugly hack which relies on placement of the options
-				case 'comment': return argv.comment || '';
-				case 'comment2': return argv.comment2 || '';
-				case 'size': return size;
-				case 'timestamp': return post.genTime;
+				case '0filenum':
+					return '{{(""+$filenum).padStart((""+$files).length, "0")}}';
+				case '0part':
+					return '{{(""+$part).padStart((""+$parts).length, "0")}}';
+				case 'filenum': case 'files': case 'filename': case 'filesize':
+				case 'part': case 'parts': case 'comment': case 'comment2':
+				case 'size': case 'timestamp':
+					return '{{$' + token.toLowerCase() + '}}';
 				default:
-					// rand:
-					var rnd = '';
-					var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-					while(a1--)
-						rnd += chars[(Math.random() * chars.length) | 0];
-					return rnd;
+					// rand: (deprecated)
+					return '{{random_string('+a1+')}}';
 			}
+		}).replace(/\{\{(.+?)\}\}/g, function(m, code) {
+			return evalStr(code, {
+				$filenum: filenum,
+				$files: filenumtotal,
+				$filename: filename,
+				$filesize: filesize,
+				$part: part,
+				$parts: parts,
+				// ugly hack which relies on placement of the options
+				$comment: argv.comment || '',
+				$comment2: argv.comment2 || '',
+				$size: size,
+				$timestamp: post.genTime
+			}, area);
 		});
 	};
 };
@@ -272,7 +414,7 @@ var optMap = {
 		type: 'string',
 		alias: 's',
 		map: 'postHeaders/Subject',
-		fn: articleHeaderFn
+		fn: articleHeaderFn.bind(null, 'subject')
 	},
 	from: {
 		type: 'string',
@@ -287,7 +429,7 @@ var optMap = {
 	'message-id': {
 		type: 'string',
 		map: 'postHeaders/Message-ID',
-		fn: articleHeaderFn
+		fn: articleHeaderFn.bind(null, 'message-id')
 	},
 	out: {
 		type: 'string',
@@ -954,8 +1096,13 @@ if(verbosity < 1) {
 			process.removeListener('exit', writeNewline);
 		getProcessIndicator = null;
 		process.emit('finished');
-		logger.error('Unexpected fatal exception encountered, stack trace below');
-		throw err; // this seems to change the exit code a bit :/
+		if(err.name == 'UserScriptError') {
+			logger.error('Evaluation failed for '+err.area+': ' + err.message);
+			process.exit(isNode010 ? 8 : 1);
+		} else {
+			logger.error('Unexpected fatal exception encountered, stack trace below');
+			throw err; // this seems to change the exit code a bit :/
+		}
 	});
 }
 

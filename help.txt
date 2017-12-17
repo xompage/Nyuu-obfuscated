@@ -75,12 +75,18 @@ Article/Post Options:
                                  {comment}   Value from `--comment`
                                  {comment2}  Value from `--comment2`
                                  {timestamp} Unix timestamp of post
-                                 {rand:N}    Random text, N characters long
                              Default is similar to the following:
                                  {comment} [{0filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
-                             Note that {timestamp} and {rand:N} are different
-                             for every post. They are not intended to be used
-                             with `--subject`, but for `--message-id` instead.
+                             Note that {timestamp} is different for every post
+                             and not intended to be used with `--subject`, but
+                             for `--message-id` instead.
+                             Javascript evaluation is supported within {{...}}
+                             constructs, with the above variables (except for
+                             {0filenum} and {0part}) available prefixed with
+                             '$'. For example, '{filenum}' is equivalent to
+                             '{{$filenum}}'. Javascript is evaluated for every
+                             post. See below for full details on Javascript
+                             evaluation.
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>', where
                              these values are sourced from the local system.
@@ -98,7 +104,7 @@ Article/Post Options:
                              timestamp across the whole run.
        --message-id          Format of generated Message-ID. See `--subject`
                              for available placeholders.
-                             Default is similar to: {rand:24}-{timestamp}@nyuu
+                             Default is similar to: {{random_string(24)}}-{timestamp}@nyuu
        --keep-message-id     Don't randomize Message-ID every time the post is
                              submitted. (flag option)
   -H,  --header              Specify an NNTP header in either of these forms:
@@ -107,6 +113,32 @@ Article/Post Options:
                              This option can be specified multiple times. Note
                              that specifying the same header more than once is
                              currently not supported.
+
+  For `--subject` and `--message-id` flags, Javascript evaluation is supported
+  within '{{...}}' type constructs. This enables more complex expressions to be
+  specified when formatting the Subject and Message-ID headers.
+  In addition to variables described above, the following Node.js variables are
+  available (see Node.js documentation for full details):
+      process: a subset of the `process` object; keys available are:
+          version, versions, arch, platform, release, argv, env, pid
+      path: Node.js's `require('path')` object (excludes path.win32/posix)
+  Also the following functions are available:
+      hash(type, data [, encoding = 'hex' [, inputEncoding = 'binary']]):
+          calculates hash of *data*, using algorithm of specified *type*
+          output is encoded in *encoding* which can be 'hex', 'binary' or
+          'base64', whilst input is taken as *inputEncoding* which can be
+          'utf8', 'ascii' or 'binary'
+      random_string([length = 20]):
+          generates a string of specified length, of random characters
+  Furthermore, the String.prototype is polyfilled with the following functions
+  so that they are always supported regardless of Node.js version:
+      includes, padStart, padEnd, startsWith, endsWith, repeat
+  Note that Javascript code is matched via regex and is only meant for simple
+  expressions, and not intended for complex code. Consider editing config.js if
+  something more complex is desired. Also note that whilst Javascript is run in
+  a restricted sandbox, an unhandled exception will halt the uploading process.
+  Example, which encodes the filename in the subject with an MD5 hash:
+    --subject '[{0filenum}/{files}] - "{{hash("md5", $filename)}}" yEnc ({part}/{parts})'
 
 Post Check Options:
 
