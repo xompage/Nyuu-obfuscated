@@ -41,6 +41,7 @@ servers: [
 		onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
 		tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
 		uploadChunkSize: 0, // break up post into chunks of this size when uploading; 0 to disable chunking
+		useIHave: false, // if true, post using IHAVE command instead of POST
 		
 		postConnections: 3, // number of connections for posting
 		checkConnections: 0, // number of connections used for checking

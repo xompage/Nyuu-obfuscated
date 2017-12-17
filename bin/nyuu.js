@@ -158,6 +158,10 @@ var servOptMap = {
 		keyMap: 'uploadChunkSize',
 		ifSetDefault: '192K'
 	},
+	'use-ihave': {
+		type: 'bool',
+		keyMap: 'useIHave'
+	},
 	connections: {
 		type: 'int',
 		alias: 'n',
