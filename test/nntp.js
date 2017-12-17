@@ -26,7 +26,7 @@ var waterfall = function(funcs, cb) {
 function DummyPost(data) {
 	this.data = new Buffer(data);
 	this.randomizeMessageID = function() {
-		return 'xxxx';
+		return this.messageId = 'xxxx';
 	};
 }
 
