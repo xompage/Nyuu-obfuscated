@@ -142,13 +142,13 @@ articleQueueBuffer: null, // number of buffered articles; default is min(round(n
 
 /** Other Options **/
 subdirs: 'include', // can be 'skip', 'include' or 'keep'; note that it affects directly passed directories too
-// if above setting is 'keep', filenames will be transformed according to the following setting
+// filenames will be transformed according to the following setting, which is a function that will have the file's path and name passed to it
 // the default is to keep the filename component only, which essentially flattens all files into a single directory
 // this is similar to how other clients handle folders
 // you can also return false from this function to skip specific files
-subdirNameTransform: function(fileName, pathName, fullPath) { return fileName; },
+fileNameTransform: require('path').basename,
 // another example: include path, seperated by dashes (e.g. "MyFolder - SubFolder - SomeFile.txt")
-// subdirNameTransform: function(fileName, pathName, fullPath) { return pathName.replace(/\//g, ' - ') + fileName; },
+// fileNameTransform: function(fileName) { return path.dirname(fileName).replace(/\//g, ' - ') + path.basename(fileName); },
 
 
 dumpPostLoc: '', // dump all failed articles to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging

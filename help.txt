@@ -87,6 +87,20 @@ Article/Post Options:
                              '{{$filenum}}'. Javascript is evaluated for every
                              post. See below for full details on Javascript
                              evaluation.
+       --filename            How on disk file names are transformed into a
+                             'filename' for use in posting. The following
+                             placeholders are available:
+                                 {filename} Full file name and path as
+                                            specified in command supplied
+                                 {basename} Base file name without path
+                                 {pathname} Path component of file name
+                             Default is `{basename}` which effectively
+                             discards path names.
+                             As with `--subject`, Javascript evaluation is
+                             supported with {{...}} construct, with the
+                             $filename variable being available.
+                             Note that this option has no effect on files not
+                             sourced from disk.
   -f,  --from                Shortcut for `-H From=...`
                              Defaults to 'username <username@host>', where
                              these values are sourced from the local system.
@@ -114,9 +128,9 @@ Article/Post Options:
                              that specifying the same header more than once is
                              currently not supported.
 
-  For `--subject` and `--message-id` flags, Javascript evaluation is supported
-  within '{{...}}' type constructs. This enables more complex expressions to be
-  specified when formatting the Subject and Message-ID headers.
+  For `--subject`, `--filename` and `--message-id` flags, Javascript evaluation
+  is supported within '{{...}}' type constructs. This enables more complex
+  expressions to be specified for these options.
   In addition to variables described above, the following Node.js variables are
   available (see Node.js documentation for full details):
       process: a subset of the `process` object; keys available are:

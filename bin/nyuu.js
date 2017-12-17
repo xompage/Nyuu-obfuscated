@@ -337,6 +337,23 @@ var articleHeaderFn = function(area, v) {
 		});
 	};
 };
+var filenameTransformFn = function(v) {
+	if(!v) return;
+	return function(filename) {
+		return v.replace(/\{(filename|basename|pathname)\}/ig, function(m, token, a1) {
+			switch(token.toLowerCase()) {
+				case 'basename':
+					return '{{path.basename($filename)}}';
+				case 'pathname':
+					return '{{path.dirname($filename)}}';
+				case 'filename':
+					return '{{$' + token.toLowerCase() + '}}';
+			}
+		}).replace(/\{\{(.+?)\}\}/g, function(m, code) {
+			return evalStr(code, {$filename: filename}, 'filename');
+		});
+	};
+};
 var optMap = {
 	/*'check-reuse-conn': {
 		type: 'bool',
@@ -415,6 +432,11 @@ var optMap = {
 		alias: 's',
 		map: 'postHeaders/Subject',
 		fn: articleHeaderFn.bind(null, 'subject')
+	},
+	filename: {
+		type: 'string',
+		map: 'fileNameTransform',
+		fn: filenameTransformFn
 	},
 	from: {
 		type: 'string',
