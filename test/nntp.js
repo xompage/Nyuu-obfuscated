@@ -102,7 +102,7 @@ TestServer.prototype = {
 	_closed: false,
 	
 	onData: function(chunk) {
-		if(!this._expect) throw new Error('Unexpected data received: ' + chunk.toString());
+		if(!this._expect && this._expect !== '') throw new Error('Unexpected data received: ' + chunk.toString());
 		
 		if(DEBUG) console.log('<< ' + chunk.toString());
 		
@@ -117,7 +117,7 @@ TestServer.prototype = {
 			this.data = new Buffer(0);
 			if(typeof this._expectAction == 'function')
 				this._expectAction.call(this);
-			else if(this._expectAction)
+			else if(this._expectAction || this._expectAction === '')
 				this.respond(this._expectAction);
 		}
 	},
@@ -1843,6 +1843,79 @@ it('should fail on badly formed responses', function(done) {
 			});
 			client.post(new DummyPost(msg), function(err) {
 				assert.equal(err.code, 'invalid_response');
+				cb();
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should retry on badly formed responses if requested', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {
+			requestRetries: 1,
+			retryBadResp: true
+		}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			server.expect('DATE\r\n', function() {
+				this.expect('DATE\r\n', '111 20100204060810');
+				this.respond('100 derp');
+			});
+			client.date(function(err, date) {
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
+				cb();
+			});
+		},
+		function(cb) {
+			server.expect('DATE\r\nDATE\r\n', function() {
+				this.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20100204060810');
+				this.respond('\r\n111 20000204060801');
+			});
+			client.date(function(err, date) {
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
+			});
+			client.date(function(err, date) {
+				assert(!err);
+				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
+				cb();
+			});
+		},
+		function(cb) {
+			// test failure
+			server.expect('POST\r\n', function() {
+				this.expect('POST\r\n', '133 ');
+				this.respond('133 ');
+			});
+			client.post(new DummyPost('abc'), function(err) {
+				assert.equal(err.code, 'bad_response');
+				cb();
+			});
+		},
+		function(cb) {
+			// test posting
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this.expect(msg, function() {
+					this.expect('POST\r\n', function() {
+						this.expect(msg, '240 <new-article> Article received ok');
+						this.respond('340  Send article');
+					});
+					this.respond('');
+				});
+				this.respond('340  Send article');
+			});
+			client.post(new DummyPost(msg), function(err, a) {
+				assert(!err);
+				assert.equal(a, 'new-article');
 				cb();
 			});
 		},
