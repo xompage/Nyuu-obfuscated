@@ -1122,10 +1122,10 @@ if(verbosity < 1) {
 	});
 } else {
 	process.once('uncaughtException', function(err) {
+		process.emit('finished');
 		if(getProcessIndicator)
 			process.removeListener('exit', writeNewline);
 		getProcessIndicator = null;
-		process.emit('finished');
 		if(err.name == 'UserScriptError') {
 			logger.error('Evaluation failed for '+err.area+': ' + err.message);
 			process.exit(isNode010 ? 8 : 1);
@@ -1238,8 +1238,8 @@ var filesToUpload = argv._;
 	}), ulOpts, function(err) {
 		if(getProcessIndicator)
 			process.removeListener('exit', writeNewline);
-		getProcessIndicator = null;
 		process.emit('finished');
+		getProcessIndicator = null;
 		if(err) {
 			displayCompleteMessage(err);
 			process.exitCode = 33;
@@ -1404,6 +1404,8 @@ var filesToUpload = argv._;
 					}, 1000);
 					process.on('finished', function() {
 						clearInterval(seInterval);
+						// force final progress to be written; this will usually be cleared and hence be unnecessary, but can be useful if someone's parsing the output
+						process[prgTarget].write(getProcessIndicator());
 					});
 					// if unexpected exit, force a newline to prevent some possible terminal corruption
 					process.on('exit', writeNewline);
