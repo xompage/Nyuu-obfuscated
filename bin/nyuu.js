@@ -1136,6 +1136,10 @@ if(verbosity < 1) {
 	});
 }
 
+process.once('finished', function() {
+	process.removeAllListeners('finished'); // prevent this executing twice, e.g. due to crash after end
+});
+
 var displayCompleteMessage = function(err) {
 	if(err)
 		Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
