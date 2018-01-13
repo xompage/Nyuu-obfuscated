@@ -123,6 +123,10 @@ var servOptMap = {
 		type: 'int',
 		keyMap: 'requestRetries'
 	},
+	'retry-on-bad-resp': {
+		type: 'bool',
+		keyMap: 'retryBadResp'
+	},
 	'post-retries': {
 		type: 'int',
 		postOnly: true,

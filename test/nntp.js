@@ -1801,6 +1801,57 @@ it('should give up after max request retries hit (post timeout)', function(done)
 });
 it('should give up after max post retries hit');
 
+it('should fail on badly formed responses', function(done) {
+	var server, client;
+	waterfall([
+		setupTest,
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			server.expect('DATE\r\n', '100 derp');
+			client.date(function(err) {
+				assert.equal(err.code, 'bad_response');
+				cb();
+			});
+		},
+		function(cb) {
+			server.expect('DATE\r\nDATE\r\n', '\r\n000');
+			client.date(function(err) {
+				assert.equal(err.code, 'invalid_response');
+			});
+			client.date(function(err) {
+				assert.equal(err.code, 'invalid_response');
+				cb();
+			});
+		},
+		function(cb) {
+			server.expect('POST\r\n', '133 ');
+			client.post(new DummyPost('abc'), function(err) {
+				assert.equal(err.code, 'bad_response');
+				cb();
+			});
+		},
+		function(cb) {
+			// test posting
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this.expect(msg, '');
+				this.respond('340  Send article');
+			});
+			client.post(new DummyPost(msg), function(err) {
+				assert.equal(err.code, 'invalid_response');
+				cb();
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
 it('should deal with a connection drop after receiving partial data');
 it('should deal with the case of newlines being split across packets'); // or in unfortunate positions
 

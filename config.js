@@ -34,6 +34,7 @@ servers: [
 		reconnectDelay: 15000, // 15 seconds
 		connectRetries: 1,
 		requestRetries: 5, // how many times to retry an interrupted request
+		retryBadResp: false, // enable retrying if a bad response is received
 		postRetries: 1, // how many times to retry if server returns 441 response to posted article
 		errorTeardown: false, // false = gracefully close bad connections, true = forcefully destroy them
 		closeTimeout: 10000, // 10 seconds; wait period before forcefully dropping gracefully closed connections
