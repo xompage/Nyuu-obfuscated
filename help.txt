@@ -452,6 +452,17 @@ Input Files:
                              Note that this is somewhat connected to
                              `--post-queue-size`
 
+Exit codes:
+
+  The end result can be determined from scripts by checking the exit code of
+  the run. The following exit codes are used by Nyuu:
+
+     0: no error occurred
+     1: invalid command/usage; for NodeJS >= 0.11, also used for crashes
+     8: for NodeJS version 0.10, process crashed
+    32: process completed, but with errors
+    33: process terminated due to an error
+
 ------------------
 Examples
 
