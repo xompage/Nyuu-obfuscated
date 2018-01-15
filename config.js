@@ -150,7 +150,7 @@ subdirs: 'include', // can be 'skip', 'include' or 'keep'; note that it affects 
 // you can also return false from this function to skip specific files
 fileNameTransform: require('path').basename,
 // another example: include path, seperated by dashes (e.g. "MyFolder - SubFolder - SomeFile.txt")
-// fileNameTransform: function(fileName) { return path.dirname(fileName).replace(/\//g, ' - ') + path.basename(fileName); },
+// fileNameTransform: function(fileName) { return path.dirname(fileName).replace(path.sep == '\\' ? /\\\\/g : new RegExp(path.sep, 'g'), ' - ') + path.basename(fileName); },
 
 
 dumpPostLoc: '', // dump all failed articles to this location (the Message-ID will be appended to this, so if you want to store in a directory, end this with a trailing slash); only useful for debugging
