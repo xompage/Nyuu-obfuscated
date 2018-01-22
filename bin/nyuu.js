@@ -1340,6 +1340,37 @@ var filesToUpload = argv._;
 			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
 		
 		var startTime = Date.now();
+		var progressReport = function(now) {
+			now = now || Date.now();
+			return [
+				'Total articles: ' + totalPieces + ' (' + friendlySize(totalSize) + ')',
+				'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
+				'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
+				'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
+				'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
+				'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
+			];
+		};
+		var reportOnEnd = false;
+		var getCompleteStatus = function(err) {
+			var msg;
+			var time = Date.now() - startTime;
+			if(err) {
+				msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
+				var unchecked = uploader.articlesPosted - uploader.articlesChecked;
+				if(unchecked)
+					msg += ' (' + unchecked + ' unchecked)';
+				msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
+			} else {
+				msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
+				
+				if(errorCount)
+					msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+			}
+			
+			return msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s';
+		};
+		
 		progress.forEach(function(prg) {
 			switch(prg.type) {
 				case 'log':
@@ -1350,10 +1381,11 @@ var filesToUpload = argv._;
 						clearInterval(logInterval);
 					});
 				break;
-				case 'stderr':
 				case 'stderrx':
-				case 'stdout':
 				case 'stdoutx':
+					reportOnEnd = true;
+				case 'stderr':
+				case 'stdout':
 					if(getProcessIndicator) break; // no need to double output =P
 					var ProgressRecorder = require('../lib/progrec');
 					var byteSamples = new ProgressRecorder(180);
@@ -1410,6 +1442,16 @@ var filesToUpload = argv._;
 						clearInterval(seInterval);
 						// force final progress to be written; this will usually be cleared and hence be unnecessary, but can be useful if someone's parsing the output
 						process[prgTarget].write(getProcessIndicator());
+						
+						if(reportOnEnd) {
+							getCompleteStatus = function(err) {
+								var now = Date.now();
+								
+								return (err ? 'Process has been aborted.' : 'Process complete.') + ' Report follows:\n' +
+									'         Elapsed time: ' + friendlyTime(now-startTime) + '\n' +
+								'         ' + progressReport(now).join('\n         ');
+							};
+						}
 					});
 					// if unexpected exit, force a newline to prevent some possible terminal corruption
 					process.on('exit', writeNewline);
@@ -1423,23 +1465,15 @@ var filesToUpload = argv._;
 						conn.write([
 							'Time: ' + (new Date(now)),
 							'Start time: ' + (new Date(startTime)),
-							'',
-							'Total articles: ' + totalPieces,
-							'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
-							'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-							'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
-							'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-							'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
-							'',
-							'Post connections active: ' + uploader.postConnections.filter(retArg).length,
-							'Check connections active: ' + uploader.checkConnections.filter(retArg).length,
+							''
+						].concat(progressReport(now)).concat([
 							'',
 							'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
 							'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
 							'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
 							'Re-read queue size: ' + uploader.reloadQueue.queue.length,
 							'', ''
-						].join('\r\n'));
+						]).join('\r\n'));
 						
 						var dumpConnections = function(conns) {
 							var i = 0;
@@ -1593,23 +1627,9 @@ var filesToUpload = argv._;
 		});
 		
 		displayCompleteMessage = function(err) {
-			var msg = '';
-			var time = Date.now() - startTime;
-			if(err) {
+			if(err)
 				Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
-				msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
-				var unchecked = uploader.articlesPosted - uploader.articlesChecked;
-				if(unchecked)
-					msg += ' (' + unchecked + ' unchecked)';
-				msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
-			} else {
-				msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
-				
-				if(errorCount)
-					msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
-			}
-			
-			Nyuu.log.info(msg + '. Raw upload: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s');
+			Nyuu.log.info(getCompleteStatus(err));
 		};
 		
 		process.once('SIGINT', function() {
