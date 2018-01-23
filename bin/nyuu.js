@@ -280,7 +280,7 @@ var evalStr = function(str, sb, area) {
 		else if(typeof path[k] != 'object')
 			pth[k] = path[k];
 	}
-	var sandbox = Object.assign({
+	var sandbox = {
 		process: proc,
 		path: pth,
 		hash: function(type, data, encoding, inputEncoding) {
@@ -302,7 +302,8 @@ var evalStr = function(str, sb, area) {
 				rnd += chars[(Math.random() * chars.length) | 0];
 			return rnd;
 		}
-	}, sb || {});
+	};
+	if(sb) for(var k in sb) sandbox[k] = sb[k];
 	
 	try {
 		return require('vm').runInNewContext('process.__polyfillString(String.prototype);delete process.__polyfillString;\n'+str, sandbox, isNode010 ? '<'+area+'>' : {filename: '<'+area+'>', timeout: 100});
