@@ -205,18 +205,17 @@ var articleHeaderFn = function(v) {
 };
 var filenameTransformFn = function(v) {
 	if(!v) return;
+	var path = require('path');
 	return function(filename) {
 		return v.replace(/\{(filename|basename|pathname)\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'basename':
-					return '{{path.basename($filename)}}';
+					return path.basename(filename);
 				case 'pathname':
-					return '{{path.dirname($filename)}}';
+					return path.dirname(filename);
 				case 'filename':
-					return '{{$' + token.toLowerCase() + '}}';
+					return filename;
 			}
-		}).replace(/\{\{(.+?)\}\}/g, function(m, code) {
-			return evalStr(code, {$filename: filename}, 'filename');
 		});
 	};
 };

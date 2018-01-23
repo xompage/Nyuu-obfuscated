@@ -92,9 +92,6 @@ Article/Post Options:
                                  {pathname} Path component of file name
                              Default is `{basename}` which effectively
                              discards path names.
-                             As with `--subject`, Javascript evaluation is
-                             supported with {{...}} construct, with the
-                             $filename variable being available.
                              Note that this option has no effect on files not
                              sourced from disk.
   -f,  --from                Shortcut for `-H From=...`
