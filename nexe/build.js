@@ -1,4 +1,4 @@
-var nodeVer = '4.8.3';
+var nodeVer = '4.8.7';
 var nexeBase = '.';
 var nodeSrc = nexeBase + '/node/' + nodeVer + '/_/'; // TODO: auto search folder
 var yencSrc = './yencode-src/';
