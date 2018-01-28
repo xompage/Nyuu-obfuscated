@@ -123,6 +123,23 @@ nzb: {
 	},
 	corkOutput: false, // cork the output stream (node >=0.12); is here until we have better support for output buffering
 },
+// the above can also be a function which returns an NZB specification - this allows multiple NZBs to be generated
+// the function takes args(filenum, filenumtotal, filename, filesize) and must return an array pair [key, spec] OR a falsey value to indicate no NZB creation
+// see the following example for more details
+/*
+nzb: function(filenum, filenumtotal, filename, filesize) {
+	if(filesize < 8192) return; // don't add files < 8KB to NZB
+	
+	return [
+		filename, // the key is used to group files into an NZB; use the same key for files you want to be in the same NZB
+		// (in this example, every file is put into a new NZB)
+		{ // this is the specification of the NZB to output to; it uses the same syntax as shown above
+			writeTo: filename + '.nzb',
+			writeOpts: {flags: 'w'}
+		}
+	];
+},
+*/
 
 /** Input Stream Copy/Tee Options **/
 inputCopy: null, // a writable stream to copy the input to, or a function (see example below)
