@@ -68,7 +68,15 @@ Article/Post Options:
                                              pre-padded with 0's
                                  {files}     Number of files in collection
                                  {filename}  File's name
+                                 {fnamebase} File's name without extension;
+                                             uses same logic as `--group-files`
                                  {filesize}  File's size in bytes
+                                 {fileksize} File's size in KiB, rounded to 2dp
+                                             Replace the 'k' with 'm', 'g', 't'
+                                             for sizes in MiB, GiB and TiB
+                                             respectively, e.g. {filemsize}
+                                 {fileasize} Friendly formatted file size, e.g.
+                                             '4.85 MiB' or '35.1 GiB'
                                  {part}      Article part number
                                  {0part}     Article part number, pre-padded
                                              with 0's to be as long as {parts}

@@ -30,6 +30,14 @@ var rpad = function(s, l, c) {
 	if(s.length > l) return s;
 	return s + repeatChar((c || ' '), l-s.length);
 };
+var friendlySize = function(s) {
+	var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
+	for(var i=0; i<units.length; i++) {
+		if(s < 10000) break;
+		s /= 1024;
+	}
+	return (Math.round(s *100)/100) + ' ' + units[i];
+};
 
 
 var servOptMap = {
@@ -176,14 +184,21 @@ var servOptMap = {
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
 var articleHeaderFn = function(v) {
 	if(!v) return;
+	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
-		return v.replace(/\{(0?filenum|files|filename|filesize|0?part|parts|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
+		return v.replace(/\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
 				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
 				case 'files': return filenumtotal;
 				case 'filename': return filename;
+				case 'fnamebase': return filename.replace(re_group_fname, '');
 				case 'filesize': return filesize;
+				case 'fileksize': return Math.round(filesize / 10.24) / 100;
+				case 'filemsize': return Math.round(filesize / 10485.76) / 100;
+				case 'filegsize': return Math.round(filesize / 10737418.24) / 100;
+				case 'filetsize': return Math.round(filesize / 10995116277.76) / 100;
+				case 'fileasize': return friendlySize(filesize);
 				case 'part': return part;
 				case '0part': return lpad(''+part, (''+parts).length, '0');
 				case 'parts': return parts;
@@ -1148,14 +1163,6 @@ var filesToUpload = argv._;
 	});
 	
 	// display some stats
-	var friendlySize = function(s) {
-		var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
-		for(var i=0; i<units.length; i++) {
-			if(s < 10000) break;
-			s /= 1024;
-		}
-		return (Math.round(s *100)/100) + ' ' + units[i];
-	};
 	var decimalPoint = ('' + 1.1).replace(/1/g, '');
 	var friendlyTime = function(t, compact) {
 		var days = (t / 86400000) | 0;
