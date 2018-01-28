@@ -85,10 +85,10 @@ Article/Post Options:
                                  {comment}   Value from `--comment`
                                  {comment2}  Value from `--comment2`
                                  {timestamp} Unix timestamp of post
-                                 {rand:N}    Random text, N characters long
+                                 ${rand(N)}  Random text, N characters long
                              Default is similar to the following:
                                  {comment} [{0filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}
-                             Note that {timestamp} and {rand:N} are different
+                             Note that {timestamp} and ${rand(N)} are different
                              for every post. They are not intended to be used
                              with `--subject`, but for `--message-id` instead.
        --filename            How on disk file names are transformed into a
@@ -119,7 +119,7 @@ Article/Post Options:
                              timestamp across the whole run.
        --message-id          Format of generated Message-ID. See `--subject`
                              for available placeholders.
-                             Default is similar to: {rand:24}-{timestamp}@nyuu
+                             Default is similar to: ${rand(24)}-{timestamp}@nyuu
        --keep-message-id     Don't randomize Message-ID every time the post is
                              submitted. (flag option)
   -H,  --header              Specify an NNTP header in either of these forms:

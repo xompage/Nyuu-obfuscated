@@ -186,7 +186,7 @@ var articleHeaderFn = function(v) {
 	if(!v) return;
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
-		return v.replace(/\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand:(\d+))\}/ig, function(m, token, a1) {
+		return v.replace(/\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
 				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
@@ -208,7 +208,7 @@ var articleHeaderFn = function(v) {
 				case 'size': return size;
 				case 'timestamp': return post.genTime;
 				default:
-					// rand:
+					// rand(n)
 					var rnd = '';
 					var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 					while(a1--)
@@ -222,7 +222,7 @@ var filenameTransformFn = function(v) {
 	if(!v) return;
 	var path = require('path');
 	return function(filename) {
-		return v.replace(/\{(filename|basename|pathname)\}/ig, function(m, token, a1) {
+		return v.replace(/\$?\{(filename|basename|pathname)\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'basename':
 					return path.basename(filename);
