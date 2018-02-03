@@ -178,8 +178,10 @@ else
 
 if(fs.existsSync(nodeSrc + 'src/node_extensions.h')) { // node 0.10.x
 	var ext = fs.readFileSync(nodeSrc + 'src/node_extensions.h').toString();
-	ext = ext.replace('\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
-	fs.writeFileSync(nodeSrc + 'src/node_extensions.h', ext);
+	if(!ext.indexOf('yencode')) {
+		ext = ext.replace('\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
+		fs.writeFileSync(nodeSrc + 'src/node_extensions.h', ext);
+	}
 }
 
 // create embeddable help
