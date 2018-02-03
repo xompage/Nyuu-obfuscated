@@ -182,11 +182,11 @@ var servOptMap = {
 };
 
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
-var articleHeaderFn = function(v) {
+var _mainTransform = function(rx, v) {
 	if(!v) return;
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
-		return v.replace(/\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig, function(m, token, a1) {
+		return v.replace(rx, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
 				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
@@ -218,6 +218,9 @@ var articleHeaderFn = function(v) {
 		});
 	};
 };
+var articleHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig);
+var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size)\}/ig;
+var fileTransformFn = _mainTransform.bind(null, RE_FILE_TRANSFORM);
 var filenameTransformFn = function(v) {
 	if(!v) return;
 	var path = require('path');
@@ -336,18 +339,7 @@ var optMap = {
 	out: {
 		type: 'string',
 		alias: 'o',
-		map: 'nzb/writeTo',
-		fn: function(v) {
-			if(v === '-')
-				return process.stdout;
-			else if(v && v.match(/^proc:\/\//i)) {
-				return function(cmd) {
-					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
-					// if process exits early, the write stream should break and throw an error
-				}.bind(null, v.substr(7));
-			}
-			return v;
-		}
+		map: 'nzb/writeTo'
 	},
 	minify: {
 		type: 'bool',
@@ -854,6 +846,41 @@ if(argv['preload-modules']) {
 if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
 	ulOpts.keepMessageId = true;
 
+if(argv['out']) {
+	if(argv['out'] == '-') {
+		ulOpts.nzb.writeTo = process.stdout;
+	} else {
+		var outTokens = RE_FILE_TRANSFORM.test(argv['out']);
+		var nzbOpts = ulOpts.nzb;
+		if(outTokens) delete nzbOpts.writeTo;
+		if(/^proc:\/\//i.test(argv['out'])) {
+			var proc = argv['out'].substr(7);
+			if(outTokens) {
+				ulOpts.nzb = function(tr, procsStarted, filenum, filenumtotal, filename, filesize) {
+					var proc = tr(filenum, filenumtotal, filename, filesize);
+					if(!procsStarted[proc])
+						procsStarted[proc] = processStart(proc, {stdio: ['pipe','ignore','ignore']}).stdin;
+					var opts = {writeTo: procsStarted[proc]};
+					for(var k in nzbOpts)
+						opts[k] = nzbOpts[k];
+					return [proc, opts];
+				}.bind(null, fileTransformFn(proc), {});
+			} else {
+				ulOpts.nzb.writeTo = function(cmd) {
+					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
+					// if process exits early, the write stream should break and throw an error
+				}.bind(null, proc);
+			}
+		} else if(outTokens) {
+			ulOpts.nzb = function(tr, filenum, filenumtotal, filename, filesize) {
+				var opts = {writeTo: tr(filenum, filenumtotal, filename, filesize)};
+				for(var k in nzbOpts)
+					opts[k] = nzbOpts[k];
+				return [opts.writeTo, opts];
+			}.bind(null, fileTransformFn(argv['out']));
+		}
+	}
+}
 // custom validation rules
 // TODO: more validation
 

@@ -228,6 +228,19 @@ NZB Output Options:
                              example: `-o 'proc://cat>out.nzb'`, which is the
                              same as using `-o- | cat>out.nzb`. The stdout and
                              stderr of the process is discarded.
+                             The following tokens are also supported (see
+                             `--subject` for details):
+                                 {filenum}
+                                 {0filenum}
+                                 {files}
+                                 {filename}
+                                 {fnamebase}
+                                 {filesize}
+                                 {fileksize} also {filemsize} etc
+                                 {fileasize}
+                             If tokens are used, multiple NZB files may be
+                             created (or multiple processes spawned if proc://
+                             is used)
   -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
                              (flag option)
        --minify              Minify outputted NZB (flag option)
