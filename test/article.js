@@ -18,12 +18,12 @@ var simpleCheck = function(pool) {
 	
 	a.setHeaders({
 		Subject: 'first post!',
-		From: function(filename, filesize, part, parts, size) {
+		From: function(filename, filesize, part, parts, post) {
 			assert.equal(filename, 'somefile');
 			assert.equal(filesize, 6);
 			assert.equal(part, 1);
 			assert.equal(parts, 2);
-			assert.equal(size, 3);
+			assert.equal(post.rawSize, 3);
 			return 'fromfield';
 		}
 	});
