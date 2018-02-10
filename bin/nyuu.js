@@ -682,7 +682,7 @@ if(argv.config || process.env.NYUU_CONFIG) {
 			delete cOpts.verbose;
 		}
 		for(var k in cOpts) {
-			if(!(k in argv))
+			if(!(k in argv) && k[0] != ' ')
 				argv[k] = cOpts[k];
 		}
 	}
