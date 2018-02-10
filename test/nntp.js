@@ -248,6 +248,7 @@ function closeTest(client, server, cb) {
 		assert.equal(client.state, 'closing');
 		tl.defer(function() {
 			assert.equal(client.state, 'inactive');
+			assert.equal(client._requests.length, 0);
 			server.close(cb);
 			killServer();
 		});
@@ -648,6 +649,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 					server.close(cb);
 					killServer();
 					assert.equal(client.state, 'inactive');
+					assert.equal(client._requests.length, 0);
 				});
 			}
 		], done);
@@ -1939,6 +1941,7 @@ it('should deal with a socket error during connect');
 // TODO: connect() callback shouldn't be called on first error?
 
 // TODO: consider testing recoverability after an error occurrence?
+// - i.e. finished=true marked, but another request made, which causes a reconnect and resets everything
 
 // TODO: test onPostTimeout hacks
 
