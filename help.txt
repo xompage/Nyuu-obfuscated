@@ -81,7 +81,7 @@ Article/Post Options:
                                  {0part}     Article part number, pre-padded
                                              with 0's to be as long as {parts}
                                  {parts}     Number of articles for the file
-                                 {size}      File chunk size (before yEnc)
+                                 {size}      Article chunk size (before yEnc)
                                  {comment}   Value from `--comment`
                                  {comment2}  Value from `--comment2`
                                  {timestamp} Unix timestamp of post
@@ -91,6 +91,11 @@ Article/Post Options:
                              Note that {timestamp} and ${rand(N)} are different
                              for every post. They are not intended to be used
                              with `--subject`, but for `--message-id` instead.
+                             Also note that this differs from the subject
+                             option present in PowerPost based clients, as this
+                             option specifies the entire subject. Nyuu does not
+                             enforce any format and will not attempt to fix a
+                             badly formed subject.
        --filename            How on disk file names are transformed into a
                              'filename' for use in posting. The following
                              placeholders are available:
