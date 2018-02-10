@@ -79,7 +79,7 @@ comment: '', // subject pre-comment
 comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 
-// if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts, chunkSize)
+// if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts)
 postHeaders: {
 	// required headers
 	'Message-ID': null, // default: auto-generated
@@ -94,7 +94,7 @@ postHeaders: {
 	'User-Agent': 'Nyuu/' + (global.__nyuu_pkg || require('./package.json')).version,
 	// nice list of headers: https://www.cotse.net/privacy/newsgroup_header.htm or http://www.cs.tut.fi/~jkorpela/headers.html
 },
-// postHeaders can also, itself, be a function, in which case, it is called with (name, size, num, numTotal) as arguments, and must return an object like the above
+// postHeaders can also, itself, be a function, in which case, it is called with (filenum, filenumtotal, filename, size, part [always 1], parts) as arguments, and must return an object like the above
 
 /** NZB Options **/
 nzb: {
@@ -108,7 +108,7 @@ nzb: {
 	overrides: {
 		// here you can override values for NZB <file> entries
 		// if unset, will use the NNTP header values from the first segment of the file
-		// can be set to a function, which will be called with args(header_value, filenum, filenumtotal, filename, size, parts)
+		// can be set to a function, which will be called with args(filenum, filenumtotal, filename, size, part [always 1], parts, header_value)
 		subject: null, // Subject header
 		poster: null, // From header
 		date: null, // timestamp when post was generated (note: will be interpreted as a Javascript date)
@@ -124,7 +124,7 @@ nzb: {
 	corkOutput: false, // cork the output stream (node >=0.12); is here until we have better support for output buffering
 },
 // the above can also be a function which returns an NZB specification - this allows multiple NZBs to be generated
-// the function takes args(filenum, filenumtotal, filename, filesize) and must return an array pair [key, spec] OR a falsey value to indicate no NZB creation
+// the function takes args(filenum, filenumtotal, filename, filesize, part [always 1], parts) and must return an array pair [key, spec] OR a falsey value to indicate no NZB creation
 // see the following example for more details
 /*
 nzb: function(filenum, filenumtotal, filename, filesize) {

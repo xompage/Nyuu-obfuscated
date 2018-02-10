@@ -243,6 +243,9 @@ NZB Output Options:
                                  {filesize}
                                  {fileksize} also {filemsize} etc
                                  {fileasize}
+                                 {part} (always is 1)
+                                 {0part}
+                                 {parts}
                              If tokens are used, multiple NZB files may be
                              created (or multiple processes spawned if proc://
                              is used)

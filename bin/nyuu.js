@@ -185,7 +185,7 @@ var servOptMap = {
 var _mainTransform = function(rx, v) {
 	if(!v) return;
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
-	return function(filenum, filenumtotal, filename, filesize, part, parts, size, post) {
+	return function(filenum, filenumtotal, filename, filesize, part, parts, post) {
 		return v.replace(rx, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
@@ -205,7 +205,7 @@ var _mainTransform = function(rx, v) {
 				// ugly hack which relies on placement of the options
 				case 'comment': return argv.comment || '';
 				case 'comment2': return argv.comment2 || '';
-				case 'size': return size;
+				case 'size': return post.rawSize;
 				case 'timestamp': return post.genTime;
 				default:
 					// rand(n)
@@ -219,7 +219,7 @@ var _mainTransform = function(rx, v) {
 	};
 };
 var articleHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig);
-var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size)\}/ig;
+var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts)\}/ig;
 var fileTransformFn = _mainTransform.bind(null, RE_FILE_TRANSFORM);
 var filenameTransformFn = function(v) {
 	if(!v) return;
@@ -856,15 +856,16 @@ if(argv['out']) {
 		if(/^proc:\/\//i.test(argv['out'])) {
 			var proc = argv['out'].substr(7);
 			if(outTokens) {
-				ulOpts.nzb = function(tr, procsStarted, filenum, filenumtotal, filename, filesize) {
-					var proc = tr(filenum, filenumtotal, filename, filesize);
+				var tr = fileTransformFn(proc), procsStarted = {};
+				ulOpts.nzb = function() {
+					var proc = tr.apply(null, arguments);
 					if(!procsStarted[proc])
 						procsStarted[proc] = processStart(proc, {stdio: ['pipe','ignore','ignore']}).stdin;
 					var opts = {writeTo: procsStarted[proc]};
 					for(var k in nzbOpts)
 						opts[k] = nzbOpts[k];
 					return [proc, opts];
-				}.bind(null, fileTransformFn(proc), {});
+				};
 			} else {
 				ulOpts.nzb.writeTo = function(cmd) {
 					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
@@ -872,12 +873,13 @@ if(argv['out']) {
 				}.bind(null, proc);
 			}
 		} else if(outTokens) {
-			ulOpts.nzb = function(tr, filenum, filenumtotal, filename, filesize) {
-				var opts = {writeTo: tr(filenum, filenumtotal, filename, filesize)};
+			var tr = fileTransformFn(argv['out']);
+			ulOpts.nzb = function() {
+				var opts = {writeTo: tr.apply(null, arguments)};
 				for(var k in nzbOpts)
 					opts[k] = nzbOpts[k];
 				return [opts.writeTo, opts];
-			}.bind(null, fileTransformFn(argv['out']));
+			};
 		}
 	}
 }
