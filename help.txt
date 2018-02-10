@@ -259,6 +259,19 @@ NZB Output Options:
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
        --nzb-encoding        Character encoding used in the NZB (default utf-8)
+       --nzb-subject         Override the subject specified in the NZB. By
+                             default, Nyuu uses the Subject header sent for the
+                             first article of each file. If you want the
+                             subject specified in the NZB to differ from that
+                             uploaded, use this option.
+                             This option supports the same tokens as `--out`.
+                             In addition, {value} can be used to obtain the
+                             value from the header.
+                             Default is {value}
+       --nzb-poster          Override the poster specified in the NZB, which,
+                             is taken from the From header by default. Details
+                             are the same as `--nzb-subject` described above.
+                             Default is {value}
 
 Advanced Tuning Options:
 

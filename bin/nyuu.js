@@ -185,7 +185,7 @@ var servOptMap = {
 var _mainTransform = function(rx, v) {
 	if(!v) return;
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
-	return function(filenum, filenumtotal, filename, filesize, part, parts, post) {
+	return function(filenum, filenumtotal, filename, filesize, part, parts, extra) {
 		return v.replace(rx, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
@@ -205,8 +205,9 @@ var _mainTransform = function(rx, v) {
 				// ugly hack which relies on placement of the options
 				case 'comment': return argv.comment || '';
 				case 'comment2': return argv.comment2 || '';
-				case 'size': return post.rawSize;
-				case 'timestamp': return post.genTime;
+				case 'size': return extra.rawSize;
+				case 'timestamp': return extra.genTime;
+				case 'value': return extra;
 				default:
 					// rand(n)
 					var rnd = '';
@@ -219,6 +220,7 @@ var _mainTransform = function(rx, v) {
 	};
 };
 var articleHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig);
+var nzbHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|value)\}/ig);
 var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts)\}/ig;
 var fileTransformFn = _mainTransform.bind(null, RE_FILE_TRANSFORM);
 var filenameTransformFn = function(v) {
@@ -362,6 +364,16 @@ var optMap = {
 	'nzb-encoding': {
 		type: 'string',
 		map: 'nzb/writeOpts/encoding'
+	},
+	'nzb-subject': {
+		type: 'string',
+		map: 'nzb/overrides/subject',
+		fn: nzbHeaderFn
+	},
+	'nzb-poster': {
+		type: 'string',
+		map: 'nzb/overrides/poster',
+		fn: nzbHeaderFn
 	},
 	overwrite: {
 		type: 'bool',
