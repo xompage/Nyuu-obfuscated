@@ -273,11 +273,11 @@ it('should handle basic tasks', function(done) {
 			assert.equal(client.state, 'connected');
 			// this tests a pipelined DATE request
 			server.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20110204060810');
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
 				date1set = true;
-			});
+			}));
 			client.date(cb);
 		},
 		function(date, cb) {
@@ -357,11 +357,11 @@ it('should be able to pipeline a post after a stat', function(done) {
 				this.respond('223 51 <valid-post> article retrieved - request text separately\r\n340  Send article');
 			});
 			// TODO: consider testing the post with a post-timeout-hack enabled
-			client.stat('valid-post', function(err, a) {
+			client.stat('valid-post', tl.fn1(function(err, a) {
 				assert.equal(rc++, 0);
 				assert.equal(a[0], 51);
 				assert.equal(a[1], 'valid-post');
-			});
+			}));
 			client.post(new DummyPost(msg), function(err, a) {
 				assert.equal(rc++, 1);
 				assert.equal(a, 'new-article');
@@ -405,11 +405,11 @@ it('should honour a request made before connected', function(done) {
 			
 			server.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20110204060810');
 			client.connect();
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
 				date1set = true;
-			});
+			}));
 			client.date(cb);
 		},
 		function(date, cb) {
@@ -609,10 +609,10 @@ it('should notify cancellation if cancelled during authentication', function(don
 					};
 					
 					if(test.req == 'date2') {
-						client.date(function(err, date) {
+						client.date(tl.fn1(function(err, date) {
 							assert.equal(called++, 0);
 							respCb(err, date);
-						});
+						}));
 					} else {
 						called++;
 					}
@@ -1126,16 +1126,16 @@ it('should retry on request timeout (3x pipeline)', function(done) {
 			});
 			
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
-			});
-			client.date(function(err, date) {
+			}));
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 1);
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2012-02-04 06:08:10')).toString());
-			});
+			}));
 			client.date(function(err, date) {
 				assert.equal(called++, 2);
 				assert(!err);
@@ -1170,11 +1170,11 @@ it('should send timeout errors to pipelined requests', function(done) {
 			});
 			
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert.equal(err.code, 'timeout');
 				assert(!date);
-			});
+			}));
 			client.date(function(err, date) {
 				assert.equal(called++, 1);
 				assert.equal(err.code, 'connection_lost');
@@ -1206,13 +1206,13 @@ it('check timeout timing of pipelined requests', function(done) {
 			});
 			
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert(Date.now()-t >= 200); // timeout delay
 				assert(Date.now()-t < 300); // but less than timeout + second request delay
 				assert.equal(err.code, 'timeout');
 				assert(!date);
-			});
+			}));
 			setTimeout(function() {
 				client.date(function(err, date) {
 					assert.equal(called++, 1);
@@ -1231,10 +1231,10 @@ it('check timeout timing of pipelined requests', function(done) {
 			});
 			
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
-			});
+			}));
 			setTimeout(function() {
 				client.date(function(err, date) {
 					assert.equal(called++, 1);
@@ -1375,12 +1375,12 @@ it('should return error if reconnect completely fails during a request', functio
 				this.drop();
 			});
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert(!date);
 				assert.equal(err.code, 'connect_fail');
 				assert.equal(client.state, 'inactive');
-			});
+			}));
 			client.date(function(err, date) {
 				assert.equal(called++, 1);
 				assert(!date);
@@ -1415,17 +1415,17 @@ it('should work if requesting whilst disconnected without pending connect', func
 		function(cb) {
 			server.expect('DATE\r\nDATE\r\n', '111 20110204060810\r\n111 20120204060810');
 			var called = 0;
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
 				assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
 				assert.equal(client.state, 'connected');
-			});
-			client.date(function(err, date) {
+			}));
+			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 1);
 				assert.equal(date.toString(), (new Date('2012-02-04 06:08:10')).toString());
 				assert.equal(client.state, 'connected');
 				closeTest(client, server, cb);
-			});
+			}));
 			assert.equal(client.state, 'connecting');
 		}
 	], done);
@@ -1827,9 +1827,9 @@ it('should fail on badly formed responses', function(done) {
 		},
 		function(cb) {
 			server.expect('DATE\r\nDATE\r\n', '\r\n000');
-			client.date(function(err) {
+			client.date(tl.fn1(function(err) {
 				assert.equal(err.code, 'invalid_response');
-			});
+			}));
 			client.date(function(err) {
 				assert.equal(err.code, 'invalid_response');
 				cb();
@@ -1887,10 +1887,10 @@ it('should retry on badly formed responses if requested', function(done) {
 				this.expect('DATE\r\nDATE\r\n', '111 20100204060810\r\n111 20100204060810');
 				this.respond('\r\n111 20000204060801');
 			});
-			client.date(function(err, date) {
+			client.date(tl.fn1(function(err, date) {
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
-			});
+			}));
 			client.date(function(err, date) {
 				assert(!err);
 				assert.equal(date.toString(), (new Date('2010-02-04 06:08:10')).toString());
