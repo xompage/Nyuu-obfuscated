@@ -913,7 +913,7 @@ if(argv.quiet && argv.verbose)
 	error('Cannot specify both `quiet` and `verbose`');
 
 var verbosity = 3;
-if(argv['log-level'])
+if(argv['log-level'] || argv['log-level'] === 0)
 	verbosity = argv['log-level'];
 else if(argv.quiet)
 	verbosity = 2;
