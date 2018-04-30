@@ -352,7 +352,7 @@ var optMap = {
 		map: 'nzb/compression',
 		ifSetDefault: 'gzip',
 		fn: function(v) {
-			if(v && ['gzip','zlib','deflate','xz'].indexOf(v) < 0)
+			if(v && ['gzip','zlib','deflate','xz','brotli'].indexOf(v) < 0)
 				error('Invalid value supplied for `nzb-compress`');
 			return v;
 		}
@@ -576,6 +576,9 @@ if(argv['package-info']) {
 	};
 	try {
 		modules.xz = parsePackage(require('../node_modules/xz/package.json'));
+	} catch(x) {}
+	try {
+		modules.iltorb = parsePackage(require('../node_modules/iltorb/package.json'));
 	} catch(x) {}
 	try {
 		modules.nexe = parsePackage(require('../node_modules/nexe/package.json'));

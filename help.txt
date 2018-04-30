@@ -254,8 +254,10 @@ NZB Output Options:
        --minify              Minify outputted NZB (flag option)
        --nzb-compress        Compress outputted NZB. Can be gzip, zlib or
                              deflate. If node-xz is installed, xz is also
+                             available. If iltorb is installed, brotli is
                              available.
        --nzb-compress-level  Compression level (0-9) to use. Default is 6
+                             For Brotli, range is 0-11, default being 11
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
        --nzb-encoding        Character encoding used in the NZB (default utf-8)

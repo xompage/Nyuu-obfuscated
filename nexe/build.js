@@ -255,7 +255,7 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	                                            // http://v8project.blogspot.de/2015/09/custom-startup-snapshots.html
 	    framework: "node", // node, nodejs, or iojs
 	    
-	    browserifyExcludes: ['yencode','xz','../node_modules/xz/package.json']
+	    browserifyExcludes: ['yencode','xz','../node_modules/xz/package.json','iltorb','../node_modules/iltorb/package.json']
 	}, function(err) {
 	    if(err) {
 	        return console.log(err);
