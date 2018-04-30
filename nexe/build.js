@@ -117,6 +117,8 @@ if(!tNode.ldflags) {
 	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s','-flto',");
 }
 
+// strip OpenSSL exports
+doPatch(/('use_openssl_def':) 1,/, "0,");
 
 
 fs.writeFileSync(nodeSrc + 'node.gyp', gypData);
@@ -175,14 +177,22 @@ else
 
 
 
+var patchFile = function(path, find, replFrom, replTo) {
+	var ext = fs.readFileSync(nodeSrc + path).toString();
+	if(!find || !ext.match(find)) {
+		ext = ext.replace(replFrom, replTo);
+		fs.writeFileSync(nodeSrc + path, ext);
+	}
+};
 
 if(fs.existsSync(nodeSrc + 'src/node_extensions.h')) { // node 0.10.x
-	var ext = fs.readFileSync(nodeSrc + 'src/node_extensions.h').toString();
-	if(!ext.indexOf('yencode')) {
-		ext = ext.replace('\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
-		fs.writeFileSync(nodeSrc + 'src/node_extensions.h', ext);
-	}
+	patchFile('src/node_extensions.h', 'yencode', '\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
 }
+
+// strip exports
+patchFile('src/node.h', 'define NODE_EXTERN __declspec(dllexport)', 'define NODE_EXTERN __declspec(dllexport)', 'define NODE_EXTERN');
+patchFile('common.gypi', null, /'BUILDING_(V8|UV)_SHARED=1',/g, '');
+
 
 // create embeddable help
 fs.writeFileSync('../bin/help.json', JSON.stringify({
