@@ -261,6 +261,8 @@ NZB Output Options:
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
        --nzb-encoding        Character encoding used in the NZB (default utf-8)
+                             See the following for a list of valid encodings:
+                             https://nodejs.org/api/buffer.html#buffer_buffers_and_character_encodings
        --nzb-subject         Override the subject specified in the NZB. By
                              default, Nyuu uses the Subject header sent for the
                              first article of each file. If you want the

@@ -353,7 +353,7 @@ var optMap = {
 		ifSetDefault: 'gzip',
 		fn: function(v) {
 			if(v && ['gzip','zlib','deflate','xz','brotli'].indexOf(v) < 0)
-				error('Invalid value supplied for `nzb-compress`');
+				error('Invalid value supplied for `nzb-compress`: ' + v + '. Valid values: gzip, zlib, deflate, xz, brotli');
 			return v;
 		}
 	},
@@ -363,7 +363,15 @@ var optMap = {
 	},
 	'nzb-encoding': {
 		type: 'string',
-		map: 'nzb/writeOpts/encoding'
+		map: 'nzb/writeOpts/encoding',
+		fn: function(v) {
+			try {
+				Buffer.alloc ? Buffer.from('', v) : new Buffer('', v);
+			} catch(x) {
+				error('Unknown encoding for `nzb-encoding`: ' + v + '. Valid encodings include: ascii, utf8, utf16le, latin1, base64, hex');
+			}
+			return v;
+		}
 	},
 	'nzb-subject': {
 		type: 'string',
@@ -399,7 +407,7 @@ var optMap = {
 		fn: function(v) {
 			if(!v) return 'include';
 			if(['skip','keep','include'].indexOf(v) < 0)
-				error('Invalid option supplied for `subdirs`');
+				error('Invalid option supplied for `subdirs`: ' + v + '. Valid values: skip, keep, include');
 			return v;
 		}
 	},
