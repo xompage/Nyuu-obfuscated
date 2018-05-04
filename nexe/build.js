@@ -196,8 +196,8 @@ patchFile('common.gypi', null, /'BUILDING_(V8|UV)_SHARED=1',/g, '');
 
 // create embeddable help
 fs.writeFileSync('../bin/help.json', JSON.stringify({
-	full: fs.readFileSync('../help.txt').toString(),
-	short: fs.readFileSync('../help-short.txt').toString()
+	full: fs.readFileSync('../help-full.txt').toString(),
+	short: fs.readFileSync('../help.txt').toString()
 }));
 
 

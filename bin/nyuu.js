@@ -557,7 +557,7 @@ if(argv['help-full'] || argv.help) {
 		// for embedding help text
 		helpText = require('./help.json')[argv['help-full'] ? 'full':'short'];
 	} catch(x) {
-		helpText = fs.readFileSync(__dirname + '/../help' + (argv['help-full'] ? '':'-short') + '.txt').toString();
+		helpText = fs.readFileSync(__dirname + '/../help' + (argv['help-full'] ? '-full':'') + '.txt').toString();
 	}
 	console.error(helpText.replace(/^Nyuu(\r?\n)/, 'Nyuu v' + require('../package.json').version + '$1'));
 	process.exit(0);
