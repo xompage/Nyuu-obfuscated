@@ -872,6 +872,8 @@ if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
 if(argv['out']) {
 	if(argv['out'] == '-') {
 		ulOpts.nzb.writeTo = process.stdout;
+	} else if(/^fd:\/\/\d+$/i.test(argv['out'])) {
+		ulOpts.nzb.writeTo = fs.createWriteStream(null, {fd: argv['out'].substr(5)|0, encoding: ulOpts.nzb.writeOpts.encoding});
 	} else {
 		var outTokens = RE_FILE_TRANSFORM.test(argv['out']);
 		var nzbOpts = ulOpts.nzb;
@@ -1089,18 +1091,24 @@ var filesToUpload = argv._;
 	if(fileLists) {
 		var stdInUsed = false;
 		require('async').map(fileLists, function(fl, cb) {
-			if(fl[0] == '-') {
-				if(stdInUsed) error('stdin was specified as input for multiple sources');
-				stdInUsed = true;
+			if(fl[0] == '-' || /^fd:\/\/\d+$/i.test(fl[0])) {
+				var stream;
+				if(fl[0] == '-') {
+					if(stdInUsed) error('stdin was specified as input for multiple sources');
+					stdInUsed = true;
+					stream = process.stdin;
+				} else {
+					stream = fs.createReadStream(null, {fd: fl[0].substr(5)|0});
+				}
 				// read from stream
 				var data = '';
-				process.stdin.on('data', function(chunk) {
+				stream.on('data', function(chunk) {
 					data += chunk.toString();
 				});
-				process.stdin.once('end', function() {
+				stream.once('end', function() {
 					cb(null, [fl[1], data]);
 				});
-				process.stdin.once('error', cb);
+				stream.once('error', cb);
 			} else if(/^proc:\/\//i.test(fl[0])) {
 				require('child_process').exec(fl[0].substr(7), {maxBuffer: 1048576*32}, function(err, stdout, stderr) {
 					cb(err, [fl[1], stdout]);
@@ -1143,6 +1151,8 @@ var filesToUpload = argv._;
 				name: m[0],
 				size: Math.floor(m[1]),
 				stream: function(cmd) {
+					if(typeof cmd == 'number')
+						return fs.createReadStream(null, {fd: cmd|0});
 					return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
 				}.bind(null, m[2])
 			};
