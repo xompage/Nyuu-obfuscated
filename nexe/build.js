@@ -1,4 +1,4 @@
-var nodeVer = '4.8.7';
+var nodeVer = '4.9.1';
 var nexeBase = '.';
 var nodeSrc = nexeBase + '/node/' + nodeVer + '/_/'; // TODO: auto search folder
 var yencSrc = './yencode-src/';
@@ -12,7 +12,7 @@ var nexe = require('nexe');
 
 var isNode010 = !!nodeVer.match(/^0\.10\./);
 var modulePref = isNode010?'node_':'';
-var yencodeCC = fs.readFileSync(yencSrc + 'yencode.cc').toString(); // trigger error if it doesn't exist
+fs.statSync(yencSrc + 'yencode.cc'); // trigger error if it doesn't exist
 
 var gypParse = function(gyp) {
 	// very hacky fixes for Python's flexibility
@@ -38,10 +38,13 @@ var findGypTarget = function(targ) {
 
 // changing the GYP too much breaks nexe, so resort to monkey-patching it
 
-var doPatch = function(r, s) {
+var doPatch = function(r, s, ignoreMissing) {
 	var m = gypData.match(r);
-	if(!m) throw new Error('Could not match ' + r);
-	if(gypData.substr(m.index+1).match(r))
+	if(!m) {
+		if(ignoreMissing) return;
+		throw new Error('Could not match ' + r);
+	}
+	if(!r.global && gypData.substr(m.index+1).match(r))
 		throw new Error('Expression matched >1 times: ' + r);
 	gypData = gypData.replace(r, '$1 ' + s);
 };
@@ -70,8 +73,12 @@ if(!findGypTarget('crcutil')) {
 	})+',');
 }
 
-var tNode = findGypTarget('<(node_core_target_name)');
-var tNodeM = "['\"]target_name['\"]:\\s*['\"]<\\(node_core_target_name\\)['\"],";
+var tNode = findGypTarget('<(node_lib_target_name)');
+var tNodeM = "['\"]target_name['\"]:\\s*['\"]<\\(node_lib_target_name\\)['\"],";
+if(!tNode) {
+	tNode = findGypTarget('<(node_core_target_name)');
+	tNodeM = "['\"]target_name['\"]:\\s*['\"]<\\(node_core_target_name\\)['\"],";
+}
 if(!tNode) {
 	tNode = findGypTarget('node');
 	tNodeM = "['\"]target_name['\"]:\\s*['\"]node['\"],";
@@ -80,9 +87,10 @@ var tNodeMatch = new RegExp('('+tNodeM+')');
 if(tNode.sources.indexOf('src/'+modulePref+'yencode.cc') < 0)
 	doPatch(/(['"]src\/node_file\.cc['"],)/, "'src/"+modulePref+"yencode.cc',");
 if(tNode.dependencies.indexOf('crcutil') < 0)
-	doPatch(/(['"]node_js2c#host['"],)/, "'crcutil',");
+	// try to avoid matching the cctest target
+	doPatch(/('target_name': '<\([^\]]+?['"]node_js2c#host['"],)/, "'crcutil',");
 if(tNode.include_dirs.indexOf('crcutil-1.0/code') < 0)
-	doPatch(/(['"]deps\/uv\/src\/ares['"],)/, "'crcutil-1.0/code', 'crcutil-1.0/examples',");
+	doPatch(/(['"]<\(SHARED_INTERMEDIATE_DIR\)['"],? # for node_natives\.h\r?\n)/g, "'crcutil-1.0/code', 'crcutil-1.0/examples',");
 
 if(gyp.variables.library_files.indexOf('lib/yencode.js') < 0)
 	doPatch(/(['"]lib\/fs\.js['"],)/, "'lib/yencode.js',");
@@ -118,7 +126,7 @@ if(!tNode.ldflags) {
 }
 
 // strip OpenSSL exports
-doPatch(/('use_openssl_def':) 1,/, "0,");
+doPatch(/('use_openssl_def':) 1,/, "0,", true);
 
 
 fs.writeFileSync(nodeSrc + 'node.gyp', gypData);
@@ -202,15 +210,25 @@ fs.writeFileSync('../bin/help.json', JSON.stringify({
 
 
 // copy yencode sources across
-if(isNode010)
-	yencodeCC = yencodeCC.replace('NODE_MODULE(yencode', 'NODE_MODULE('+modulePref+'yencode');
-else
-	yencodeCC = yencodeCC.replace('NODE_MODULE(', 'NODE_MODULE_CONTEXT_AWARE_BUILTIN(');
-fs.writeFileSync(nodeSrc + 'src/'+modulePref+'yencode.cc', yencodeCC);
-
-var yencodeJs = fs.readFileSync(yencSrc + 'index.js').toString();
-yencodeJs = yencodeJs.replace(/require\(['"][^'"]*yencode\.node'\)/g, "process.binding('yencode')");
-fs.writeFileSync(nodeSrc + 'lib/yencode.js', yencodeJs);
+var copyCC = function(src, dest) {
+	var code = fs.readFileSync(src).toString();
+	if(isNode010)
+		code = code.replace(/NODE_MODULE\(([a-z0-9_]+)/, 'NODE_MODULE('+modulePref+'$1');
+	else
+		code = code.replace('NODE_MODULE(', 'NODE_MODULE_CONTEXT_AWARE_BUILTIN(');
+	if(dest.substr(0, 3) != '../')
+		dest = nodeSrc + dest;
+	fs.writeFileSync(dest, code);
+};
+var copyJS = function(src, dest) {
+	var code = fs.readFileSync(src).toString();
+	code = code.replace(/require\(['"][^'"]*\/([0-9a-z_]+)\.node'\)/g, "process.binding('$1')");
+	if(dest.substr(0, 3) != '../')
+		dest = nodeSrc + dest;
+	fs.writeFileSync(dest, code);
+};
+copyCC(yencSrc + 'yencode.cc', 'src/'+modulePref+'yencode.cc');
+copyJS(yencSrc + 'index.js', 'lib/yencode.js');
 
 fs.readdirSync(yencSrc).forEach(function(f) {
 	if(f == 'yencode.cc' || f == 'index.js' || f.match(/^test/)) return;
@@ -230,6 +248,7 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	
 	// now run nexe
 	// TODO: consider building startup snapshot?
+	// note: on alpine, need to run `paxmark -m out/Release/mksnapshot` first and maybe `paxmark -m out/Release/node` at the end; see https://github.com/alpinelinux/aports/blob/master/main/nodejs/APKBUILD
 	
 	nexe.compile({
 	    input: '../bin/nyuu.js', // where the input file is
@@ -237,9 +256,9 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	    nodeVersion: nodeVer, // node version
 	    nodeTempDir: nexeBase, // where to store node source.
 	    // --without-snapshot
-	    nodeConfigureArgs: ['--fully-static', '--without-dtrace', '--without-etw', '--without-perfctr', '--without-npm', '--with-intl=none'], // for all your configure arg needs.
+	    nodeConfigureArgs: ['--fully-static', '--without-dtrace', '--without-etw', '--without-perfctr', '--without-npm', '--with-intl=none', '--dest-cpu=' + vcBuildArch], // for all your configure arg needs.
 	    nodeMakeArgs: makeArgs, // when you want to control the make process.
-	    nodeVCBuildArgs: ["nosign", vcBuildArch], // when you want to control the make process for windows.
+	    nodeVCBuildArgs: ["nosign", vcBuildArch, "noetw", "noperfctr", "intl-none"], // when you want to control the make process for windows.
 	                                        // By default "nosign" option will be specified
 	                                        // You can check all available options and its default values here:
 	                                        // https://github.com/nodejs/node/blob/master/vcbuild.bat
@@ -263,5 +282,9 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	    
 	    console.log('done');
 	    fs.unlinkSync('../bin/help.json');
+	    
+	    // paxmark -m nyuu
+	    // tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-amd64.tar nyuu ../config-sample.json
+	    
 	});
 });
