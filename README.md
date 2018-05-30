@@ -10,9 +10,9 @@ exposing all the interesting bits and pieces. From what I’ve seen, Nyuu excels
 more than any other usenet posting client in these aspects.
 
 Nyuu runs on top of node.js (which *everyone* knows is [bad ass rock star
-tech](<https://www.youtube.com/watch?v=bzkRVzciAZg>)) with minimal dependencies.
+tech](https://www.youtube.com/watch?v=bzkRVzciAZg)) with minimal dependencies.
 It does require one compiled module,
-[yencode](<https://animetosho.org/app/node-yencode>), for ultra fast yEnc and
+[yencode](https://animetosho.org/app/node-yencode), for ultra fast yEnc and
 CRC32 calculation.
 
 Features
@@ -29,7 +29,7 @@ Features
 -   Sub-directory handling
 
 **Fast & efficient:** Nyuu is amongst the fastest (if not [the
-fastest](<bench/info.md#benchmark-2>)) usenet posters, designed to run on low
+fastest](bench/info.md#benchmark-2)) usenet posters, designed to run on low
 power, overloaded servers with \>= 1Gbps connections
 
 -   Multiple uploading connections
@@ -93,15 +93,15 @@ Installation & Requirements
 Pre-Built Binaries
 ------------------
 
-Pre-packaged Windows builds with Node 4.x may be found on [the releases
-page](<https://github.com/animetosho/Nyuu/releases>) if I can be bothered to
-provide them.
+Static pre-built binaries with Node 4.x may be found on [the releases
+page](https://github.com/animetosho/Nyuu/releases) if I can be bothered to
+provide them. These can simply be extracted and run.
 
 Install Via NPM
 ---------------
 
 If NPM is installed (usually comes bundled with
-[node.js](<https://nodejs.org/en/download/>)), the following command can be used
+[node.js](https://nodejs.org/en/download/)), the following command can be used
 to install Nyuu:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +117,7 @@ titled “Node.js” for more details.
 You can then later uninstall Nyuu via:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm uninstall nyuu
+npm uninstall -g nyuu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install From Source
@@ -125,15 +125,15 @@ Install From Source
 
 Note that code from Git is considered to be unstable (or rather, less stable
 than release versions). Stable packages can be found on [the releases
-page](<https://github.com/animetosho/Nyuu/releases>).
+page](https://github.com/animetosho/Nyuu/releases).
 
 ### Node.js
 
 Nyuu should run on node.js 0.10.x and later. Recent Linux distributions should
 have *nodejs* in their repositories, otherwise, see [installing via package
-manager](<https://nodejs.org/en/download/package-manager/>) or
-[NodeSource](<https://github.com/nodesource/distributions>). For Windows/OSX
-builds, they [can be found here](<https://nodejs.org/en/download/stable/>).
+manager](https://nodejs.org/en/download/package-manager/) or
+[NodeSource](https://github.com/nodesource/distributions). For Windows/OSX
+builds, they [can be found here](https://nodejs.org/en/download/stable/).
 Although node.js 0.10.x is supported, newer versions of Node (\>=4 recommended)
 provide greatly improved SSL performance.
 
@@ -156,12 +156,12 @@ apt-get install node-async
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can grab the dependencies manually: create a directory named
-*node\_modules* in the Nyuu directory. Inside of which, place
-[async](<https://github.com/caolan/async/releases>).
+*node_modules* in the Nyuu directory. Inside of which, place
+[async](https://github.com/caolan/async/releases).
 
-For yencode, you’ll need to place it in the *node\_modules* directory as well,
+For yencode, you’ll need to place it in the *node_modules* directory as well,
 then follow [the installation
-instructions](<https://animetosho.org/app/node-yencode>).
+instructions](https://animetosho.org/app/node-yencode).
 
 At the end, the folder structure should resemble something like (not all files
 shown):
@@ -206,8 +206,10 @@ directory, with the following contents:
 
 Nyuu optionally supports the following modules:
 
--   [xz](<https://www.npmjs.com/package/xz>): enables NZBs to be compressed
-    using xz via the `--nzb-compress xz` option
+-   [xz](https://www.npmjs.com/package/xz) and/or
+    [iltorb](https://www.npmjs.com/package/iltorb): enables NZBs to be
+    compressed using xz and/or brotli via the `--nzb-compress xz` and/or
+    `--nzb-compress brotli` options
 
 Development
 ===========
@@ -225,18 +227,18 @@ Building Binary
 ---------------
 
 Compiling Nyuu into a single binary can be done via
-[nexe](<https://github.com/nexe/nexe>). There is a little complication with
+[nexe](https://github.com/nexe/nexe) 1.x. There is a little complication with
 bundling the *yencode* module, but a rather fragile script has been supplied in
 *nexe/build.js* to help with the process. The following general steps need to be
 taken:
 
 1.  Ensure that *nexe* is installed (doesn’t need to be globally installed) and
-    [its requirements](<https://github.com/nexe/nexe#building-requirements>) met
+    [its requirements](https://github.com/nexe/nexe#building-requirements) met
 
 2.  Download a Node.js source package. The script has mostly been tested with
-    Node 4.7.x, it may work with other versions
+    Node 4.x.x, it may work with other versions
 
-3.  The required Nyuu libraries need to be installed into the *node\_modules*
+3.  The required Nyuu libraries need to be installed into the *node_modules*
     folder
 
 4.  Inside the *nexe* folder (the one containing *build.js*), create the
@@ -244,8 +246,8 @@ taken:
 
 5.  Inside the *node* folder, create a folder with the version number of the
     package you downloaded in step 2, for example “4.7.2”. Inside *this* folder,
-    create one named “\_” and place the downloaded sources in this folder. After
-    doing this, the file *nexe/node/x.x.x/\_/node.gyp* should exist, where
+    create one named “_” and place the downloaded sources in this folder. After
+    doing this, the file *nexe/node/x.x.x/_/node.gyp* should exist, where
     *x.x.x* is the node version number
 
 6.  Inside the *yencode-src* folder, copy the source code for the *yencode*
@@ -260,11 +262,16 @@ taken:
     build the final executable. If it worked, you should get a binary named
     *nyuu* or *nyuu.exe* in the nexe folder
 
+Note that this will be built with the `-flto` option on non-Windows platforms.
+If this causes build failures, your system’s `ar` utility may not support LTO
+objects, which can be worked around if you have `gcc-ar` installed by issuing a
+command like `export AR=gcc-ar`
+
 Usage
 =====
 
-For command line usage, [see here](<help.txt>), [or here](<help-short.txt>) for
-a summarized list of options.
+For command line usage, [see here](help.txt), [or here](help-short.txt) for a
+summarized list of options.
 
 Default Configuration
 ---------------------
@@ -280,7 +287,7 @@ specify this file on every run, if you set the environment up in your shell).
 Planned Features
 ================
 
--   Integrate [ParPar](<https://animetosho.org/app/parpar>) for streaming PAR2
+-   Integrate [ParPar](https://animetosho.org/app/parpar) for streaming PAR2
     creation
 
 -   Streaming 7-Zip creation
@@ -303,10 +310,10 @@ Alternatives
 ============
 
 A list of Usenet posters I’ve come across can [be found
-here](<https://github.com/animetosho/Nyuu/wiki/Usenet-Uploaders>).
+here](https://github.com/animetosho/Nyuu/wiki/Usenet-Uploaders).
 
-[Here's a benchmark comparison](<bench/info.md>) between a few of the command
-line posters.
+[Here's a benchmark comparison](bench/info.md) between a few of the command line
+posters.
 
 License
 =======
