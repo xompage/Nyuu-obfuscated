@@ -5,12 +5,15 @@ var yencSrc = './yencode-src/';
 var python = 'python';
 var makeArgs = ["-j", "1"];
 var vcBuildArch = "x86"; // x86 or x64
+var useLTO = true;
 
 var fs = require('fs');
 var ncp = require('./ncp').ncp;
 var nexe = require('nexe');
 
 var isNode010 = !!nodeVer.match(/^0\.10\./);
+var ltoFlag = useLTO ? '"-flto"' : '';
+var ltoFlagC = useLTO ? ',"-flto"' : '';
 var modulePref = isNode010?'node_':'';
 fs.statSync(yencSrc + 'yencode.cc'); // trigger error if it doesn't exist
 
@@ -64,9 +67,14 @@ if(!findGypTarget('crcutil')) {
 	      "conditions": [
 	        ['OS=="win"', {
 	          "msvs_settings": {"VCCLCompilerTool": {"EnableEnhancedInstructionSet": "2"}}
-	        }, {
-	          "cxxflags": ["-msse2", "-O3", "-fomit-frame-pointer"]
-	        }]
+	        }, (vcBuildArch == 'x86' ? {
+	          "cxxflags": ["-msse2", "-O3", "-fomit-frame-pointer"],
+	          // some of the ASM won't compile with LTO, so disable it for CRCUtil
+	          "cflags!": ['-flto'],
+	          "cxxflags!": ['-flto']
+	        } : {
+	          "cxxflags": ["-msse2", "-O3", "-fomit-frame-pointer"].concat(useLTO ? ['-flto'] : [])
+	        })]
 	      ],
 	      "include_dirs": ["crcutil-1.0/code", "crcutil-1.0/tests"],
 	      "defines": ["CRCUTIL_USE_MM_CRC32=0"]
@@ -114,15 +122,15 @@ if(!tNode.msvs_settings) {
 	}
 }
 if(!tNode.cxxflags) {
-	doPatch(tNodeMatch, "'cxxflags': ['-Os','-msse2','-flto'],");
+	doPatch(tNodeMatch, "'cxxflags': ['-Os','-msse2'"+ltoFlagC+"],");
 } else if(tNode.cxxflags.indexOf('-Os') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'-Os','-msse2','-flto',");
+	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'-Os','-msse2'"+ltoFlagC+",");
 }
 
 if(!tNode.ldflags) {
-	doPatch(tNodeMatch, "'ldflags': ['-s','-flto'],");
+	doPatch(tNodeMatch, "'ldflags': ['-s'"+ltoFlagC+"],");
 } else if(tNode.ldflags.indexOf('-s') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s','-flto',");
+	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s'"+ltoFlagC+",");
 }
 
 // strip OpenSSL exports
@@ -153,7 +161,7 @@ var patchGypCompiler = function(file, targets) {
 	
 	if(!gyp.target_defaults) {
 		targets = targets || 'targets';
-		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['-Os','-msse2','-flto'], 'ldflags': ['-s','-flto']}, '"+targets+"':");
+		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['-Os','-msse2'"+ltoFlagC+"], 'ldflags': ['-s'"+ltoFlagC+"]}, '"+targets+"':");
 	} else {
 		// TODO: other possibilities
 		if(!gyp.target_defaults.msvs_settings)
@@ -161,17 +169,18 @@ var patchGypCompiler = function(file, targets) {
 		else if(!gyp.target_defaults.msvs_settings.VCCLCompilerTool || !gyp.target_defaults.msvs_settings.VCLinkerTool || !gyp.target_defaults.msvs_settings.VCCLCompilerTool.EnableEnhancedInstructionSet)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.cxxflags)
-			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['-Os','-msse2','-flto'],");
-		else if(gyp.target_defaults.cxxflags.indexOf('-flto') < 0)
+			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['-Os','-msse2'"+ltoFlagC+"],");
+		else if(useLTO && gyp.target_defaults.cxxflags.indexOf('-flto') < 0)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.ldflags)
-			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'ldflags': ['-s','-flto'],");
-		else if(gyp.target_defaults.ldflags.indexOf('-flto') < 0)
+			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'ldflags': ['-s'"+ltoFlagC+"],");
+		else if(useLTO && gyp.target_defaults.ldflags.indexOf('-flto') < 0)
 			throw new Error('To be implemented');
 	}
 	
 	fs.writeFileSync(nodeSrc + file, gypData);
 };
+
 //patchGypCompiler('node.gyp');
 patchGypCompiler('deps/cares/cares.gyp');
 //patchGypCompiler('deps/http_parser/http_parser.gyp');
@@ -192,6 +201,13 @@ var patchFile = function(path, find, replFrom, replTo) {
 		fs.writeFileSync(nodeSrc + path, ext);
 	}
 };
+
+// TODO: improve placement of ldflags
+patchFile('common.gypi', null, "'cflags': [ '-O3',", (useLTO ? "'ldflags': ['-flto'], ":'')+"'cflags': [ '-Os','-msse2'"+ltoFlagC+",");
+patchFile('common.gypi', null, "'FavorSizeOrSpeed': 1,", "'FavorSizeOrSpeed': 2, 'EnableEnhancedInstructionSet': '2',");
+patchFile('common.gypi', null, "'GenerateDebugInformation': 'true',", "'GenerateDebugInformation': 'false',");
+
+// TODO: set AR=gcc-ar if ar fails
 
 if(fs.existsSync(nodeSrc + 'src/node_extensions.h')) { // node 0.10.x
 	patchFile('src/node_extensions.h', 'yencode', '\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
@@ -284,7 +300,8 @@ ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
 	    fs.unlinkSync('../bin/help.json');
 	    
 	    // paxmark -m nyuu
-	    // tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-amd64.tar nyuu ../config-sample.json
+	    // tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-x86-sse2.tar nyuu ../config-sample.json
+	    // xz -9e --x86 --lzma2 *.tar
 	    
 	});
 });
