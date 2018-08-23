@@ -33,7 +33,8 @@ Upload Server Options:
                              https://nodejs.org/api/tls.html
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
-  -n,  --connections         Number of connections to use (default 3)
+  -n,  --connections         Number of connections to create for posting
+                             (default 3)
        --timeout             Timeout on server responses (default 30s)
        --connect-timeout     Connect timeout (default 30s)
        --post-timeout        Timeout on uploading a post (default 150s)
@@ -142,10 +143,12 @@ Post Check Options:
   making Nyuu perform post checking on a different host. `--check-post-retries`
   is unavailable as no posting is performed on these connections.
 
-  -k,  --check-connections   Number of connections to use for post checking
+  -k,  --check-connections   Number of connections to create for post checking
                              (default 0). Set to 1 to enable checking. Higher
                              numbers of connections are only useful if post
                              checking is bottlenecking the rest of the process.
+                             Note that the total number of connections spawned
+                             equals this number + `--connections`
        --check-tries         Maximum number of check attempts to perform.
                              A value of 0 disables post checking. (default 2)
        --check-delay         Initial delay after posting before performing
