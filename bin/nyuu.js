@@ -1267,10 +1267,10 @@ var filesToUpload = argv._;
 				'Total articles: ' + totalPieces + ' (' + friendlySize(totalSize) + ')',
 				'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
 				'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-				'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')',
+				uploader.numCheckConns ? 'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')' : false,
 				'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
 				'Upload Rate (raw|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
-			];
+			].filter(function(e){return e;});
 		};
 		var reportOnEnd = false;
 		var getCompleteStatus = function(err) {
@@ -1296,7 +1296,7 @@ var filesToUpload = argv._;
 			switch(prg.type) {
 				case 'log':
 					var logInterval = setInterval(function() {
-						Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted, ' + uploader.articlesChecked + ' checked');
+						Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted' + (uploader.numCheckConns ? ', ' + uploader.articlesChecked + ' checked' : ''));
 					}, prg.interval);
 					process.on('finished', function() {
 						clearInterval(logInterval);
