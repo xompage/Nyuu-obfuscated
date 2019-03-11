@@ -109,7 +109,10 @@ NNTPServer.prototype = {
 		return true;
 	},
 	listen: function(port, cb) {
-		this.server.listen(port, '127.0.0.1', cb);
+		if(typeof post == 'string') // unix socket
+			this.server.listen(port, cb);
+		else
+			this.server.listen(port, '127.0.0.1', cb);
 	},
 	address: function() {
 		return this.server.address();
