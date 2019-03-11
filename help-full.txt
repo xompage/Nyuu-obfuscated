@@ -56,7 +56,7 @@ Article/Post Options:
 
   -a,  --article-size        Target size of each news post (default 700K). Note
                              that yEnc makes the actual size larger.
-       --article-line-size   Max bytes per line (default 128)
+       --article-line-size   Target bytes per line (default 128)
   -t,  --comment             Comment to insert before post subject
        --comment2            Comment to append after post subject
   -F,  --group-files         Group files by filename, similar to how indexers
@@ -253,8 +253,8 @@ NZB Output Options:
                              created (or multiple processes spawned if proc://
                              is used)
                              Nyuu can also pipe to a specified fd if prefixed
-                             with fd:// (requires NodeJS >=0.12), i.e. `fd://1`
-                             being a shortcut for stdout.
+                             with fd:// (requires NodeJS >= 0.12), i.e.
+                             `fd://1` being a shortcut for stdout.
   -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
                              (flag option)
        --minify              Minify outputted NZB (flag option)
@@ -425,8 +425,8 @@ Input Files:
                              by newlines. Can be `-` to read from stdin, or a
                              command prefixed with proc:// to read from the
                              stdout of specified process. Can also be an fd
-                             prefixed with fd:// (requires NodeJS >=0.12), i.e.
-                             `fd://0` is an alias for stdin.
+                             prefixed with fd:// (requires NodeJS >= 0.12),
+                             i.e. `fd://0` is an alias for stdin.
                              Can be specified multiple times.
   -0,  --input-file0         Same as the `--input-file` option, except files
                              are separated by null characters instead of
@@ -447,7 +447,7 @@ Input Files:
   process is discarded, and nothing will be sent to stdin. If a number is
   supplied to [command] instead of a string, data will be read from the
   specified file descriptor rather than executing a process (requires NodeJS
-  >=0.12).
+  >= 0.12).
   Note that quotation marks and some other special characters may need to be
   escaped with backslashes, as per JSON encoding rules.
   

@@ -548,7 +548,7 @@ for(var k in servOptMap) {
 
 var argv;
 try {
-	argv = require('../lib/arg_parser.js')(process.argv.slice(2), optMap);
+	argv = require('../lib/arg_parser')(process.argv.slice(2), optMap);
 } catch(x) {
 	error(x.message);
 }
@@ -689,7 +689,7 @@ if(argv.config || process.env.NYUU_CONFIG) {
 		util.deepMerge(ulOpts, cOpts);
 	} else {
 		// simple config format, just set unset CLI args
-		cOpts = require('../lib/arg_parser.js')(cOpts, optMap);
+		cOpts = require('../lib/arg_parser')(cOpts, optMap);
 		
 		// allow --quiet or --verbose to override whatever is specified in the config, without error
 		if(argv.quiet || argv.verbose) {
@@ -961,7 +961,7 @@ if(argv.progress) {
 		var arg = str.substr(m[0].length);
 		switch(type) {
 			case 'log':
-				progress.push({type: 'log', interval: require('../lib/arg_parser.js').parseTime(arg) || 60});
+				progress.push({type: 'log', interval: require('../lib/arg_parser').parseTime(arg) || 60});
 			break;
 			case 'stderr':
 			case 'stderrx':
