@@ -54,6 +54,8 @@ servers: [
 // - specifying options via the CLI may get confusing
 // - servers are currently selected randomly for posting/checking; Nyuu won't otherwise do anything special if you specify multiple servers (this includes falling over if a server is misbehaving)
 
+connectionThreads: 0, // number of threads to distribute posting connections over
+
 /** Post Check Options **/
 check: {
 	delay: 5000, // (in ms) initial delay for performing check

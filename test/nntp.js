@@ -41,6 +41,7 @@ var tl = require('./_testlib');
 
 var DEBUG = false;
 var TEST_SSL = false;
+var TEST_THREADS = 0; // set to num desired threads, though >1 is mostly pointless
 
 // TODO: consider throwing errors on unexpected warnings
 var nntpLastLog = {warn: null, info: null, debug: null};
@@ -152,6 +153,9 @@ TestServer.prototype = {
 
 var deepMerge = require('../lib/util').deepMerge;
 
+if(TEST_THREADS)
+	require('../lib/sockthread').createPool(TEST_THREADS);
+
 var currentServer;
 var lastServerPort = 1; // hopefully invalid port
 var newNNTP = function(opts) {
@@ -162,6 +166,7 @@ var newNNTP = function(opts) {
 			highWaterMark: 0,
 			rejectUnauthorized: false
 		},
+		useThreads: !!TEST_THREADS,
 		secure: TEST_SSL,
 		user: null,
 		password: null,

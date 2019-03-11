@@ -443,6 +443,10 @@ var optMap = {
 		type: 'bool',
 		map: 'useBufferPool'
 	},
+	'connection-threads': {
+		type: 'int',
+		map: 'connectionThreads'
+	},
 	'preload-modules': {
 		type: 'bool'
 	},
@@ -856,6 +860,21 @@ if(argv.header) {
 
 // map custom meta tags
 if(argv.meta) util.extend(ulOpts.nzb.metaData, argv.meta);
+
+if(ulOpts.connectionThreads) {
+	var numConnections = 0;
+	ulOpts.servers.forEach(function(server) {
+		if(server.postConnections) {
+			server.useThreads = true;
+			numConnections += server.postConnections;
+		}
+	});
+	if(numConnections) {
+		var threadPool = require('../lib/sockthread');
+		threadPool.createPool(Math.min(numConnections, ulOpts.connectionThreads));
+		process.once('finished', threadPool.closePool);
+	}
+}
 
 if(argv['preload-modules']) {
 	require('net'); // tls requires it, so may as well...

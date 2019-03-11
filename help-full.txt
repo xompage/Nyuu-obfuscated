@@ -311,6 +311,19 @@ Advanced Tuning Options:
                              buffers. Default is enabled, and is a flag option.
                              Use `--no-use-post-pool` to disable the buffer
                              pool.
+       --connection-threads  Number of threads to distribute connections over.
+                             If set, posting connections will be allocated
+                             evenly across the specified number of threads. A
+                             value of 0 disables migrating connections to
+                             threads, using default NodeJS behaviour of
+                             handling connections on the main thread.
+                             Running connections in separate threads is mostly
+                             useful if TLS/SSL is enabled but connection speed
+                             is being limited by how fast one CPU core can
+                             encrypt data.
+                             This option requires NodeJS >= 11.7 or NodeJS >=
+                             10.5 with `--experimental-worker` flag set.
+                             Default 0
        --preload-modules     Preload modules into Node's module cache before
                              starting (flag option). This is mostly a
                              workaround to Node's shortcomming of not being
