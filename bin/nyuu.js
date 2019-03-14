@@ -140,6 +140,11 @@ var servOptMap = {
 		postOnly: true,
 		keyMap: 'postRetries'
 	},
+	'post-retry-delay': {
+		type: 'time',
+		postOnly: true,
+		keyMap: 'postRetryDelay'
+	},
 	'error-teardown': {
 		type: 'bool',
 		keyMap: 'errorTeardown'

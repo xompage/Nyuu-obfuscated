@@ -48,6 +48,7 @@ var clientOpts = function(opts) {
 			connectRetries: 1,
 			requestRetries: 1,
 			postRetries: 1,
+			postRetryDelay: 0,
 			errorTeardown: false,
 			closeTimeout: 10,
 			postConnections: 1,
@@ -146,7 +147,8 @@ describe('Nyuu', function() {
 				reconnectDelay: 500,
 				connectRetries: 10,
 				requestRetries: 10,
-				postRetries: 10
+				postRetries: 10,
+				postRetryDelay: 0
 			},
 			rawInput: !!ulType
 		};

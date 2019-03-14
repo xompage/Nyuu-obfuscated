@@ -45,6 +45,7 @@ Upload Server Options:
                              of a fatal error (flag option)
        --post-retries        Number of post retry attempts in response to 441
                              errors (default 1)
+       --post-retry-delay    Delay post retries (default 0s)
        --error-teardown      Force teardown of bad connections (flag option).
                              If unset, bad connections are closed gracefully.
        --disconnect-timeout  How long to wait for a connection to disconnect

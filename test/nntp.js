@@ -177,6 +177,7 @@ var newNNTP = function(opts) {
 		connectRetries: 1,
 		requestRetries: 5,
 		postRetries: 1,
+		postRetryDelay: 0,
 		errorTeardown: false,
 		closeTimeout: 10,
 		keepAlive: false
