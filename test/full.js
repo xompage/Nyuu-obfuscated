@@ -157,8 +157,7 @@ describe('Nyuu', function() {
 		(function(cb) {
 			var server = testSkel(files, opts, function(err) {
 				if(err) return cb(err);
-				var t = Date.now() - s;
-				assert(t < 500); // shouldn't wait for other connections to get through
+				tl.assertTimeWithin(s, 0, 500); // shouldn't wait for other connections to get through
 				server.close(function() {
 					cb(null, server);
 				});
@@ -193,9 +192,7 @@ describe('Nyuu', function() {
 		(function(cb) {
 			var server = testSkel(files, opts, function(err) {
 				if(err) return cb(err);
-				var t = Date.now() - s;
-				assert(t >= 500); // should try once
-				assert(t < 1000); // but not twice (won't happen since we restrict tries to 1, in which case, it shouldn't re-post)
+				tl.assertTimeWithin(s, 500, 1000); // should try once, but not twice (won't happen since we restrict tries to 1, in which case, it shouldn't re-post)
 				server.close(function() {
 					cb(null, server);
 				});

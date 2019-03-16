@@ -130,7 +130,7 @@ it('should wait when full, and cannot evict', function(done) {
 	c.add(2, false, function(id2) {
 		var t = Date.now();
 		c.add(3, false, function(id3) {
-			assert(Date.now()-t >= 100);
+			tl.assertTimeWithin(t, 100);
 			assertCache(c, [2, 3]);
 			assert(id3);
 			
@@ -151,10 +151,10 @@ it('should wait when full, and cannot evict (2)', function(done) {
 	c.add(1, false, function(id) {id1=id;});
 	c.add(2, false, function(id) {id2=id;});
 	c.add(3, false, function(id3) { // this won't be called until 1+2 are removed
-		assert(Date.now()-t >= 150);
+		tl.assertTimeWithin(t, 150);
 		assertCache(c, [3, 4]);
 		c.add(5, false, function(id5) {
-			assert(Date.now()-t >= 200);
+			tl.assertTimeWithin(t, 200);
 			assertCache(c, [4, 5]);
 			
 			done();
@@ -164,7 +164,7 @@ it('should wait when full, and cannot evict (2)', function(done) {
 		}, 50);
 	});
 	c.add(4, false, function(id4) {
-		assert(Date.now()-t >= 150);
+		tl.assertTimeWithin(t, 150);
 	});
 	setTimeout(function() {
 		c.remove(id1);

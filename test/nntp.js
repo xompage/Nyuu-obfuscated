@@ -88,7 +88,8 @@ function TestServer(onConn) {
 		c.on('data', this.onData.bind(this));
 		c.on('error', function(err) {
 			// we do expect errors - log them for now?
-			console.log('Test-server error: ', err);
+			if(err.code != 'EPIPE')
+				console.log('Test-server error: ', err);
 		});
 		c.once('close', function() {
 			this._conn = null;
@@ -263,6 +264,7 @@ function closeTest(client, server, cb) {
 	}
 	
 }
+
 
 describe('NNTP Client', function() {
 
@@ -1215,22 +1217,22 @@ it('check timeout timing of pipelined requests', function(done) {
 			var t = Date.now();
 			server.expect('DATE\r\nDATE\r\n', function() {
 				// don't respond -> timeout error
-				assert(Date.now()-t >= 100);
+				tl.assertTimeWithin(t, 100);
 				server.expect('DATE\r\n'); // expected 2nd request
 			});
 			
 			var called = 0;
 			client.date(tl.fn1(function(err, date) {
 				assert.equal(called++, 0);
-				assert(Date.now()-t >= 200); // timeout delay
-				assert(Date.now()-t < 300); // but less than timeout + second request delay
+				tl.assertTimeWithin(t, 200, 300); // timeout delay, but less than timeout + second request delay
 				assert.equal(err.code, 'timeout');
 				assert(!date);
 			}));
 			setTimeout(function() {
 				client.date(function(err, date) {
 					assert.equal(called++, 1);
-					assert(Date.now()-t >= 400); // the first timeout should trigger a reconnect, resetting the second timeout, so total time should be > 2*timeout
+					// the first timeout should trigger a reconnect, resetting the second timeout, so total time should be > 2*timeout
+					tl.assertTimeWithin(t, 400);
 					assert.equal(err.code, 'timeout');
 					assert(!date);
 					cb();
@@ -1252,8 +1254,7 @@ it('check timeout timing of pipelined requests', function(done) {
 			setTimeout(function() {
 				client.date(function(err, date) {
 					assert.equal(called++, 1);
-					assert(Date.now()-t >= 300); // timeout + second request delay
-					assert(Date.now()-t < 400); // but less than 2*timeout
+					tl.assertTimeWithin(t, 300, 400); // timeout + second request delay, but less than 2*timeout
 					assert.equal(err.code, 'timeout');
 					assert(!date);
 					cb();
@@ -1481,9 +1482,7 @@ it('should retry reconnecting if it only fails once', function(done) {
 			var emitted = false;
 			var s = Date.now();
 			client.connect(function(err) {
-				var timeTaken = Date.now() - s;
-				assert(timeTaken >= 300); // reconnect delay should be 300ms
-				assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+				tl.assertTimeWithin(s, 300, 801); // reconnect delay should be 300ms, ...but less than 800ms (delay + timeout)
 				assert(server);
 				cb(err, server, client);
 			});
@@ -1522,9 +1521,7 @@ it('should retry reconnecting if init sequence fails', function(done) {
 			var server = new TestServer(function() {
 				// first connection = drop, otherwise continue
 				if(dropped) {
-					var timeTaken = Date.now() - s;
-					assert(timeTaken >= 300); // reconnect delay should be 300ms
-					assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+					tl.assertTimeWithin(s, 300, 801); // reconnect delay should be 300ms ...but less than 800ms (delay + timeout)
 					server.respond('200 host test server');
 				} else {
 					server.drop();
@@ -1590,9 +1587,7 @@ it('test handling of connection failure if init sequence almost completes', func
 			var server = new TestServer(function() {
 				// first connection = drop right after sending a response, otherwise continue
 				if(dropped) {
-					var timeTaken = Date.now() - s;
-					assert(timeTaken >= 300); // reconnect delay should be 300ms
-					assert(timeTaken <= 800); // ...but less than 800ms (delay + timeout)
+					tl.assertTimeWithin(s, 300, 801); // reconnect delay should be 300ms ...but less than 800ms (delay + timeout)
 					server.respond('200 host test server');
 				} else {
 					server.respond('200 host test server');
