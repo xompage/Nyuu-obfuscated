@@ -145,6 +145,11 @@ var servOptMap = {
 		postOnly: true,
 		keyMap: 'postRetryDelay'
 	},
+	'post-fail-reconnect': {
+		type: 'bool',
+		postOnly: true,
+		keyMap: 'postFailReconnect'
+	},
 	'error-teardown': {
 		type: 'bool',
 		keyMap: 'errorTeardown'

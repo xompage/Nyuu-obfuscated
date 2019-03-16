@@ -83,6 +83,7 @@ function TestServer(onConn) {
 	this.server = require(TEST_SSL ? 'tls' : 'net').createServer(cOpts, function(c) {
 		if(this._conn) throw new Error('Multiple connections received');
 		this._conn = c;
+		this.connCount++;
 		this.connectedTime = Date.now();
 		c.on('data', this.onData.bind(this));
 		c.on('error', function(err) {
@@ -101,6 +102,7 @@ TestServer.prototype = {
 	_expectAction: null,
 	_conn: null,
 	_closed: false,
+	connCount: 0,
 	
 	onData: function(chunk) {
 		if(!this._expect && this._expect !== '') throw new Error('Unexpected data received: ' + chunk.toString());
@@ -1018,38 +1020,44 @@ it('should reattempt to post if connection drops out', function(done) {
 	], done);
 });
 
-it('should reattempt to post if first time fails', function(done) {
-	var server, client;
-	waterfall([
-		setupTest,
-		function(_server, _client, cb) {
-			server = _server;
-			client = _client;
-			client.connect(cb);
-		},
-		function(cb) {
-			assert.equal(client.state, 'connected');
-			
-			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
-			server.expect('POST\r\n', function() {
-				this.expect(msg, function() {
-					this.expect('POST\r\n', function() {
-						this.expect(msg, '240 <new-article> Article received ok');
-						this.respond('340 Send article');
+[false, true].forEach(function(reconn) {
+	it('should '+(reconn?'reconnect':'retry')+' on first post failure', function(done) {
+		var server, client;
+		waterfall([
+			setupTest.bind(null, {
+				postFailReconnect: reconn
+			}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				
+				var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+				server.expect('POST\r\n', function() {
+					this.expect(msg, function() {
+						this.expect('POST\r\n', function() {
+							this.expect(msg, '240 <new-article> Article received ok');
+							assert.equal(this.connCount, reconn?2:1);
+							this.respond('340 Send article');
+						});
+						assert.equal(this.connCount, 1);
+						this.respond('441 posting failed');
 					});
-					this.respond('441 posting failed');
+					this.respond('340 Send article');
 				});
-				this.respond('340 Send article');
-			});
-			client.post(new DummyPost(msg), cb);
-		},
-		function(a, cb) {
-			assert.equal(a, 'new-article');
-			
-			closeTest(client, server, cb);
-		}
-	], done);
-	
+				client.post(new DummyPost(msg), cb);
+			},
+			function(a, cb) {
+				assert.equal(a, 'new-article');
+				
+				closeTest(client, server, cb);
+			}
+		], done);
+		
+	});
 });
 
 it('should resend request if connection lost and reconnect fails once', function(done) {

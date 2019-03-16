@@ -46,6 +46,11 @@ Upload Server Options:
        --post-retries        Number of post retry attempts in response to 441
                              errors (default 1)
        --post-retry-delay    Delay post retries (default 0s)
+       --post-fail-reconnect Treat posting failures as connection fatal errors.
+                             This causes the connection to be reestablished in
+                             response to this error (flag option)
+                             If set, note that `--post-retries` and
+                             `--post-retry-delay` options will be ignored.
        --error-teardown      Force teardown of bad connections (flag option).
                              If unset, bad connections are closed gracefully.
        --disconnect-timeout  How long to wait for a connection to disconnect

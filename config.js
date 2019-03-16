@@ -37,6 +37,7 @@ servers: [
 		retryBadResp: false, // enable retrying if a bad response is received
 		postRetries: 1, // how many times to retry if server returns 441 response to posted article
 		postRetryDelay: 0, // delay post retries (above option) by this many milliseconds
+		postFailReconnect: false, // treat post failure like a connection-level error; postRetries and postRetryDelay settings are ignored if true
 		errorTeardown: false, // false = gracefully close bad connections, true = forcefully destroy them
 		closeTimeout: 10000, // 10 seconds; wait period before forcefully dropping gracefully closed connections
 		keepAlive: false, // always reconnect on error, even if not needed
