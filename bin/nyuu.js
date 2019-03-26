@@ -883,6 +883,7 @@ if(ulOpts.connectionThreads) {
 		var threadPool = require('../lib/sockthread');
 		threadPool.createPool(Math.min(numConnections, ulOpts.connectionThreads));
 		process.once('finished', threadPool.closePool);
+		ulOpts.useSharedBuffers = true; // reduce copying when sending posts to threads
 	}
 }
 
