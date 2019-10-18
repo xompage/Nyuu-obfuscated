@@ -245,9 +245,9 @@ taken:
     following two folders: *node* and *yencode-src*
 
 5.  Inside the *node* folder, create a folder with the version number of the
-    package you downloaded in step 2, for example “4.7.2”. Inside *this* folder,
-    create one named “_” and place the downloaded sources in this folder. After
-    doing this, the file *nexe/node/x.x.x/_/node.gyp* should exist, where
+    package you downloaded in step 2, for example “4.9.1”. Inside *this* folder,
+    create one named “\_” and place the downloaded sources in this folder. After
+    doing this, the file *nexe/node/x.x.x/\_/node.gyp* should exist, where
     *x.x.x* is the node version number
 
 6.  Inside the *yencode-src* folder, copy the source code for the *yencode*
