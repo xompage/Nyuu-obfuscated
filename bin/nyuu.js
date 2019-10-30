@@ -765,7 +765,7 @@ var servOptHelper = function(k, val, type, servers) {
 	}
 	
 	servers.forEach(function(server) {
-		setPathedVal(server, key, o.fn ? o.fn(val, server) : val);
+		setPathedVal(server, key, val);
 	});
 };
 var checkOverrides = false;
