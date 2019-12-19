@@ -101,6 +101,8 @@ provide them. These can simply be extracted and run.
 
 Archlinux users can install the latest binary-release by installing `nyuu-bin` from the AUR.
 
+*Please note that [this Package](https://aur.archlinux.org/packages/nyuu-bin/) is maintained by a third party and not officially supported. If you have an issue please contact the maintainer.*
+
 Install Via NPM
 ---------------
 
