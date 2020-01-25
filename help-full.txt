@@ -231,6 +231,7 @@ Other Upload/Check Options:
                                  POST
                                  IHAVE
                                  XREPLIC
+                                 TAKETHIS
                              Warning: XREPLIC only uses first specified group
                              and randomly generated article number
        --use-ihave           Alias for `--post-method IHAVE` (flag option)

@@ -347,6 +347,95 @@ it('should handle basic tasks', function(done) {
 	], done);
 });
 
+it('should handle XREPLIC posting', function(done) {
+	var server, client, mathRandom;
+	waterfall([
+		setupTest.bind(null, {postMethod: 'XREPLIC'}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+			
+			// hack the Math.random function to ensure exact results
+			mathRandom = Math.random;
+			Math.random = function() { return 0.5; }
+		},
+		function(cb) {
+			var msg = 'Newsgroups: a.b.group\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			
+			assert.equal(client.state, 'connected');
+			
+			server.expect('XREPLIC a.b.group:1073741823\r\n', function() {
+				this.expect(msg, '235 Article transferred OK');
+				this.respond('335 Send it');
+			});
+			var post = new DummyPost(msg);
+			post.getHeader = function(str) {
+				if(str.toLowerCase() == 'newsgroups')
+					return 'a.b.group';
+				return null;
+			};
+			client.post(post, function(err, a) {
+				assert.equal(a, 'xxxx');
+				cb();
+			});
+		},
+		function(cb) {
+			Math.random = mathRandom;
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should handle TAKETHIS posting', function(done) {
+	var server, client, mathRandom;
+	waterfall([
+		setupTest.bind(null, {postMethod: 'TAKETHIS', postRetries: 0}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			var msg = 'Newsgroups: a.b.group\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			
+			assert.equal(client.state, 'connected');
+			
+			server.expect('TAKETHIS <xxxx>\r\n'+msg, function() {
+				this.respond('239 <new-article>');
+			});
+			client.post(new DummyPost(msg), function(err, a) {
+				assert.equal(a, 'new-article');
+				cb();
+			});
+		},
+		/* uncomment when TAKETHIS pipelining is supported
+		function(cb) {
+			var rc = 0;
+			// test pipelining posts, since TAKETHIS is the only method where we support post pipelining
+			var msg1 = 'X-Info: post1\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			var msg2 = 'X-Info: post2\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			
+			server.expect('TAKETHIS <xxxx>\r\n'+msg1+'TAKETHIS <xxxx>\r\n'+msg2, function() {
+				this.respond('239 <post1>\r\n439 <post2>\r\n');
+			});
+			client.post(new DummyPost(msg1), function(err, a) {
+				assert.equals(rc++, 0);
+				assert.equal(a, 'post1');
+			});
+			client.post(new DummyPost(msg2), function(err, a) {
+				assert.equals(rc++, 1);
+				assert.equal(err.code, 'post_denied');
+				cb();
+			});
+		},
+		*/
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+
 it('should be able to pipeline a post after a stat', function(done) {
 	var server, client;
 	waterfall([
