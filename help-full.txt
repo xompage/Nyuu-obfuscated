@@ -226,8 +226,14 @@ Other Upload/Check Options:
                                    4th timeout: give up and throw error
                              Note: removed headers stay removed, even when the
                              post is re-posted due to a check failure.
-       --use-ihave           Submit articles using IHAVE command instead of
-                             POST (flag option)
+       --post-method         Command used for posting articles. Supported
+                             commands listed below. Default is POST
+                                 POST
+                                 IHAVE
+                                 XREPLIC
+                             Warning: XREPLIC only uses first specified group
+                             and randomly generated article number
+       --use-ihave           Alias for `--post-method IHAVE` (flag option)
        --check-group         Checking connections will be set to this group.
                              Some servers seem to want one set, otherwise
                              checking fails. If you set one, use a valid group

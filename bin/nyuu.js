@@ -180,9 +180,19 @@ var servOptMap = {
 		keyMap: 'uploadChunkSize',
 		ifSetDefault: '192K'
 	},
-	'use-ihave': {
+	'post-method': {
+		type: 'enum',
+		postOnly: true,
+		enum: ['post','ihave','xreplic','takethis'],
+		keyMap: 'postMethod'
+	},
+	'use-ihave': { // for backwards-compatibility
 		type: 'bool',
-		keyMap: 'useIHave'
+		postOnly: true,
+		keyMap: 'postMethod',
+		fn: function(v) {
+			return v ? 'ihave' : 'post';
+		}
 	},
 	connections: {
 		type: 'int',
