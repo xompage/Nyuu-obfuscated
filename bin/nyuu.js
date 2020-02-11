@@ -176,9 +176,9 @@ var servOptMap = {
 		keyMap: 'keepAlive'
 	},
 	'post-chunk-size': {
-		type: 'size',
-		keyMap: 'uploadChunkSize',
-		ifSetDefault: '192K'
+		type: 'size0',
+		postOnly: true,
+		keyMap: 'uploadChunkSize'
 	},
 	'post-method': {
 		type: 'enum',

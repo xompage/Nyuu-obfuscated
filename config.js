@@ -43,7 +43,7 @@ servers: [
 		keepAlive: false, // always reconnect on error, even if not needed
 		onPostTimeout: null, // list of actions (strings) to take if server sends no response to a post; values can be 'retry', 'strip-hdr=X' and 'ignore'; if not set (null), defaults to ['retry','retry','retry'...] where the number of elements == requestRetries
 		tcpKeepAlive: false, // false to disable, otherwise set a number for probe interval (in ms)
-		uploadChunkSize: 0, // break up post into chunks of this size when uploading; 0 to disable chunking
+		uploadChunkSize: 192*1024, // break up post into chunks of this size when uploading; 0 to disable chunking
 		postMethod: 'POST', // command to use when posting; can be POST, IHAVE, XREPLIC or TAKETHIS
 		
 		postConnections: 3, // number of connections for posting

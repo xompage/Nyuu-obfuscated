@@ -330,7 +330,7 @@ Advanced Tuning Options:
                              articles that can be queued for checking, as these
                              posts cannot be dropped from cache.
        --post-chunk-size     Limit upload chunk size to specified amount. Set
-                             to 0 to disable (default 0)
+                             to 0 to disable (default 192K)
        --use-post-pool       Use a buffer pool to improve memory management.
                              Buffers are pre-allocated, which can also improve
                              performance, but can increase memory usage.
