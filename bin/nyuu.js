@@ -545,6 +545,10 @@ var optMap = {
 		type: 'bool',
 		alias: 'q'
 	},
+	colorize: {
+		type: 'bool',
+		default: process.stderr.isTTY // assume colours are supported if TTY
+	},
 	progress: {
 		type: 'array'
 	},
@@ -626,7 +630,7 @@ if(argv['package-info']) {
 	
 	for(var i in m) {
 		console.error('\n' + i + ':');
-		process.stderr.write(require('util').inspect(m[i], {colors: process.stderr.isTTY}) + '\n');
+		process.stderr.write(require('util').inspect(m[i], {colors: argv.colorize}) + '\n');
 	}
 	process.exit(0);
 }
@@ -1044,8 +1048,7 @@ var writeNewline = function() {
 };
 var clrRow = stdErrProgress ? '\x1b[0G\x1B[0K' : '';
 var writeLog;
-if(process.stderr.isTTY) {
-	// assume colours are supported
+if(argv.colorize) {
 	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + '\x1B[39m ' + msg.toString() + '\n'
@@ -1255,7 +1258,7 @@ var filesToUpload = argv._;
 					}
 					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
 					if(verbosity >= 4) {
-						process.stderr.write(require('util').inspect(ah, {colors: process.stderr.isTTY}) + '\n');
+						process.stderr.write(require('util').inspect(ah, {colors: argv.colorize}) + '\n');
 					}
 				} else
 					Nyuu.log.warn('Process did not terminate cleanly');

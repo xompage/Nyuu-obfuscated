@@ -372,6 +372,8 @@ UI Options:
                                  4: show debugging info
   -v,  --verbose             Alias for `-l4` (flag option)
   -q,  --quiet               Alias for `-l2` (flag option)
+       --colorize            Enable colors in terminal output (flag option)
+                             Enabled by default if stderr is connected to a TTY
   -T,  --log-time            Add timestamps to log entries (flag option)
        --progress            Progress/status display control.
                              Value can be one of the below; if parameters are
