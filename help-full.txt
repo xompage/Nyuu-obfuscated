@@ -277,6 +277,20 @@ NZB Output Options:
                              available.
        --nzb-compress-level  Compression level (0-9) to use. Default is 6
                              For Brotli, range is 0-11, default being 11
+       --nzb-title           A human-readable identifiable title for the
+                             contents of the NZB
+                             Shortcut for `-M title=...`
+       --nzb-tag             An attribute of the NZB contents, such as "SD"
+                             Can be specified multiple times
+                             Shortcut for `-M tag=...`
+       --nzb-category        Suggested category as used by your indexing
+                             service (preferrably one, but can be specified
+                             multiple times)
+                             Shortcut for `-M category=...`
+       --nzb-password        Attach a password to this NZB if its contents
+                             requires one. Can be specified multiple times
+                             if there are multiple passwords
+                             Shortcut for `-M password=...`
   -M,  --meta                Add a <meta> tag to the NZB. See `--header` option
                              above for syntax details.
        --nzb-encoding        Character encoding used in the NZB (default utf-8)

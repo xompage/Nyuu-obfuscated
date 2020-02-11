@@ -55,6 +55,16 @@ NZB Output Options:
   -o,  --out                 If supplied, will write NZB to this file
   -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
                              (flag option)
+       --nzb-title           A human-readable identifiable title for the
+                             contents of the NZB
+       --nzb-tag             An attribute of the NZB contents, such as "SD"
+                             Can be specified multiple times
+       --nzb-category        Suggested category as used by your indexing
+                             service (preferrably one, but can be specified
+                             multiple times)
+       --nzb-password        Attach a password to this NZB if its contents
+                             requires one. Can be specified multiple times
+                             if there are multiple passwords
 
 UI Options:
 

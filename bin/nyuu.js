@@ -415,6 +415,23 @@ var optMap = {
 		type: 'map',
 		alias: 'M'
 	},
+	// "standard" NZB meta fields from https://sabnzbd.org/wiki/extra/nzb-spec#toc2
+	'nzb-title': {
+		type: 'string',
+		map: 'nzb/metaData/title'
+	},
+	'nzb-tag': {
+		type: 'array',
+		map: 'nzb/metaData/tag'
+	},
+	'nzb-category': {
+		type: 'array',
+		map: 'nzb/metaData/category'
+	},
+	'nzb-password': {
+		type: 'array',
+		map: 'nzb/metaData/password'
+	},
 	'nzb-cork': {
 		type: 'bool',
 		map: 'nzb/corkOutput'

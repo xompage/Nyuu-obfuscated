@@ -124,6 +124,7 @@ nzb: {
 	metaData: {
 		// eg:
 		// password: 'mysecret',
+		// tag: ['SD', 'H.264'],
 	},
 	corkOutput: false, // cork the output stream (node >=0.12); is here until we have better support for output buffering
 },
