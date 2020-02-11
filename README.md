@@ -184,6 +184,10 @@ Nyuu/
 package.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+### “no suitable image found” error on MacOS 10.15
+
+Due to security changes in OSX 10.15, libraries may require code signing to work. To deal with this, you’ll either need to [disable this security option](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_cs_disable-library-validation?language=objc) or [codesign the built yencode module](https://successfulsoftware.net/2018/11/16/how-to-notarize-your-software-on-macos/). Note that I do not have OSX and can’t provide much support for the platform.
+
 ### Executable
 
 Once dependencies have been installed, Nyuu can be run via `node bin/nyuu` or
@@ -324,5 +328,5 @@ posters.
 License
 =======
 
-Nyuu is **Public Domain**. Use her as you will, at your own risk of course
+Nyuu is **Public Domain** or [CC0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) (or equivalent) if PD isn’t recognised. Use her as you will, at your own risk of course
 (don’t come back crying if you lose a limb or two).
