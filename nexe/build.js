@@ -1,14 +1,16 @@
-var nodeVer = '4.9.1';
+var nodeVer = '8.17.0';
 var nexeBase = '.';
 var nodeSrc = nexeBase + '/node/' + nodeVer + '/_/'; // TODO: auto search folder
 var yencSrc = './yencode-src/';
 var python = 'python';
+// process.env.path = '' + process.env.path; // if need to specify a Python path
 var makeArgs = ["-j", "1"];
 var vcBuildArch = "x86"; // x86 or x64
 var useLTO = true;
+var oLevel = '-O2'; // prefer -O2 on GCC, -Os on Clang
+var isaBaseFlag = ',"-msse2"'; // set to blank for non-x86 targets
 
 var fs = require('fs');
-var ncp = require('./ncp').ncp;
 var nexe = require('nexe');
 
 var isNode010 = !!nodeVer.match(/^0\.10\./);
@@ -16,6 +18,19 @@ var ltoFlag = useLTO ? '"-flto"' : '';
 var ltoFlagC = useLTO ? ',"-flto"' : '';
 var modulePref = isNode010?'node_':'';
 fs.statSync(yencSrc + 'yencode.cc'); // trigger error if it doesn't exist
+
+// TODO: fix issue with workerthreads in node < 10
+
+var path = require('path');
+var copyRecursiveSync = function(src, dest) {
+	if(fs.statSync(src).isDirectory()) {
+		if(!fs.existsSync(dest)) fs.mkdirSync(dest);
+		fs.readdirSync(src).forEach(function(child) {
+			copyRecursiveSync(path.join(src, child), path.join(dest, child));
+		});
+	} else
+		fs.copyFileSync(src, dest);
+};
 
 var gypParse = function(gyp) {
 	// very hacky fixes for Python's flexibility
@@ -52,6 +67,7 @@ var doPatch = function(r, s, ignoreMissing) {
 	gypData = gypData.replace(r, '$1 ' + s);
 };
 if(!findGypTarget('crcutil')) {
+	// TODO: update this to enable building yencode 1.1.0
 	doPatch(/(\},\s*['"]targets['"]: \[)/, JSON.stringify({
 	      "target_name": "crcutil",
 	      "type": "static_library",
@@ -66,15 +82,22 @@ if(!findGypTarget('crcutil')) {
 	      ],
 	      "conditions": [
 	        ['OS=="win"', {
-	          "msvs_settings": {"VCCLCompilerTool": {"EnableEnhancedInstructionSet": "2"}}
-	        }, (vcBuildArch == 'x86' ? {
-	          "cxxflags": ["-msse2", "-O3", "-fomit-frame-pointer"],
-	          // some of the ASM won't compile with LTO, so disable it for CRCUtil
+	          "msvs_settings": {"VCCLCompilerTool": {"EnableEnhancedInstructionSet": "2", "Optimization": "MaxSpeed", "BufferSecurityCheck": "false"}}
+	        }, {
+	          "cxxflags": ["-O3", "-fomit-frame-pointer"],
+	          "cxxflags!": ["-fno-omit-frame-pointer", "-fno-tree-vrp", "-fno-strict-aliasing"]
+	        }],
+	        // some of the ASM won't compile with LTO, so disable it for CRCUtil
+	        ['target_arch == "ia32"', {
 	          "cflags!": ['-flto'],
-	          "cxxflags!": ['-flto']
-	        } : {
-	          "cxxflags": ["-msse2", "-O3", "-fomit-frame-pointer"].concat(useLTO ? ['-flto'] : [])
-	        })]
+	          "cxxflags!": ['-flto'],
+	        }, {
+	          "cxxflags": ['-flto'],
+	        }],
+	        ['target_arch in "ia32 x64"', {
+	          "cxxflags": ["-msse2"],
+	          "xcode_settings": {"OTHER_CXXFLAGS": ["-msse2"]}
+	        }]
 	      ],
 	      "include_dirs": ["crcutil-1.0/code", "crcutil-1.0/tests"],
 	      "defines": ["CRCUTIL_USE_MM_CRC32=0"]
@@ -94,16 +117,25 @@ if(!tNode) {
 var tNodeMatch = new RegExp('('+tNodeM+')');
 if(tNode.sources.indexOf('src/'+modulePref+'yencode.cc') < 0)
 	doPatch(/(['"]src\/node_file\.cc['"],)/, "'src/"+modulePref+"yencode.cc',");
-if(tNode.dependencies.indexOf('crcutil') < 0)
-	// try to avoid matching the cctest target
-	doPatch(/('target_name': '<\([^\]]+?['"]node_js2c#host['"],)/, "'crcutil',");
+if(tNode.dependencies.indexOf('crcutil') < 0) {
+	if(tNode.dependencies.indexOf('deps/histogram/histogram.gyp:histogram') == 0)
+		// Node 12
+		// TODO: this gets double-replaced if run twice
+		doPatch(/('src\/node_main\.cc'[^]{2,50}'dependencies': \[ 'deps\/histogram\/histogram\.gyp:histogram')/, ",'crcutil'");
+	else
+		// try to avoid matching the cctest target
+		doPatch(/('target_name': '<\([^\]]+?['"]node_js2c#host['"],)/, "'crcutil',");
+}
 if(tNode.include_dirs.indexOf('crcutil-1.0/code') < 0)
-	doPatch(/(['"]<\(SHARED_INTERMEDIATE_DIR\)['"],? # for node_natives\.h\r?\n)/g, "'crcutil-1.0/code', 'crcutil-1.0/examples',");
+	doPatch(/(['"]<\(SHARED_INTERMEDIATE_DIR\)['"])(,?) # for node_natives\.h\r?\n/g, ",'crcutil-1.0/code', 'crcutil-1.0/examples'$2");
 
 if(gyp.variables.library_files.indexOf('lib/yencode.js') < 0)
 	doPatch(/(['"]lib\/fs\.js['"],)/, "'lib/yencode.js',");
 
-
+// disable cctest
+var tCCT = findGypTarget('cctest');
+if(tCCT && tCCT.type == 'executable')
+	doPatch(/(['"]target_name['"]:\s*['"]cctest['"],\s*['"]type['"]:\s*)['"]executable['"]/, "'none'");
 
 // urgh, copy+paste :/
 if(!tNode.msvs_settings) {
@@ -121,20 +153,30 @@ if(!tNode.msvs_settings) {
 		doPatch(/(['"]VCLinkerTool['"]:\s*\{)/, "'GenerateDebugInformation': 'false',");
 	}
 }
-if(!tNode.cxxflags) {
-	doPatch(tNodeMatch, "'cxxflags': ['-Os','-msse2'"+ltoFlagC+"],");
-} else if(tNode.cxxflags.indexOf('-Os') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'-Os','-msse2'"+ltoFlagC+",");
-}
-
-if(!tNode.ldflags) {
-	doPatch(tNodeMatch, "'ldflags': ['-s'"+ltoFlagC+"],");
-} else if(tNode.ldflags.indexOf('-s') < 0) {
-	doPatch(new RegExp("(" + tNodeM + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s'"+ltoFlagC+",");
+var patchTargetFlags = function(node, regex) {
+	var match = new RegExp('('+regex+')');
+	if(!node.cxxflags) {
+		doPatch(match, "'cxxflags': ['"+oLevel+"'"+isaBaseFlag+ltoFlagC+"],");
+	} else if(node.cxxflags.indexOf(oLevel) < 0) {
+		doPatch(new RegExp("(" + regex + "[^]*?['\"]cxxflags['\"]:\\s*\\[)"), "'"+oLevel+"'"+isaBaseFlag+ltoFlagC+",");
+	}
+	
+	if(!node.ldflags) {
+		doPatch(match, "'ldflags': ['-s'"+ltoFlagC+"],");
+	} else if(node.ldflags.indexOf('-s') < 0) {
+		doPatch(new RegExp("(" + regex + "[^]*?['\"]ldflags['\"]:\\s*\\[)"), "'-s'"+ltoFlagC+",");
+	}
+};
+patchTargetFlags(tNode, tNodeM);
+if(tNodeM.indexOf('node_lib_target_name')) {
+	// needed in node v8.x?
+	var tNodeExe = findGypTarget('<(node_core_target_name)');
+	if(tNodeExe)
+		patchTargetFlags(tNodeExe, "['\"]target_name['\"]:\\s*['\"]<\\(node_core_target_name\\)['\"],");
 }
 
 // strip OpenSSL exports
-doPatch(/('use_openssl_def':) 1,/, "0,", true);
+doPatch(/('use_openssl_def%?':) 1,/, "0,", true);
 
 
 fs.writeFileSync(nodeSrc + 'node.gyp', gypData);
@@ -161,7 +203,7 @@ var patchGypCompiler = function(file, targets) {
 	
 	if(!gyp.target_defaults) {
 		targets = targets || 'targets';
-		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['-Os','-msse2'"+ltoFlagC+"], 'ldflags': ['-s'"+ltoFlagC+"]}, '"+targets+"':");
+		gypData = gypData.replace("'"+targets+"':", "'target_defaults': {'msvs_settings': {'VCCLCompilerTool': {'EnableEnhancedInstructionSet': '2', 'FavorSizeOrSpeed': '2'}, 'VCLinkerTool': {'GenerateDebugInformation': 'false'}}, 'cxxflags': ['"+oLevel+"'"+isaBaseFlag+ltoFlagC+"], 'ldflags': ['-s'"+ltoFlagC+"]}, '"+targets+"':");
 	} else {
 		// TODO: other possibilities
 		if(!gyp.target_defaults.msvs_settings)
@@ -169,7 +211,7 @@ var patchGypCompiler = function(file, targets) {
 		else if(!gyp.target_defaults.msvs_settings.VCCLCompilerTool || !gyp.target_defaults.msvs_settings.VCLinkerTool || !gyp.target_defaults.msvs_settings.VCCLCompilerTool.EnableEnhancedInstructionSet)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.cxxflags)
-			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['-Os','-msse2'"+ltoFlagC+"],");
+			gypData = gypData.replace("'target_defaults': {", "'target_defaults': {'cxxflags': ['"+oLevel+"'"+isaBaseFlag+ltoFlagC+"],");
 		else if(useLTO && gyp.target_defaults.cxxflags.indexOf('-flto') < 0)
 			throw new Error('To be implemented');
 		if(!gyp.target_defaults.ldflags)
@@ -187,23 +229,24 @@ patchGypCompiler('deps/cares/cares.gyp');
 patchGypCompiler('deps/openssl/openssl.gyp');
 patchGypCompiler('deps/uv/uv.gyp');
 patchGypCompiler('deps/zlib/zlib.gyp', 'conditions');
+// node 12's v8 doesn't use gyp
 if(fs.existsSync(nodeSrc + 'deps/v8/src/v8.gyp'))
 	patchGypCompiler('deps/v8/src/v8.gyp');
-else
+else if(fs.existsSync(nodeSrc + 'deps/v8/tools/gyp/v8.gyp'))
 	patchGypCompiler('deps/v8/tools/gyp/v8.gyp');
 
 
 
 var patchFile = function(path, find, replFrom, replTo) {
 	var ext = fs.readFileSync(nodeSrc + path).toString();
-	if(!find || !ext.match(find)) {
+	if(!find || (find.test ? !find.test(ext) : ext.indexOf(find) < 0)) {
 		ext = ext.replace(replFrom, replTo);
 		fs.writeFileSync(nodeSrc + path, ext);
 	}
 };
 
 // TODO: improve placement of ldflags
-patchFile('common.gypi', null, "'cflags': [ '-O3',", (useLTO ? "'ldflags': ['-flto'], ":'')+"'cflags': [ '-Os','-msse2'"+ltoFlagC+",");
+patchFile('common.gypi', null, "'cflags': [ '-O3',", (useLTO ? "'ldflags': ['-flto'], ":'')+"'cflags': [ '"+oLevel+"'"+isaBaseFlag+ltoFlagC+",");
 patchFile('common.gypi', null, "'FavorSizeOrSpeed': 1,", "'FavorSizeOrSpeed': 2, 'EnableEnhancedInstructionSet': '2',");
 patchFile('common.gypi', null, "'GenerateDebugInformation': 'true',", "'GenerateDebugInformation': 'false',");
 
@@ -212,11 +255,19 @@ patchFile('common.gypi', null, "'GenerateDebugInformation': 'true',", "'Generate
 if(fs.existsSync(nodeSrc + 'src/node_extensions.h')) { // node 0.10.x
 	patchFile('src/node_extensions.h', 'yencode', '\nNODE_EXT_LIST_START', '\nNODE_EXT_LIST_START\nNODE_EXT_LIST_ITEM('+modulePref+'yencode)');
 }
+if(nodeVer.startsWith('8.')) { // doesn't work for node 4 or 12, but does for 8
+	patchFile('src/node_internals.h', 'V(yencode)', 'V(async_wrap)', 'V(yencode) V(async_wrap)');
+	// nexe fails to patch the new code, so we'll do it ourself
+	patchFile('lib/internal/bootstrap_node.js', '"nexe.js"', 'function startup() {', 'if (process.argv[1] !== "nexe.js") process.argv.splice(1, 0, "nexe.js");\n  function startup() {\n    process._eval = NativeModule.getSource("nexe");');
+}
 
 // strip exports
-patchFile('src/node.h', 'define NODE_EXTERN __declspec(dllexport)', 'define NODE_EXTERN __declspec(dllexport)', 'define NODE_EXTERN');
+patchFile('src/node.h', null, 'define NODE_EXTERN __declspec(dllexport)', 'define NODE_EXTERN');
+patchFile('src/node.h', null, 'define NODE_MODULE_EXPORT __declspec(dllexport)', 'define NODE_MODULE_EXPORT');
+patchFile('src/node_api.h', null, 'define NAPI_EXTERN __declspec(dllexport)', 'define NAPI_EXTERN');
+patchFile('src/node_api.h', null, 'define NAPI_MODULE_EXPORT __declspec(dllexport)', 'define NAPI_MODULE_EXPORT');
 patchFile('common.gypi', null, /'BUILDING_(V8|UV)_SHARED=1',/g, '');
-
+fs.writeFileSync(nodeSrc + 'deps/zlib/win32/zlib.def', 'EXPORTS');
 
 // create embeddable help
 fs.writeFileSync('../bin/help.json', JSON.stringify({
@@ -230,6 +281,8 @@ var copyCC = function(src, dest) {
 	var code = fs.readFileSync(src).toString();
 	if(isNode010)
 		code = code.replace(/NODE_MODULE\(([a-z0-9_]+)/, 'NODE_MODULE('+modulePref+'$1');
+	else if(parseFloat(nodeVer) >= 8)
+		code = code.replace('NODE_MODULE(', '#include "'+dest.replace(/\/[^\/]+$/, '/src').replace(/[^\/]+\//g, '../') + '/node_internals.h"' + '\r\n' + 'NODE_BUILTIN_MODULE_CONTEXT_AWARE(');
 	else
 		code = code.replace('NODE_MODULE(', 'NODE_MODULE_CONTEXT_AWARE_BUILTIN(');
 	if(dest.substr(0, 3) != '../')
@@ -259,49 +312,48 @@ fs.readdirSync(yencSrc).forEach(function(f) {
 		fs.writeFileSync(nodeSrc + dst, fs.readFileSync(yencSrc + f));
 	}
 });
-ncp(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0', function() {
-	
-	
-	// now run nexe
-	// TODO: consider building startup snapshot?
-	// note: on alpine, need to run `paxmark -m out/Release/mksnapshot` first and maybe `paxmark -m out/Release/node` at the end; see https://github.com/alpinelinux/aports/blob/master/main/nodejs/APKBUILD
-	
-	nexe.compile({
-	    input: '../bin/nyuu.js', // where the input file is
-	    output: './nyuu' + (require('os').platform() == 'win32' ? '.exe':''), // where to output the compiled binary
-	    nodeVersion: nodeVer, // node version
-	    nodeTempDir: nexeBase, // where to store node source.
-	    // --without-snapshot
-	    nodeConfigureArgs: ['--fully-static', '--without-dtrace', '--without-etw', '--without-perfctr', '--without-npm', '--with-intl=none', '--dest-cpu=' + vcBuildArch], // for all your configure arg needs.
-	    nodeMakeArgs: makeArgs, // when you want to control the make process.
-	    nodeVCBuildArgs: ["nosign", vcBuildArch, "noetw", "noperfctr", "intl-none"], // when you want to control the make process for windows.
-	                                        // By default "nosign" option will be specified
-	                                        // You can check all available options and its default values here:
-	                                        // https://github.com/nodejs/node/blob/master/vcbuild.bat
-	    python: python, // for non-standard python setups. Or python 3.x forced ones.
-	    resourceFiles: [  ], // array of files to embed.
-	    resourceRoot: [  ], // where to embed the resourceFiles.
-	    flags: true, // use this for applications that need command line flags.
-	    jsFlags: "", // v8 flags
-	    startupSnapshot: '', // when you want to specify a script to be
-	                                            // added to V8's startup snapshot. This V8
-	                                            // feature deserializes a heap to save startup time.
-	                                            // More information in this blog post:
-	                                            // http://v8project.blogspot.de/2015/09/custom-startup-snapshots.html
-	    framework: "node", // node, nodejs, or iojs
-	    
-	    browserifyExcludes: ['yencode','xz','../node_modules/xz/package.json','iltorb','../node_modules/iltorb/package.json']
-	}, function(err) {
-	    if(err) {
-	        return console.log(err);
-	    }
-	    
-	    console.log('done');
-	    fs.unlinkSync('../bin/help.json');
-	    
-	    // paxmark -m nyuu
-	    // tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-x86-sse2.tar nyuu ../config-sample.json
-	    // xz -9e --x86 --lzma2 *.tar
-	    
-	});
+copyRecursiveSync(yencSrc + 'crcutil-1.0', nodeSrc + 'crcutil-1.0');
+
+
+// now run nexe
+// TODO: consider building startup snapshot?
+// note: on alpine, need to run `paxmark -m out/Release/mksnapshot` first and maybe `paxmark -m out/Release/node` at the end; see https://github.com/alpinelinux/aports/blob/master/main/nodejs/APKBUILD
+
+nexe.compile({
+    input: '../bin/nyuu.js', // where the input file is
+    output: './nyuu' + (require('os').platform() == 'win32' ? '.exe':''), // where to output the compiled binary
+    nodeVersion: nodeVer, // node version
+    nodeTempDir: nexeBase, // where to store node source.
+    // --without-snapshot
+    nodeConfigureArgs: ['--fully-static', '--without-dtrace', '--without-etw', '--without-perfctr', '--without-npm', '--with-intl=none', '--dest-cpu=' + vcBuildArch], // for all your configure arg needs.
+    nodeMakeArgs: makeArgs, // when you want to control the make process.
+    nodeVCBuildArgs: ["nosign", vcBuildArch, "noetw", "noperfctr", "intl-none"], // when you want to control the make process for windows.
+                                        // By default "nosign" option will be specified
+                                        // You can check all available options and its default values here:
+                                        // https://github.com/nodejs/node/blob/master/vcbuild.bat
+    python: python, // for non-standard python setups. Or python 3.x forced ones.
+    resourceFiles: [  ], // array of files to embed.
+    resourceRoot: [  ], // where to embed the resourceFiles.
+    flags: true, // use this for applications that need command line flags.
+    jsFlags: "", // v8 flags
+    startupSnapshot: null, // when you want to specify a script to be
+                                            // added to V8's startup snapshot. This V8
+                                            // feature deserializes a heap to save startup time.
+                                            // More information in this blog post:
+                                            // http://v8project.blogspot.de/2015/09/custom-startup-snapshots.html
+    framework: "node", // node, nodejs, or iojs
+    
+    browserifyExcludes: ['yencode','xz','../node_modules/xz/package.json','iltorb','../node_modules/iltorb/package.json']
+}, function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    
+    console.log('done');
+    fs.unlinkSync('../bin/help.json');
+    
+    // paxmark -m nyuu
+    // tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-x86-sse2.tar nyuu ../config-sample.json
+    // xz -9e --x86 --lzma2 *.tar
+    
 });
