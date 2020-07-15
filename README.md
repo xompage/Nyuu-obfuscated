@@ -120,6 +120,12 @@ If the **npm** command isn’t available, it can probably be installed via your
 package manager (`apt-get install npm` for Debian), or see the following section
 titled “Node.js” for more details.
 
+If you get a `gyp ERR! stack Error: EACCES: permission denied` error when installing, try the following command instead:
+
+```
+npm install -g nyuu --unsafe-perm
+```
+
 You can then later uninstall Nyuu via:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
