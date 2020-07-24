@@ -121,6 +121,7 @@ package manager (`apt-get install npm` for Debian), or see the following section
 titled “Node.js” for more details.
 
 If you get a `gyp ERR! stack Error: EACCES: permission denied` error when installing, try the following command instead:
+Side note: For example on Ubuntu 20.04 there are no errors while installing but nyuu crashes when ran for the first time, this solution might also fix that.
 
 ```
 npm install -g nyuu --unsafe-perm
