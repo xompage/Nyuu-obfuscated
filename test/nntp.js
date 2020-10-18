@@ -1543,10 +1543,9 @@ it('should deal with connection timeouts', function(done) {
 			server = _server;
 			client = _client;
 			// simulate a connection timeout by hijacking the connect method, so that it does nothing on the first call
-			var net = require('net');
-			var realConnect = net.connect;
-			net.connect = function() {
-				net.connect = realConnect;
+			var realConnect = client.connectSocket;
+			client.connectSocket = function() {
+				client.connectSocket = realConnect;
 				return newFakeConn();
 			};
 			
@@ -1554,6 +1553,36 @@ it('should deal with connection timeouts', function(done) {
 		},
 		function(cb) {
 			assert.equal(client.state, 'connected');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should not gracefully close connection on connection timeouts', function(done) {
+	var server, client;
+	
+	// simulate a connection timeout by hijacking the connect method, so that it does nothing on the first call
+	var net = require('net');
+	var realConnect = net.connect;
+	net.connect = function() {
+		net.connect = realConnect;
+		return newFakeConn();
+	};
+	
+	waterfall([
+		setupTest.bind(null, {connectRetries: 0, connTimeout: 100, closeTimeout: 200}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			var s = Date.now();
+			client.connect(function(err) {
+				assert.equal(err.code, 'connect_fail');
+				assert.equal(client.state, 'inactive');
+				tl.assertTimeWithin(s, 100, 200); // should wait for connTimeout but not closeTimeout to kick in
+				cb();
+			});
+		},
+		function(cb) {
 			closeTest(client, server, cb);
 		}
 	], done);
