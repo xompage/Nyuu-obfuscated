@@ -623,6 +623,41 @@ it('should not connect if destroyed straight after', function(done) {
 			}
 		], done);
 	});
+	
+	it('should notify cancellation if ' + ef + '() during connection', function(done) {
+		var server, client;
+		
+		// simulate a connection timeout by hijacking the connect method, so that it does nothing on the first call
+		var net = require('net');
+		var realConnect = net.connect;
+		net.connect = function() {
+			net.connect = realConnect;
+			return newFakeConn();
+		};
+		
+		waterfall([
+			setupTest.bind(null, {connectRetries: 2, connTimeout: 100, closeTimeout: 150}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				
+				var s = Date.now();
+				client.connect(function(err) {
+					assert.equal(err.code, 'cancelled');
+					assert.equal(client.state, 'inactive');
+					tl.assertTimeWithin(s, 0, 50); // shouldn't wait for timeout
+					setTimeout(cb, 250); // wait to see if the timeout gets fired
+				});
+				setImmediate(function() {
+					// end the connection whilst it's still connecting
+					endClient(client, null, ef);
+				});
+			},
+			function(cb) {
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 
 it('should notify cancellation if cancelled during authentication', function(done) {
