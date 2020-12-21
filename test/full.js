@@ -173,6 +173,45 @@ describe('Nyuu', function() {
 		});
 	});
 	
+	it('should close hanging check connections on complete' +ulType, function(done) {
+		var opts = {
+			server: {
+				postConnections: 1,
+				checkConnections: 2,
+				
+				timeout: 1000,
+				connTimeout: 1000,
+				reconnectDelay: 500,
+				connectRetries: 10
+			},
+			check: {
+				delay: 10,
+				recheckDelay: 500,
+				tries: 1,
+			},
+			rawInput: !!ulType
+		};
+		
+		var s = Date.now();
+		(function(cb) {
+			var server = testSkel(files, opts, function(err) {
+				if(err) return cb(err);
+				tl.assertTimeWithin(s, 0, 500); // shouldn't wait for other connections to get through
+				server.close(function() {
+					cb(null, server);
+				});
+			});
+			var connCnt = 0;
+			server.onConnect(function(conn) {
+				// only let the first 2 connections do anything
+				if(++connCnt < 3) return;
+				conn._respond = function() {};
+			});
+		})(function(err, server) {
+			done(err);
+		});
+	});
+	
 	
 	it('should retry check if first attempt doesn\'t find it' +ulType, function(done) {
 		var opts = {
