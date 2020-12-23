@@ -624,7 +624,7 @@ it('should not connect if destroyed straight after', function(done) {
 		], done);
 	});
 	
-	it('should notify cancellation if ' + ef + '() during connection', function(done) {
+	it('should notify cancellation if ' + ef + '() whilst connecting', function(done) {
 		var server, client;
 		
 		// simulate a connection timeout by hijacking the connect method, so that it does nothing on the first call
