@@ -30,7 +30,7 @@ servers: [
 		// note that these times are specified in miliseconds
 		timeout: 30000, // 30000ms = 30 seconds
 		connTimeout: 30000, // 30 seconds
-		postTimeout: 150000, // 2.5 minutes
+		postTimeout: 120000, // 2 minutes
 		reconnectDelay: 15000, // 15 seconds
 		connectRetries: 1,
 		requestRetries: 5, // how many times to retry an interrupted request

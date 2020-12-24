@@ -38,7 +38,7 @@ Upload Server Options:
        --timeout             Timeout on server responses (default 30s)
                              Set to 0 to disable (i.e. wait forever)
        --connect-timeout     Connect timeout (default 30s)  Set to 0 to disable
-       --post-timeout        Timeout on uploading a post (default 150s)
+       --post-timeout        Timeout on sending post data (default 120s)
                              Set to 0 to disable
        --connect-retries     Number of connection retry attempts (default 1)
        --reconnect-delay     Delay connection retries (default 15s)
