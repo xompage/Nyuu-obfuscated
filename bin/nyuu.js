@@ -1266,6 +1266,8 @@ var filesToUpload = argv._;
 					var hTypes = {};
 					ah.forEach(function(h) {
 						var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
+						// exclude stdout/stderr from count
+						if(cn == 'WriteStream' && (h.fd == 1 || h.fd == 2)) return;
 						if(cn in hTypes)
 							hTypes[cn]++;
 						else
