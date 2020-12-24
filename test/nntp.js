@@ -1624,6 +1624,28 @@ it('should not gracefully close connection on connection timeouts', function(don
 });
 it('should do nothing on an idle too long message');
 
+it('should not wait for close timeout on successful close', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {connectRetries: 0, closeTimeout: 200}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			
+			var s = Date.now();
+			client.connect(function(err) {
+				client.close(function() {
+					tl.assertTimeWithin(s, 0, 100);
+					cb();
+				});
+			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
 it('should retry reconnecting if it only fails once', function(done) {
 	var server, client;
 	waterfall([
