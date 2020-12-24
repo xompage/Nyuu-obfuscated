@@ -56,7 +56,7 @@ Upload Server Options:
        --error-teardown      Force teardown of bad connections (flag option).
                              If unset, bad connections are closed gracefully.
        --disconnect-timeout  How long to wait for a connection to disconnect
-                             before forcefully tearing it down (default 10s).
+                             before forcefully tearing it down (default 5s).
                              Set to 0 to disable
        --keep-alive          Try to always keep connection alive even if not
                              needed (flag option).
