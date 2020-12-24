@@ -569,6 +569,63 @@ it('should end when requested'); // also test .destroy() method
 			}
 		], done);
 	});
+	
+	it('should handle ' + ef + '() whilst error-closing', function(done) {
+		var server, client;
+		waterfall([
+			setupTest.bind(null, {closeTimeout: 100}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				
+				client.connect(function(err) {
+					assert.equal(client.state, 'connected');
+					
+					// test a double-close - both should get the callback without waiting for the close timeout
+					var s = Date.now();
+					server.expect('QUIT\r\n');
+					client._close(function() {
+						tl.assertTimeWithin(s, 0, 20);
+					});
+					client[ef](function() {
+						tl.assertTimeWithin(s, 0, 20);
+						setTimeout(cb, 200); // wait to see if the timeout gets fired
+					});
+				});
+			},
+			function(cb) {
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
+	it('should handle ' + ef + '() whilst error-closing (reverse order)', function(done) {
+		var server, client;
+		waterfall([
+			setupTest.bind(null, {closeTimeout: 100}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				
+				client.connect(function(err) {
+					assert.equal(client.state, 'connected');
+					
+					// test a double-close - both should get the callback without waiting for the close timeout
+					var s = Date.now();
+					server.expect('QUIT\r\n');
+					client[ef](function() {
+						tl.assertTimeWithin(s, 0, 20);
+					});
+					client._close(function() {
+						tl.assertTimeWithin(s, 0, 20);
+						setTimeout(cb, 200); // wait to see if the timeout gets fired
+					});
+				});
+			},
+			function(cb) {
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 
 it('should call all end/close callbacks when closed');
