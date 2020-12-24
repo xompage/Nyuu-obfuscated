@@ -1243,6 +1243,7 @@ var filesToUpload = argv._;
 		}
 		(function(cb) {
 			if(processes && processes.running) {
+				processes.closeAll();
 				var procWarnTO = setTimeout(function() {
 					if(!processes.running) return;
 					Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
