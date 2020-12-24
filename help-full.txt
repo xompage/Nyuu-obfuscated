@@ -36,8 +36,10 @@ Upload Server Options:
   -n,  --connections         Number of connections to create for posting
                              (default 3)
        --timeout             Timeout on server responses (default 30s)
-       --connect-timeout     Connect timeout (default 30s)
+                             Set to 0 to disable (i.e. wait forever)
+       --connect-timeout     Connect timeout (default 30s)  Set to 0 to disable
        --post-timeout        Timeout on uploading a post (default 150s)
+                             Set to 0 to disable
        --connect-retries     Number of connection retry attempts (default 1)
        --reconnect-delay     Delay connection retries (default 15s)
        --request-retries     Number of request retry attempts (default 5)
@@ -55,6 +57,7 @@ Upload Server Options:
                              If unset, bad connections are closed gracefully.
        --disconnect-timeout  How long to wait for a connection to disconnect
                              before forcefully tearing it down (default 10s).
+                             Set to 0 to disable
        --keep-alive          Try to always keep connection alive even if not
                              needed (flag option).
 
@@ -235,6 +238,7 @@ Other Upload/Check Options:
                              Warning: XREPLIC only uses first specified group
                              and randomly generated article number
        --use-ihave           Alias for `--post-method IHAVE` (flag option)
+                             Option is deprecated
        --check-group         Checking connections will be set to this group.
                              Some servers seem to want one set, otherwise
                              checking fails. If you set one, use a valid group
