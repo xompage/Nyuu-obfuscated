@@ -46,6 +46,13 @@ servers: [
 		uploadChunkSize: 192*1024, // break up post into chunks of this size when uploading; 0 to disable chunking
 		postMethod: 'POST', // command to use when posting; can be POST, IHAVE, XREPLIC or TAKETHIS
 		
+		// for throttling upload speed - this throttle is shared among all posting connections for this server config
+		// set either to 0 to disable speed throttling
+		throttleRate: {
+			size: 0, // size in bytes to signify target maximum amount of data to send...
+			time: 0  // ...within this time period
+		},
+		
 		postConnections: 3, // number of connections for posting
 		checkConnections: 0, // number of connections used for checking
 		// TODO: consider ability to reuse posting connections for checking?

@@ -39,6 +39,8 @@ var friendlySize = function(s) {
 	return (Math.round(s *100)/100) + ' ' + units[i];
 };
 
+var arg_parser = require('../lib/arg_parser');
+
 
 var servOptMap = {
 	host: {
@@ -198,6 +200,22 @@ var servOptMap = {
 		type: 'int',
 		alias: 'n',
 		checkAlias: 'k'
+	},
+	'max-upload-rate': {
+		type: 'string',
+		keyMap: 'throttleRate',
+		postOnly: true,
+		fn: function(v) {
+			if(!v || v == '0') return null;
+			var m = (''+v).match(/^([0-9.]*)([bkmgtpe])\/([0-9.]*)(m?s|[mhdw])$/i);
+			if(!m) error('Invalid format for `--max-upload-rate`: ' + v);
+			if(m[1] === '') m[1] = '1';
+			if(m[3] === '') m[3] = '1';
+			return {
+				size: arg_parser.parseSize(m[1] + m[2]),
+				time: arg_parser.parseTime(m[3] + m[4])
+			};
+		}
 	},
 };
 
@@ -589,7 +607,7 @@ for(var k in servOptMap) {
 
 var argv;
 try {
-	argv = require('../lib/arg_parser')(process.argv.slice(2), optMap);
+	argv = arg_parser(process.argv.slice(2), optMap);
 } catch(x) {
 	error(x.message);
 }
@@ -731,7 +749,7 @@ if(argv.config || process.env.NYUU_CONFIG) {
 		util.deepMerge(ulOpts, cOpts);
 	} else {
 		// simple config format, just set unset CLI args
-		cOpts = require('../lib/arg_parser')(cOpts, optMap);
+		cOpts = arg_parser(cOpts, optMap);
 		
 		// allow --quiet or --verbose to override whatever is specified in the config, without error
 		if(argv.quiet || argv.verbose) {
@@ -1004,7 +1022,7 @@ if(argv.progress) {
 		var arg = str.substr(m[0].length);
 		switch(type) {
 			case 'log':
-				progress.push({type: 'log', interval: require('../lib/arg_parser').parseTime(arg) || 60});
+				progress.push({type: 'log', interval: arg_parser.parseTime(arg) || 60});
 			break;
 			case 'stderr':
 			case 'stderrx':

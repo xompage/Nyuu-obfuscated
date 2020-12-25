@@ -35,6 +35,14 @@ Upload Server Options:
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to create for posting
                              (default 3)
+       --max-upload-rate     Throttle rate at which posts are uploaded at. This
+                             option is in the form {size}/{time}, for example
+                             "10M/5s" which means 10 MiB per 5 seconds. If the
+                             quantity is omitted, 1 is assume, e.g. "2M/s".
+                             The size indicates the burst rate, so "2M/s" means
+                             that 2 MiB must be sent before any throttling can
+                             occur, whilst "10M/5s" allows a 10 MiB burst.
+                             Set to 0 to disable.
        --timeout             Timeout on server responses (default 30s)
                              Set to 0 to disable (i.e. wait forever)
        --connect-timeout     Connect timeout (default 30s)  Set to 0 to disable
