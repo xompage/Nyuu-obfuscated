@@ -141,6 +141,9 @@ TestServer.prototype = {
 			process.nextTick(cb);
 		this._closed = true;
 	},
+	disconnect: function() {
+		this._conn.end();
+	},
 	drop: function() {
 		this._conn.destroy();
 		this._conn = null;
@@ -1595,6 +1598,101 @@ it('should handle server responding early during chunked post upload', function(
 			closeTest(client, server, cb);
 		}
 	], done);
+});
+
+it('should handle disconnect during chunked post upload, and retry', function(done) {
+	var server, client;
+	var sendNextChunks = 0;
+	waterfall([
+		setupTest.bind(null, {uploadChunkSize: 4, throttle: function(cost, cb) {
+			if(sendNextChunks) {
+				cb();
+				sendNextChunks--;
+			}
+		}}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var msg = 'X:b\r\n\r\nm\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				this.expect(msg.substr(0, 4), function() {
+					this.expect('POST\r\n', function() {
+						sendNextChunks = 10;
+						this.expect(msg, '240 <new-article> Article received ok');
+						this.respond('340  Send article');
+					});
+					this.disconnect();
+				});
+				sendNextChunks = 1;
+				this.respond('340  Send article');
+			});
+			client.post(new DummyPost(msg), cb);
+		},
+		function(a, cb) {
+			assert.equal(a, 'new-article');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+['close','destroy'].forEach(function(ef) {
+	it('should handle '+ef+' request during chunked post upload', function(done) {
+		var server, client;
+		var sendNextChunks = 0;
+		var gotPostCb = 0, gotCancel = 0;
+		waterfall([
+			setupTest.bind(null, {uploadChunkSize: 4, throttle: function(cost, cb) {
+				if(sendNextChunks) {
+					cb();
+					sendNextChunks--;
+				}
+				var cancelObj = function(){};
+				cancelObj.cancel = function() {
+					gotCancel++;
+					cb(true);
+				};
+				return cancelObj;
+			}}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				
+				var msg = 'X:b\r\n\r\nm\r\n.\r\n';
+				server.expect('POST\r\n', function() {
+					this.expect(msg.substr(0, 4), function() {
+						if(ef == 'destroy') {
+							client.destroy();
+							tl.defer(cb);
+						} else {
+							client[ef](function() {
+								tl.defer(cb);
+							});
+						}
+					});
+					sendNextChunks = 1;
+					this.respond('340  Send article');
+				});
+				client.post(new DummyPost(msg), function(err) {
+					gotPostCb++;
+					assert.equal(err.code, 'cancelled');
+				});
+			},
+			function(cb) {
+				assert.equal(gotPostCb, 1);
+				assert.equal(gotCancel, 1);
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 
 it('should return error if reconnect completely fails during a request', function(done) {
