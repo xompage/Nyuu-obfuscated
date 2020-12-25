@@ -1169,7 +1169,7 @@ it('should resend request if connection lost before response received', function
 it('should reattempt to post if connection drops out', function(done) {
 	var server, client;
 	waterfall([
-		setupTest,
+		setupTest.bind(null, {uploadChunkSize: 1}),
 		function(_server, _client, cb) {
 			server = _server;
 			client = _client;
@@ -1548,6 +1548,50 @@ it('should ignore posting timeout if requested', function(done) {
 		},
 		function(a, cb) {
 			assert.equal(a, 'xxxx');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
+it('should handle server responding early during chunked post upload', function(done) {
+	var server, client;
+	var sendNextChunks = 0;
+	waterfall([
+		setupTest.bind(null, {retryBadResp: true, requestRetries: 1, uploadChunkSize: 4, throttle: function(cost, cb) {
+			if(sendNextChunks) {
+				cb();
+				sendNextChunks--;
+			}
+		}}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var msg = 'X:b\r\n\r\nm\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				// respond after only receiving first chunk
+				this.expect(msg.substr(0, 4), function() {
+					this.expect('POST\r\n', function() { // expect a re-post attempt
+						this.expect(msg.substr(0, 4), '240 <new-article> Article received ok');
+						sendNextChunks = 1;
+						this.respond('340  Send article');
+					});
+					this.respond('240 <new-article> Article received ok');
+				});
+				sendNextChunks = 1;
+				this.respond('340  Send article');
+			});
+			client.post(new DummyPost(msg), function(err) {
+				assert.equal(err.code, 'post_interrupted');
+				assert(client.state == 'inactive' || client.state == 'disconnected');
+				cb();
+			});
+		},
+		function(cb) {
 			closeTest(client, server, cb);
 		}
 	], done);
