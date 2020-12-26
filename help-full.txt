@@ -363,6 +363,8 @@ Advanced Tuning Options:
                              encrypt data.
                              This option requires NodeJS >= 11.7 or NodeJS >=
                              10.5 with `--experimental-worker` flag set.
+                             `--max-upload-rate` is not supported with
+                             connection threading.
                              Default 0
        --preload-modules     Preload modules into Node's module cache before
                              starting (flag option). This is mostly a

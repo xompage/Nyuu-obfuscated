@@ -931,6 +931,8 @@ if(ulOpts.connectionThreads) {
 	var numConnections = 0;
 	ulOpts.servers.forEach(function(server) {
 		if(server.postConnections) {
+			if(server.throttleRate && (server.throttleRate.size || server.throttleRate.time))
+				error('Upload throttling is not supported with connection threading');
 			server.useThreads = true;
 			numConnections += server.postConnections;
 		}
