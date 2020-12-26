@@ -76,10 +76,9 @@ it('should throttle if exceeds burst', function(done) {
 	assert(!q.pass(9, function() {
 		tl.assertTimeWithin(s, 0, 20);
 		assert(q.pass(5, function() {
-			tl.assertTimeWithin(s, 90, 110);
-			s = Date.now();
+			tl.assertTimeWithin(s, 80, 120);
 			assert(q.pass(5, function() {
-				tl.assertTimeWithin(s, 90, 110);
+				tl.assertTimeWithin(s, 180, 220);
 				done();
 			}));
 		}));
@@ -87,43 +86,43 @@ it('should throttle if exceeds burst', function(done) {
 });
 
 it('should throttle if exceeds burst (2)', function(done) {
-	var q = new ThrottleQueue(5, 100);
+	var q = new ThrottleQueue(5, 200);
 	var s = Date.now();
 	var called = 0;
 	assert(!q.pass(9, function() {
-		tl.assertTimeWithin(s, 0, 10);
+		tl.assertTimeWithin(s, 0, 20);
 		called = 1;
 		assert(q.pass(6, function() {
-			tl.assertTimeWithin(s, 90, 110);
+			tl.assertTimeWithin(s, 180, 220);
 			assert.equal(called, 3);
 			called = 4;
 			s = Date.now();
 		}));
 	}));
 	assert(q.pass(5, function() {
-		tl.assertTimeWithin(s, 90, 110);
+		tl.assertTimeWithin(s, 180, 220);
 		assert.equal(called, 1);
 		called = 2;
 		s = Date.now();
 		assert(q.pass(6, function() {
-			tl.assertTimeWithin(s, 110, 130);
+			tl.assertTimeWithin(s, 220, 260);
 			assert.equal(called, 4);
 			called = 5;
 			s = Date.now();
 			assert(q.pass(500, function() {
-				tl.assertTimeWithin(s, 110, 130);
+				tl.assertTimeWithin(s, 220, 260);
 				assert.equal(called, 6);
 				done();
 			}));
 		}));
 	}));
 	assert(q.pass(5, function() {
-		tl.assertTimeWithin(s, 90, 110);
+		tl.assertTimeWithin(s, 180, 220);
 		assert.equal(called, 2);
 		called = 3;
 		s = Date.now();
 		assert(q.pass(6, function() {
-			tl.assertTimeWithin(s, 110, 130);
+			tl.assertTimeWithin(s, 220, 260);
 			assert.equal(called, 5);
 			called = 6;
 			s = Date.now();
@@ -132,13 +131,13 @@ it('should throttle if exceeds burst (2)', function(done) {
 });
 
 it('should throttle when needed, even if under-utilised', function(done) {
-	var q = new ThrottleQueue(5, 100);
+	var q = new ThrottleQueue(5, 200);
 	var s = Date.now();
 	assert(!q.pass(9, function() {
 		tl.assertTimeWithin(s, 0, 20);
 		assert(q.pass(5, function() {
 			// throttle should trigger
-			tl.assertTimeWithin(s, 90, 110);
+			tl.assertTimeWithin(s, 180, 220);
 			
 			// now wait 2x periods
 			setTimeout(function() {
@@ -152,12 +151,12 @@ it('should throttle when needed, even if under-utilised', function(done) {
 						s = Date.now();
 						// this should throttle, despite overall rate being below target rate
 						assert(q.pass(5, function() {
-							tl.assertTimeWithin(s, 40, 60);
+							tl.assertTimeWithin(s, 70, 90);
 							done();
 						}));
 					}));
 				}));
-			}, 200);
+			}, 400);
 		}));
 	}));
 });
