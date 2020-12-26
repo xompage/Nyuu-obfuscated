@@ -181,8 +181,53 @@ it('should not throttle if disabled', function(done) {
 
 // TODO: add complex mixed case
 
-it('should flush all queued when requested');
+it('should flush all queued when requested', function(done) {
+	var q = new ThrottleQueue(5, 200);
+	var s = Date.now();
+	var cbCnt = 0;
+	assert(!q.pass(9, function(cancelled) {
+		tl.assertTimeWithin(s, 0, 20);
+		assert(!cancelled);
+		cbCnt++;
+	}));
+	assert(q.pass(5, function(cancelled) {
+		assert(cancelled);
+		tl.assertTimeWithin(s, 0, 20);
+		cbCnt++;
+	}));
+	assert(q.pass(5, function(cancelled) {
+		assert(cancelled);
+		tl.assertTimeWithin(s, 0, 20);
+		cbCnt++;
+	}));
+	q.cancel();
+	tl.defer(function() {
+		assert.equal(cbCnt, 3);
+		done();
+	});
+});
 
-// TODO: test cancelItem
+it('should handle basic cancelItem', function(done) {
+	var q = new ThrottleQueue(5, 200);
+	var s = Date.now();
+	var cbCnt = 0;
+	assert(!q.pass(9, function(cancelled) {
+		tl.assertTimeWithin(s, 0, 20);
+		assert(!cancelled);
+		cbCnt++;
+	}));
+	var token = q.pass(5, function(cancelled) {
+		assert(cancelled);
+		tl.assertTimeWithin(s, 0, 20);
+		cbCnt++;
+	});
+	assert(q.pass(5, function(cancelled) {
+		tl.assertTimeWithin(s, 180, 220);
+		assert(!cancelled);
+		assert.equal(cbCnt, 2);
+		done();
+	}));
+	token.cancel();
+});
 
 });
