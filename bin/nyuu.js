@@ -1351,7 +1351,7 @@ var filesToUpload = argv._;
 				'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
 				uploader.numCheckConns ? 'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')' : false,
 				'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-				'Upload Rate (network|real): ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
+				'Upload Rate (network|real): ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
 			].filter(function(e){return e;});
 		};
 		var reportOnEnd = false;
@@ -1371,7 +1371,7 @@ var filesToUpload = argv._;
 					msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
 			}
 			
-			return msg + '. Network upload rate: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s';
+			return msg + '. Network upload rate: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s';
 		};
 		
 		progress.forEach(function(prg) {
@@ -1391,7 +1391,7 @@ var filesToUpload = argv._;
 				case 'stdout':
 					if(getProcessIndicator) break; // no need to double output =P
 					var ProgressRecorder = require('../lib/progrec');
-					var byteSamples = new ProgressRecorder(180);
+					var byteSamples = new ProgressRecorder(60);
 					var progressSamples = new ProgressRecorder(180);
 					byteSamples.add(0);
 					progressSamples.add(0);
@@ -1405,7 +1405,7 @@ var filesToUpload = argv._;
 						var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
 						var advancement = completed;
 						if(byteSamples.count() >= 2) {
-							speed = byteSamples.average(4, 4*ulOpts.articleSize);
+							speed = byteSamples.average(4, ulOpts.articleSize);
 							advancement = progressSamples.average(10, 20);
 						}
 						
@@ -1428,7 +1428,7 @@ var filesToUpload = argv._;
 							var posted = '' + uploader.articlesChecked;
 							if(uploader.articlesChecked != uploader.articlesPosted)
 								posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-							var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (network: ' + friendlySize(uploader.currentPostSpeed()*1000) + '/s) ETA ' + eta;
+							var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (network: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s) ETA ' + eta;
 							if(ret.length > 80)
 								// if too long, strip the network post speed
 								ret = ret.replace(/ \(network\: [0-9.]+ [A-Zi]+\/s\)/, ',');
