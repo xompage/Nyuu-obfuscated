@@ -69,7 +69,7 @@ NNTP.log = {
 function TestServer(onConn) {
 	this.data = new Buffer(0);
 	
-	var cOpts = {};
+	var cOpts = {allowHalfOpen: true};
 	if(TEST_SSL) {
 		var readFile = function(f) {
 			return require('fs').readFileSync(__dirname + require('path').sep + f)
@@ -94,6 +94,10 @@ function TestServer(onConn) {
 		c.once('close', function() {
 			this._conn = null;
 		}.bind(this));
+		c.once('end', function() {
+			if(this.autoClose)
+				this._conn.end();
+		}.bind(this));
 		c.setNoDelay(); // make tests a little faster
 		onConn();
 	}.bind(this));
@@ -104,6 +108,7 @@ TestServer.prototype = {
 	_conn: null,
 	_closed: false,
 	connCount: 0,
+	autoClose: true,
 	
 	onData: function(chunk) {
 		if(!this._expect && this._expect !== '') throw new Error('Unexpected data received: ' + chunk.toString());
@@ -751,23 +756,29 @@ it('should notify cancellation if cancelled during authentication', function(don
 });
 
 [
-	{msg: 'half-open end request', resp: true, req: 'date', ef: 'end'}, // this test seems to fail with SSL enabled; maybe node has slightly different semantics with calling .end() and not receiving data afterwards
-	{msg: 'half-open end request (error)', resp: false, req: 'date', ef: 'end'},
-	{msg: 'half-open end pipelined request', resp: true, req: 'date2', ef: 'end'},
-	{msg: 'half-open end pipelined request (error)', resp: false, req: 'date2', ef: 'end'},
-	{msg: 'half-open close request', resp: true, req: 'date', ef: 'close'},
-	{msg: 'half-open close request (error)', resp: false, req: 'date', ef: 'close'},
-	{msg: 'half-open close pipelined request', resp: true, req: 'date2', ef: 'close'},
-	{msg: 'half-open close pipelined request (error)', resp: false, req: 'date2', ef: 'close'},
-	{msg: 'close request during post', resp: true, req: 'post', ef: 'close'},
-	{msg: 'close request during post (error)', resp: false, req: 'post', ef: 'close'}
+	{msg: 'half-open end request', noResp: '', req: 'date', ef: 'end'}, // this test seems to fail with SSL enabled; maybe node has slightly different semantics with calling .end() and not receiving data afterwards
+	{msg: 'half-open end request', noResp: 'no-resp', req: 'date', ef: 'end'},
+	{msg: 'half-open end request', noResp: 'close-timeout', req: 'date', ef: 'end'},
+	{msg: 'half-open end pipelined request', noResp: '', req: 'date2', ef: 'end'},
+	{msg: 'half-open end pipelined request', noResp: 'no-resp', req: 'date2', ef: 'end'},
+	{msg: 'half-open end pipelined request', noResp: 'close-timeout', req: 'date2', ef: 'end'},
+	{msg: 'half-open close request', noResp: '', req: 'date', ef: 'close'},
+	{msg: 'half-open close request', noResp: 'no-resp', req: 'date', ef: 'close'},
+	{msg: 'half-open close request', noResp: 'close-timeout', req: 'date', ef: 'close'},
+	{msg: 'half-open close pipelined request', noResp: '', req: 'date2', ef: 'close'},
+	{msg: 'half-open close pipelined request', noResp: 'no-resp', req: 'date2', ef: 'close'},
+	{msg: 'half-open close pipelined request', noResp: 'close-timeout', req: 'date2', ef: 'close'},
+	{msg: 'close request during post', noResp: '', req: 'post', ef: 'close'},
+	{msg: 'close request during post', noResp: 'no-resp', req: 'post', ef: 'close'},
+	{msg: 'close request during post', noResp: 'close-timeout', req: 'post', ef: 'close'}
 ].forEach(function(test) {
-	it('should handle ' + test.msg, function(done) {
+	it('should handle ' + test.msg + (test.noResp ? ' ('+test.noResp+')' : ''), function(done) {
 		var server, client;
 		waterfall([
-			setupTest,
+			setupTest.bind(null, {timeout: 5000, closeTimeout: 50}),
 			function(_server, _client, cb) {
 				server = _server;
+				if(test.noResp == 'close-timeout') server.autoClose = false;
 				client = _client;
 				client.connect(cb);
 			},
@@ -777,7 +788,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 				// request something and immediately end - response should still come back
 				if(test.req == 'date' || test.req == 'date2') {
 					server.expect('DATE\r\n' + (test.req == 'date2' ? 'DATE\r\n':'') + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
-						if(test.resp) {
+						if(!test.noResp) {
 							setImmediate(function() {
 								server.respond('111 20110204060810' + (test.req == 'date2' ? '\r\n111 20110204060810':''));
 								if(test.ef == 'end')
@@ -793,10 +804,10 @@ it('should notify cancellation if cancelled during authentication', function(don
 						if(test.ef == 'close') {
 							assert.equal(err.code, 'cancelled');
 							assert(!date);
-						} else if(test.resp) {
+						} else if(!test.noResp) {
 							assert.equal(date.toString(), (new Date('2011-02-04 06:08:10')).toString());
 						} else {
-							assert.equal(err.code, 'timeout');
+							assert.equal(err.code, 'cancelled');
 							assert(!date);
 							//assert.equal(client.state, 'disconnected');
 						}
@@ -819,7 +830,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 				if(test.req == 'post') {
 					var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
 					server.expect('POST\r\n' + (test.ef == 'end' ? 'QUIT\r\n':''), function() {
-						if(test.resp) {
+						if(!test.noResp) {
 							this.respond('340  Send article');
 							if(test.ef == 'end')
 								server.respond('205 Connection closing');
@@ -841,6 +852,7 @@ it('should notify cancellation if cancelled during authentication', function(don
 			function(cb) {
 				tl.defer(function() {
 					server.close(cb);
+					if(test.noResp == 'close-timeout') server.disconnect();
 					killServer();
 					assert.equal(client.state, 'inactive');
 					assert.equal(client._requests.length, 0);
@@ -1604,7 +1616,7 @@ it('should handle disconnect during chunked post upload, and retry', function(do
 	var server, client;
 	var sendNextChunks = 0;
 	waterfall([
-		setupTest.bind(null, {uploadChunkSize: 4, throttle: function(cost, cb) {
+		setupTest.bind(null, {closeTimeout: 5000 /*should never trigger*/, uploadChunkSize: 4, throttle: function(cost, cb) {
 			if(sendNextChunks) {
 				cb();
 				sendNextChunks--;
@@ -1640,13 +1652,14 @@ it('should handle disconnect during chunked post upload, and retry', function(do
 	], done);
 });
 
+// TODO: support .end when we add support for ending whilst posting
 ['close','destroy'].forEach(function(ef) {
 	it('should handle '+ef+' request during chunked post upload', function(done) {
 		var server, client;
 		var sendNextChunks = 0;
 		var gotPostCb = 0, gotCancel = 0;
 		waterfall([
-			setupTest.bind(null, {uploadChunkSize: 4, throttle: function(cost, cb) {
+			setupTest.bind(null, {closeTimeout: 5000 /*should never trigger*/, uploadChunkSize: 4, throttle: function(cost, cb) {
 				if(sendNextChunks) {
 					cb();
 					sendNextChunks--;
