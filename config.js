@@ -27,7 +27,7 @@ servers: [
 		secure: false, // set to true to use SSL
 		user: '',
 		password: '',
-		// note that these times are specified in miliseconds
+		// note that these times are specified in milliseconds
 		timeout: 30000, // 30000ms = 30 seconds
 		connTimeout: 30000, // 30 seconds
 		postTimeout: 120000, // 2 minutes
@@ -50,8 +50,9 @@ servers: [
 		// set either to 0 to disable speed throttling
 		throttleRate: {
 			size: 0, // size in bytes to signify target maximum amount of data to send...
-			time: 0  // ...within this time period
+			time: 0  // ...within this time period (milliseconds)
 		},
+		throttleChunkTime: 2000, // if throttling is enabled, uploadChunkSize != 0 and it would take longer than this amount of milliseconds to send a chunk, at specified throttle rate, reduce the chunk size to a 4KB multiple to suit; set this to 0 to disable
 		
 		postConnections: 3, // number of connections for posting
 		checkConnections: 0, // number of connections used for checking

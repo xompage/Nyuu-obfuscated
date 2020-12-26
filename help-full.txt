@@ -23,7 +23,7 @@ Upload Server Options:
        --bind-host           Local address to bind to
        --tcp-keep-alive      If set, enables TCP keep-alive with the probe
                              interval set the number specified.
-  -S,  --ssl                 Connect over SSL (flag option)
+  -S,  --ssl                 Connect over SSL/TLS (flag option)
        --ignore-cert         Ignore SSL certificate problems (flag option)
        --sni-host            SNI host name to send if connecting over SSL
        --ssl-ciphers         List of SSL ciphers to use, in OpenSSL format
@@ -342,7 +342,8 @@ Advanced Tuning Options:
                              articles that can be queued for checking, as these
                              posts cannot be dropped from cache.
        --post-chunk-size     Limit upload chunk size to specified amount. Set
-                             to 0 to disable (default 192K)
+                             to 0 to disable (default 192K if
+                             `--max-upload-rate` not specified)
        --use-post-pool       Use a buffer pool to improve memory management.
                              Buffers are pre-allocated, which can also improve
                              performance, but can increase memory usage.

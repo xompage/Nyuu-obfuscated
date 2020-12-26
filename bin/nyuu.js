@@ -862,6 +862,12 @@ if(checkOverrides && argv['check-connections'] !== 0 && (defNumConnCheck || argv
 	ulOpts.servers = ulOpts.servers.concat(addServ);
 }
 
+if(argv['post-chunk-size']) {
+	// if a chunk size is explicitly supplied, disable the auto chunk-size scaler
+	ulOpts.servers.forEach(function(server) {
+		server.throttleChunkTime = 0;
+	});
+}
 
 if(argv['dump-failed-posts']) {
 	try {
