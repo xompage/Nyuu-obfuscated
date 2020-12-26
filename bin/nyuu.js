@@ -1397,7 +1397,7 @@ var filesToUpload = argv._;
 				case 'stdout':
 					if(getProcessIndicator) break; // no need to double output =P
 					var ProgressRecorder = require('../lib/progrec');
-					var byteSamples = new ProgressRecorder(60);
+					var byteSamples = new ProgressRecorder(180);
 					var progressSamples = new ProgressRecorder(180);
 					byteSamples.add(0);
 					progressSamples.add(0);
@@ -1411,7 +1411,7 @@ var filesToUpload = argv._;
 						var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
 						var advancement = completed;
 						if(byteSamples.count() >= 2) {
-							speed = byteSamples.average(4, ulOpts.articleSize);
+							speed = byteSamples.average(4, 4*ulOpts.articleSize);
 							advancement = progressSamples.average(10, 20);
 						}
 						
