@@ -11,9 +11,16 @@ var error = function(msg) {
 	process.exit(1);
 };
 var processes;
-var processStart = function() {
+var processStart = function(purpose) {
 	if(!processes) processes = new (require('../lib/procman'))();
-	return processes.start.apply(processes, arguments);
+	var proc = processes.start.apply(processes, Array.prototype.slice.call(arguments, 1));
+	proc.once('exit', function(code) {
+		if(logger && code) logger.warn(purpose + ' process exited with code ' + code);
+	});
+	proc.once('error', function(err) { // error usually doesn't occur, because command is executed via shell, so it should always spawn
+		if(logger) logger.warn(purpose + ' process issued error: ' + err.toString());
+	});
+	return proc;
 };
 
 var repeatChar = function(c, l) {
@@ -900,7 +907,7 @@ if(argv['copy-input']) {
 			return token == 'filename' ? filename : size;
 		});
 		if(copyProc) {
-			return processStart(target, {stdio: ['pipe','ignore','ignore']}).stdin;
+			return processStart('Copy', target, {stdio: ['pipe','ignore','ignore']}).stdin;
 		} else {
 			return fs.createWriteStream(target);
 		}
@@ -973,7 +980,7 @@ if(argv['out']) {
 				ulOpts.nzb = function() {
 					var proc = tr.apply(null, arguments);
 					if(!procsStarted[proc])
-						procsStarted[proc] = processStart(proc, {stdio: ['pipe','ignore','ignore']}).stdin;
+						procsStarted[proc] = processStart('NZB', proc, {stdio: ['pipe','ignore','ignore']}).stdin;
 					var opts = {writeTo: procsStarted[proc]};
 					for(var k in nzbOpts)
 						opts[k] = nzbOpts[k];
@@ -981,7 +988,7 @@ if(argv['out']) {
 				};
 			} else {
 				ulOpts.nzb.writeTo = function(cmd) {
-					return processStart(cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
+					return processStart('NZB', cmd, {stdio: ['pipe','ignore','ignore']}).stdin;
 					// if process exits early, the write stream should break and throw an error
 				}.bind(null, proc);
 			}
@@ -1198,6 +1205,9 @@ var filesToUpload = argv._;
 				stream.once('error', cb);
 			} else if(/^proc:\/\//i.test(fl[0])) {
 				require('child_process').exec(fl[0].substr(7), {maxBuffer: 1048576*32}, function(err, stdout, stderr) {
+					if(stderr && stderr.length && verbosity >= 4 && !err) {
+						logger.debug('File list process outputted to stderr: ' + stderr.toString());
+					}
 					cb(err, [fl[1], stdout]);
 				});
 			} else {
@@ -1240,7 +1250,7 @@ var filesToUpload = argv._;
 				stream: function(cmd) {
 					if(typeof cmd == 'number')
 						return fs.createReadStream(null, {fd: cmd|0});
-					return processStart(cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
+					return processStart('Input', cmd, {stdio: ['ignore','pipe','ignore']}).stdout;
 				}.bind(null, m[2])
 			};
 			if(!ret.size)
