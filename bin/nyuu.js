@@ -1288,12 +1288,13 @@ var filesToUpload = argv._;
 			}
 			setTimeout(function() {
 				if(process._getActiveHandles) { // undocumented function, but seems to always work
-					var ah = process._getActiveHandles();
+					var ah = process._getActiveHandles().filter(function(h) {
+						// exclude stdout/stderr from count
+						return !h.constructor || h.constructor.name != 'WriteStream' || (h.fd != 1 && h.fd != 2);
+					});
 					var hTypes = {};
 					ah.forEach(function(h) {
 						var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
-						// exclude stdout/stderr from count
-						if(cn == 'WriteStream' && (h.fd == 1 || h.fd == 2)) return;
 						if(cn in hTypes)
 							hTypes[cn]++;
 						else
