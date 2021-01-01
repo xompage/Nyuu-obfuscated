@@ -660,7 +660,7 @@ if(argv['package-info']) {
 		modules.iltorb = parsePackage(require('../node_modules/iltorb/package.json'));
 	} catch(x) {}
 	try {
-		modules.nexe = parsePackage(require('../node_modules/nexe/package.json'));
+		modules.nexe = parsePackage(require('../nexe/node_modules/nexe/package.json'));
 	} catch(x) {}
 	var m = {
 		'Packages': modules,

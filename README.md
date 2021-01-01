@@ -244,10 +244,20 @@ slow computer may not be able to service them as expected.
 Building Binary
 ---------------
 
+A basic script to compile the Nyuu binary is provided in the *nexe* folder. The script has been tested with NodeJS 12.20.0 and may work on other 12.x.x versions. For NodeJS 8.x.x and older, see section below.
+
+1. If you haven’t done so already, do an `npm install` in Nyuu’s folder to ensure its dependencies are available
+2. Enter the *nexe* folder and do an `npm install` to pull down required build packages (note, nexe requires NodeJS 10 or greater)
+3. If desired, edit the variables at the top of *nexe/build.js*
+4. If you’re building against glibc, be aware that static linking may break DNS resolution. If this is the case, in *nexe/build.js* find `--fully-static` and replace with `--partly-static` to enable libc to be dynamically linked. Note that this executable can only be distributed to systems with the same glibc ABI.
+5. Run `node build`. If everything worked, there’ll eventually be a *nyuu* or *nyuu.exe* binary built.
+
+### Building for NodeJS 8.x.x or older
+
 Compiling Nyuu into a single binary can be done via
 [nexe](https://github.com/nexe/nexe) 1.x. There is a little complication with
 bundling the *yencode* module, but a rather fragile script has been supplied in
-*nexe/build.js* to help with the process. The following general steps need to be
+*nexe1/build.js* to help with the process. The following general steps need to be
 taken:
 
 1.  Ensure that *nexe* is installed (doesn’t need to be globally installed) and
@@ -259,7 +269,7 @@ taken:
 3.  The required Nyuu libraries need to be installed into the *node_modules*
     folder
 
-4.  Inside the *nexe* folder (the one containing *build.js*), create the
+4.  Inside the *nexe1* folder (the one containing *build.js*), create the
     following two folders: *node* and *yencode-src*
 
 5.  Inside the *node* folder, create a folder with the version number of the
@@ -268,7 +278,7 @@ taken:
     doing this, the file *nexe/node/x.x.x/\_/node.gyp* should exist, where
     *x.x.x* is the node version number
 
-6.  Inside the *yencode-src* folder, copy the source code for the *yencode*
+6.  Inside the *yencode-src* folder, copy the source code for the *yencode* (v1.0.x)
     module
 
 7.  Edit *nexe/build.js*; options that are likely to be edited are at the top of

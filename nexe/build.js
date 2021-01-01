@@ -1,0 +1,241 @@
+var os = require('os');
+
+// -- change these variables if desired --
+var compileConcurrency = os.cpus().length;
+var python = null;
+// process.env.path = '' + process.env.path; // if need to specify a Python path
+var buildArch = os.arch(); // x86 or x64
+var buildOs = os.platform();
+var nexeBase = './build';
+var nodeVer = '12.20.0';
+
+
+var yencSrc = './node_modules/yencode/';
+var nexe = require('nexe');
+var path = require('path');
+var fs = require('fs');
+var browserify = require('browserify');
+var pkg = require('../package.json');
+
+
+const copyRecursiveSync = function(src, dest) {
+	if(fs.statSync(src).isDirectory()) {
+		if(!fs.existsSync(dest)) fs.mkdirSync(dest);
+		fs.readdirSync(src).forEach(function(child) {
+			copyRecursiveSync(path.join(src, child), path.join(dest, child));
+		});
+	} else
+		fs.copyFileSync(src, dest);
+};
+
+
+// create embeddable help
+fs.writeFileSync('../bin/help.json', JSON.stringify({
+	full: fs.readFileSync('../help-full.txt').toString(),
+	short: fs.readFileSync('../help.txt').toString()
+}));
+
+// bundle Nyuu into a single JS file
+// TODO: maybe explore copying all files instead, instead of bundling
+let b = browserify(['../bin/nyuu.js'], {
+	debug: false,
+	detectGlobals: true,
+	node: true
+});
+['yencode','xz','../node_modules/xz/package.json','iltorb','../node_modules/iltorb/package.json', 'worker_threads'].forEach(exclude => {
+	b.exclude(exclude);
+});
+
+
+// invoke nexe
+var configureArgs = ['--fully-static', '--without-dtrace', '--without-etw', '--without-npm', '--with-intl=none', '--without-report', '--without-node-options', '--without-inspector', '--without-siphash', '--dest-cpu=' + buildArch];
+// --v8-lite-mode ?
+if(parseFloat(nodeVer) >= 8)
+	configureArgs.push('--without-intl');
+if(parseFloat(nodeVer) >= 10) {
+	if(buildOs == 'linux')
+		configureArgs.push('--enable-lto');
+	if(buildOs == 'win32')
+		configureArgs.push('--with-ltcg');
+} else
+	configureArgs.push('--without-perfctr');
+
+nexe.compile({
+	input: null, // we'll overwrite _third_party_main instead
+	name: 'nyuu',
+	target: buildOs+'-'+buildArch+'-'+nodeVer,
+	build: true,
+	mangle: false,
+	bundle: false,
+	python: python,
+	flags: [], // runtime flags
+	configure: configureArgs,
+	make: ['-j', compileConcurrency],
+	vcBuild: ["nosign", buildArch, "noetw", "noperfctr", "intl-none", "without-intl", "release", "ltcg", "static", "no-cctest"],
+	snapshot: null, // TODO: consider using this
+	temp: nexeBase,
+	rc: {
+		ProductName: pkg.name,
+		FileDescription: pkg.description,
+		FileVersion: pkg.version,
+		ProductVersion: pkg.version,
+		InternalName: 'nyuu',
+		CompanyName: 'Anime Tosho'
+	},
+	//fakeArgv: 'nyuu',
+	//sourceUrl: '<disable_download>',
+	loglevel: 'info',
+	
+	patches: [
+		/*
+		// fix nexe 3.3.7 breakage on node 12.16.3
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('src/node.cc', /int exit_code = 0;\/\/ProcessGlobalArgs\([^;]+;/g, "int exit_code = 0;");
+			return next();
+		},
+		*/
+		// remove nexe's boot-nexe code + fix argv
+		async (compiler, next) => {
+			// TODO: is the double'd javascript entry (by nexe) problematic?
+			await compiler.replaceInFileAsync('lib/internal/bootstrap/pre_execution.js', /(initializePolicy|initializeFrozenIntrinsics)\(\);\s*!\(function.+?new Module.+?\}\)\(\);/s, "$1();");
+			
+			// I don't get the point of the fs patch, so just remove it...
+			await compiler.replaceInFileAsync('lib/internal/bootstrap/pre_execution.js', /if \(true\) \{.+?__nexe_patch\(.+?\}\n/s, '');
+			
+			// fix argv
+			await compiler.replaceInFileAsync('lib/internal/bootstrap/pre_execution.js', /patchProcessObject\(expandArgv1\);/, 'patchProcessObject(false); if(!process.send) process.argv.splice(1,0,"nyuu");');
+			return next();
+		},
+		
+		// fix worker thread with third_party_main
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('src/node.cc', /StartExecution\(env, "internal\/main\/run_third_party_main"\)/, 'StartExecution(env, env->worker_context() == nullptr ? "internal/main/run_third_party_main" : "internal/main/worker_thread")');
+			return next();
+		},
+		
+		// add yencode into source list
+		async (compiler, next) => {
+			var data = await compiler.readFileAsync('node.gyp');
+			data = data.contents.toString();
+			data = data.replace(/(['"]src\/node_file\.cc['"],)( 'deps\/yencode\/src\/yencode\.cc',)?/, "$1 'deps/yencode/src/yencode.cc',");
+			//data = data.replace(/('src\/node_main\.cc'[^]{2,50}'dependencies': \[\s*'deps\/histogram\/histogram\.gyp:histogram')(,'deps\/yencode\/binding\.gyp:yencode')?/, "$1,'deps/yencode/binding.gyp:yencode'");
+			data = data.replace(/('deps\/histogram\/histogram\.gyp:histogram')(,'deps\/yencode\/binding\.gyp:yencode')?/g, "$1,'deps/yencode/binding.gyp:yencode'");
+			data = data.replace(/(['"]<\(SHARED_INTERMEDIATE_DIR\)['"])(,?) # for node_natives\.h\r?\n/g, "$1,'deps/yencode/crcutil-1.0/code', 'deps/yencode/crcutil-1.0/examples', 'deps/yencode/src'$2");
+			//data = data.replace(/(['"]lib\/fs\.js['"],)( 'lib\/yencode\.js',)?/, "$1 'lib/yencode.js',");
+			await compiler.setFileContentsAsync('node.gyp', data);
+			
+			// also add it as a valid binding
+			await compiler.replaceInFileAsync('src/node_binding.cc', /(V\(async_wrap\))( V\(yencode\))?/, "$1 V(yencode)");
+			
+			// avoid nexe's methods to prevent double-writing this to node.gyp
+			const loaderFile = path.join(compiler.src, 'lib/internal/bootstrap/loaders.js');
+			data = fs.readFileSync(loaderFile).toString();
+			data = data.replace(/('async_wrap',)( 'yencode',)?/, "$1 'yencode',");
+			fs.writeFileSync(loaderFile, data);
+			
+			return next();
+		},
+		// copy yencode sources
+		async (compiler, next) => {
+			const dst = path.join(compiler.src, 'deps', 'yencode');
+			if(!fs.existsSync(path.join(dst, 'binding.gyp')))
+				copyRecursiveSync(yencSrc, dst);
+			
+			// patch yencode
+			var data = await compiler.readFileAsync('deps/yencode/src/yencode.cc');
+			data = data.contents.toString();
+			data = data.replace(/#if NODE_VERSION_AT_LEAST\(10, 7, 0\).+?NODE_MODULE_INIT.+?#endif/s,
+`#include "../../src/node_internals.h"
+#include <uv.h>
+static uv_once_t init_once = UV_ONCE_INIT;
+void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> context, void* priv)`
+			);
+			data = data.replace(/(\nNODE_MODULE_CONTEXT_AWARE_INTERNAL\(yencode, yencode_init\))?$/, "\nNODE_MODULE_CONTEXT_AWARE_INTERNAL(yencode, yencode_init)");
+			await compiler.setFileContentsAsync('deps/yencode/src/yencode.cc', data);
+			
+			data = await compiler.readFileAsync('deps/yencode/index.js');
+			data = data.contents.toString();
+			data = data.replace(/require\('[^'"]*\/([0-9a-z_]+)\.node'\)/g, "process.binding('$1')");
+			//fs.writeFileSync(path.join(compiler.src, 'lib', 'yencode.js'), data);
+			await compiler.setFileContentsAsync('lib/yencode.js', data);
+			
+			data = await compiler.readFileAsync('deps/yencode/binding.gyp');
+			data = data.contents.toString();
+			data = data.replace(/"src\/yencode\.cc",/g, "");
+			data = data.replace(/"target_name": "yencode",( "type": "static_library",)?/, '"target_name": "yencode", "type": "static_library",');
+			data = data.replace(/"enable_native_tuning%": 1,/, '"enable_native_tuning%": 0,');
+			await compiler.setFileContentsAsync('deps/yencode/binding.gyp', data);
+			
+			return next();
+		},
+		
+		// disable unnecessary executables
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('node.gyp', /(['"]target_name['"]:\s*['"](cctest|embedtest|fuzz_url|fuzz_env)['"],\s*['"]type['"]:\s*)['"]executable['"]/g, "$1'none'");
+			return next();
+		},
+		// disable exports
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('node.gyp', /('use_openssl_def%?':) 1,/, "$1 0,");
+			await compiler.replaceInFileAsync('src/node.h', /(define (NODE_EXTERN|NODE_MODULE_EXPORT)) __declspec\(dllexport\)/, '$1');
+			await compiler.replaceInFileAsync('src/node_api.h', /(define (NAPI_EXTERN|NAPI_MODULE_EXPORT)) __declspec\(dllexport\)/, '$1');
+			await compiler.replaceInFileAsync('common.gypi', /'BUILDING_(V8|UV)_SHARED=1',/g, '');
+			await compiler.setFileContentsAsync('deps/zlib/win32/zlib.def', 'EXPORTS');
+			return next();
+		},
+		// patch build options
+		async (compiler, next) => {
+			var data = await compiler.readFileAsync('common.gypi');
+			data = data.contents.toString();
+			
+			// MSVC
+			// enable SSE2 as base
+			if(buildArch == 'x86')
+				data = data.replace(/('EnableIntrinsicFunctions':\s*'true',)(\s*)('FavorSizeOrSpeed':,)/, "$1$2'EnableEnhancedInstructionSet': '2',$2$3");
+			// disable debug info
+			data = data.replace(/'GenerateDebugInformation': 'true',/, "'GenerateDebugInformation': 'false',");
+			
+			// GNU
+			// SSE2 enable
+			if(buildArch == 'x86')
+				data = data.replace(/('cflags': \[)(\s*'-O3')/, "'ldflags': ['-s'], $1 '-msse2',$2");
+			else
+				data = data.replace(/('ldflags': \['-s'\], )?('cflags': \[\s*'-O3')/, "'ldflags': ['-s'], $2");
+			
+			await compiler.setFileContentsAsync('common.gypi', data);
+			return next();
+		},
+		
+		
+		// strip icon
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('src/res/node.rc', /1 ICON node\.ico/, '');
+			return next();
+		},
+		
+		// set _third_party_main
+		async (compiler, next) => {
+			const stream = fs.createWriteStream(compiler.src + '/lib/_third_party_main.js');
+			const pipe = b.bundle().pipe(stream);
+			return new Promise((resolve, reject) => {
+				pipe.once('error', reject);
+				stream.once('error', reject);
+				stream.once('close', async () => {
+					// get nexe to recognise this is added
+					await compiler.replaceInFileAsync('lib/_third_party_main.js', /^/, '');
+					resolve();
+				});
+			});
+			return p;
+		}
+	],
+	
+}).then(() => {
+	console.log('done');
+	fs.unlinkSync('../bin/help.json');
+	
+	// paxmark -m nyuu
+	// tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-x86-sse2.tar nyuu ../config-sample.json
+	// xz -9e --x86 --lzma2 *.tar
+	
+});
