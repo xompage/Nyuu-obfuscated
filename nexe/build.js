@@ -8,7 +8,8 @@ var buildArch = os.arch(); // x86 or x64
 var buildOs = os.platform();
 var nexeBase = './build';
 var nodeVer = '12.20.0';
-
+var staticness = '--fully-static'; // set to '--partly-static' if building with glibc
+var vsSuite = null; // if on Windows, and it's having trouble finding Visual Studio, try set this to, e.g. 'vs2019' or 'vs2017'
 
 var yencSrc = './node_modules/yencode/';
 var nexe = require('nexe');
@@ -48,17 +49,25 @@ let b = browserify(['../bin/nyuu.js'], {
 
 
 // invoke nexe
-var configureArgs = ['--fully-static', '--without-dtrace', '--without-etw', '--without-npm', '--with-intl=none', '--without-report', '--without-node-options', '--without-inspector', '--without-siphash', '--dest-cpu=' + buildArch];
+var configureArgs = [staticness, '--without-dtrace', '--without-etw', '--without-npm', '--with-intl=none', '--without-report', '--without-node-options', '--without-inspector', '--without-siphash', '--dest-cpu=' + buildArch];
+var vcbuildArgs = ["nosign", buildArch, "noetw", "intl-none", "release", "static", "no-cctest"];
 // --v8-lite-mode ?
-if(parseFloat(nodeVer) >= 8)
+if(parseFloat(nodeVer) >= 8) {
 	configureArgs.push('--without-intl');
+	vcbuildArgs.push('without-intl');
+}
 if(parseFloat(nodeVer) >= 10) {
 	if(buildOs == 'linux')
 		configureArgs.push('--enable-lto');
-	if(buildOs == 'win32')
+	if(buildOs == 'win32') {
 		configureArgs.push('--with-ltcg');
-} else
+		vcbuildArgs.push('ltcg');
+	}
+} else {
 	configureArgs.push('--without-perfctr');
+	vcbuildArgs.push('noperfctr');
+}
+if(vsSuite) vcbuildArgs.push(vsSuite);
 
 nexe.compile({
 	input: null, // we'll overwrite _third_party_main instead
@@ -71,7 +80,7 @@ nexe.compile({
 	flags: [], // runtime flags
 	configure: configureArgs,
 	make: ['-j', compileConcurrency],
-	vcBuild: ["nosign", buildArch, "noetw", "noperfctr", "intl-none", "without-intl", "release", "ltcg", "static", "no-cctest"],
+	vcBuild: vcbuildArgs,
 	snapshot: null, // TODO: consider using this
 	temp: nexeBase,
 	rc: {
@@ -87,13 +96,6 @@ nexe.compile({
 	loglevel: 'info',
 	
 	patches: [
-		/*
-		// fix nexe 3.3.7 breakage on node 12.16.3
-		async (compiler, next) => {
-			await compiler.replaceInFileAsync('src/node.cc', /int exit_code = 0;\/\/ProcessGlobalArgs\([^;]+;/g, "int exit_code = 0;");
-			return next();
-		},
-		*/
 		// remove nexe's boot-nexe code + fix argv
 		async (compiler, next) => {
 			// TODO: is the double'd javascript entry (by nexe) problematic?
@@ -112,6 +114,15 @@ nexe.compile({
 			await compiler.replaceInFileAsync('src/node.cc', /StartExecution\(env, "internal\/main\/run_third_party_main"\)/, 'StartExecution(env, env->worker_context() == nullptr ? "internal/main/run_third_party_main" : "internal/main/worker_thread")');
 			return next();
 		},
+		
+		// fix for building on Alpine
+		// https://gitlab.alpinelinux.org/alpine/aports/-/issues/8626
+		async (compiler, next) => {
+			await compiler.replaceInFileAsync('tools/v8_gypfiles/v8.gyp', /('target_defaults': \{)( 'cflags': \['-U_FORTIFY_SOURCE'\],)?/, "$1 'cflags': ['-U_FORTIFY_SOURCE'],");
+			await compiler.replaceInFileAsync('node.gyp', /('target_name': '(node_mksnapshot|mkcodecache|<\(node_core_target_name\)|<\(node_lib_target_name\))',)( 'cflags': \['-U_FORTIFY_SOURCE'\],)?/g, "$1 'cflags': ['-U_FORTIFY_SOURCE'],");
+			return next();
+		},
+		
 		
 		// add yencode into source list
 		async (compiler, next) => {
@@ -176,11 +187,23 @@ void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> con
 		},
 		// disable exports
 		async (compiler, next) => {
-			await compiler.replaceInFileAsync('node.gyp', /('use_openssl_def%?':) 1,/, "$1 0,");
 			await compiler.replaceInFileAsync('src/node.h', /(define (NODE_EXTERN|NODE_MODULE_EXPORT)) __declspec\(dllexport\)/, '$1');
 			await compiler.replaceInFileAsync('src/node_api.h', /(define (NAPI_EXTERN|NAPI_MODULE_EXPORT)) __declspec\(dllexport\)/, '$1');
+			await compiler.replaceInFileAsync('src/node_api.h', /__declspec\(dllexport,\s*/g, '__declspec(');
+			await compiler.replaceInFileAsync('src/js_native_api.h', /(define NAPI_EXTERN) __declspec\(dllexport\)/, '$1');
 			await compiler.replaceInFileAsync('common.gypi', /'BUILDING_(V8|UV)_SHARED=1',/g, '');
 			await compiler.setFileContentsAsync('deps/zlib/win32/zlib.def', 'EXPORTS');
+			await compiler.replaceInFileAsync('tools/v8_gypfiles/v8.gyp', /'defines':\s*\["BUILDING_V8_BASE_SHARED"\],/g, '');
+			
+			var data = await compiler.readFileAsync('node.gyp');
+			data = data.contents.toString();
+			data = data.replace(/('use_openssl_def%?':) 1,/, "$1 0,");
+			data = data.replace(/'\/WHOLEARCHIVE:[^']+',/g, '');
+			data = data.replace(/'-Wl,--whole-archive',.*?'-Wl,--no-whole-archive',/s, '');
+			await compiler.setFileContentsAsync('node.gyp', data);
+			
+			await compiler.replaceInFileAsync('node.gypi', /'force_load%': 'true',/, "'force_load%': 'false',");
+			
 			return next();
 		},
 		// patch build options
@@ -188,19 +211,14 @@ void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> con
 			var data = await compiler.readFileAsync('common.gypi');
 			data = data.contents.toString();
 			
-			// MSVC
-			// enable SSE2 as base
-			if(buildArch == 'x86')
-				data = data.replace(/('EnableIntrinsicFunctions':\s*'true',)(\s*)('FavorSizeOrSpeed':,)/, "$1$2'EnableEnhancedInstructionSet': '2',$2$3");
-			// disable debug info
-			data = data.replace(/'GenerateDebugInformation': 'true',/, "'GenerateDebugInformation': 'false',");
+			// enable SSE2 as base targeted ISA
+			if(buildArch == 'x86' || buildArch == 'ia32') {
+				data = data.replace(/('EnableIntrinsicFunctions':\s*'true',)(\s*)('FavorSizeOrSpeed':)/, "$1$2'EnableEnhancedInstructionSet': '2',$2$3");
+				data = data.replace(/('cflags': \[)(\s*'-O3')/, "$1 '-msse2',$2");
+			}
 			
-			// GNU
-			// SSE2 enable
-			if(buildArch == 'x86')
-				data = data.replace(/('cflags': \[)(\s*'-O3')/, "'ldflags': ['-s'], $1 '-msse2',$2");
-			else
-				data = data.replace(/('ldflags': \['-s'\], )?('cflags': \[\s*'-O3')/, "'ldflags': ['-s'], $2");
+			// MSVC - disable debug info
+			data = data.replace(/'GenerateDebugInformation': 'true',/, "'GenerateDebugInformation': 'false',");
 			
 			await compiler.setFileContentsAsync('common.gypi', data);
 			return next();
@@ -235,6 +253,7 @@ void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> con
 	fs.unlinkSync('../bin/help.json');
 	
 	// paxmark -m nyuu
+	// strip nyuu
 	// tar --group=nobody --owner=nobody -cf nyuu-v0.3.8-linux-x86-sse2.tar nyuu ../config-sample.json
 	// xz -9e --x86 --lzma2 *.tar
 	
