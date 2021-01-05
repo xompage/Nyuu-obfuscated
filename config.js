@@ -127,7 +127,7 @@ nzb: {
 		groups: null // Newsgroups header
 	},
 	minify: false,
-	compression: '', // can be 'gzip', 'zlib', 'deflate', 'xz', 'brotli' or '' (none)
+	compression: '', // can be 'gzip', 'zlib', 'deflate', 'brotli' or '' (none)
 	compressOpts: {}, // options for zlib, see https://nodejs.org/api/zlib.html#zlib_class_options
 	metaData: {
 		// eg:

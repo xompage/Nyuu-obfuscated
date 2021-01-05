@@ -397,8 +397,8 @@ var optMap = {
 		map: 'nzb/compression',
 		ifSetDefault: 'gzip',
 		fn: function(v) {
-			if(v && ['gzip','zlib','deflate','xz','brotli'].indexOf(v) < 0)
-				error('Invalid value supplied for `nzb-compress`: ' + v + '. Valid values: gzip, zlib, deflate, xz, brotli');
+			if(v && ['gzip','zlib','deflate','brotli'].indexOf(v) < 0)
+				error('Invalid value supplied for `nzb-compress`: ' + v + '. Valid values: gzip, zlib, deflate, brotli');
 			return v;
 		}
 	},
@@ -653,12 +653,6 @@ if(argv['package-info']) {
 		async: parsePackage(require('../node_modules/async/package.json')),
 		yencode: parsePackage(require('../node_modules/yencode/package.json')),
 	};
-	try {
-		modules.xz = parsePackage(require('../node_modules/xz/package.json'));
-	} catch(x) {}
-	try {
-		modules.iltorb = parsePackage(require('../node_modules/iltorb/package.json'));
-	} catch(x) {}
 	try {
 		modules.nexe = parsePackage(require('../nexe/node_modules/nexe/package.json'));
 	} catch(x) {}
@@ -957,7 +951,7 @@ if(argv['preload-modules']) {
 	ulOpts.servers.forEach(function(server) {
 		if(server.secure) require('tls');
 	});
-	// we won't consider modules loaded by the UploadManager constructor (zlib/xz, nzbbuffer, bufferpool, procman) as 'too late', since it occurs before the 'start' event is fired, hence won't bother preloading these here
+	// we won't consider modules loaded by the UploadManager constructor (zlib, nzbbuffer, bufferpool, procman) as 'too late', since it occurs before the 'start' event is fired, hence won't bother preloading these here
 }
 
 // if doing raw posts, default keepMessageId to true

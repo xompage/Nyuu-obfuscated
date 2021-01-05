@@ -283,10 +283,8 @@ NZB Output Options:
   -O,  --overwrite           If NZB exists, overwrite it, otherwise will error
                              (flag option)
        --minify              Minify outputted NZB (flag option)
-       --nzb-compress        Compress outputted NZB. Can be gzip, zlib or
-                             deflate. If node-xz is installed, xz is also
-                             available. If iltorb is installed, brotli is
-                             available.
+       --nzb-compress        Compress outputted NZB. Can be gzip, zlib, deflate
+                             or brotli. (brotli requires NodeJS >= 11.7.0)
        --nzb-compress-level  Compression level (0-9) to use. Default is 6
                              For Brotli, range is 0-11, default being 11
        --nzb-title           A human-readable identifiable title for the

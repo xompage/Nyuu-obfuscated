@@ -220,15 +220,6 @@ directory, with the following contents:
 
 (obviously, fix the paths to what they actually are)
 
-### Optional Modules
-
-Nyuu optionally supports the following modules:
-
--   [xz](https://www.npmjs.com/package/xz) and/or
-    [iltorb](https://www.npmjs.com/package/iltorb): enables NZBs to be
-    compressed using xz and/or brotli via the `--nzb-compress xz` and/or
-    `--nzb-compress brotli` options
-
 Development
 ===========
 

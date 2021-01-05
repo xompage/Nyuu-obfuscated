@@ -43,7 +43,7 @@ let b = browserify(['../bin/nyuu.js'], {
 	detectGlobals: true,
 	node: true
 });
-['yencode','xz','../node_modules/xz/package.json','iltorb','../node_modules/iltorb/package.json', 'worker_threads'].forEach(exclude => {
+['yencode','worker_threads'].forEach(exclude => {
 	b.exclude(exclude);
 });
 
