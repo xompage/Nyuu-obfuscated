@@ -104,6 +104,15 @@ var servOptMap = {
 		keyMap: 'connect/secureProtocol',
 		ifSetDefault: ''
 	},
+	'ssl-ca': {
+		type: 'array',
+		keyMap: 'connect/ca',
+		fn: function(v) {
+			return v.map(function(file) {
+				return fs.readFileSync(file);
+			});
+		}
+	},
 	user: {
 		type: 'string',
 		alias: 'u',

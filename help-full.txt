@@ -30,7 +30,11 @@ Upload Server Options:
                              See https://nodejs.org/api/tls.html for defaults
                              Requires NodeJS >= 0.12
        --ssl-method          Force SSL/TLS method. For details, see
-                             https://nodejs.org/api/tls.html
+                             `secureProtocol` at https://nodejs.org/api/tls.html
+       --ssl-ca              PEM encoded file containing trusted CA for
+                             certificate validation. Can be specified multiple
+                             times. Specifying this option disables the default
+                             CA trust store.
   -u,  --user                Username to authenticate with
   -p,  --password            Password to authenticate with
   -n,  --connections         Number of connections to create for posting
