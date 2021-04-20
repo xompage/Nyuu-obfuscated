@@ -1144,6 +1144,7 @@ if(verbosity < 1) {
 		process.exit(isNode010 ? 8 : 1);
 	});
 } else {
+	Error.stackTraceLimit = 25; // increase limit as I've had cases where 10 entries wasn't enough
 	process.once('uncaughtException', function(err) {
 		process.emit('finished');
 		if(getProcessIndicator)
