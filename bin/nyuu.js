@@ -1283,13 +1283,17 @@ var filesToUpload = argv._;
 		}
 		(function(cb) {
 			if(processes && processes.running) {
-				processes.closeAll();
-				var procWarnTO = setTimeout(function() {
+				var procShutdownDelay = setTimeout(function() {
 					if(!processes.running) return;
 					Nyuu.log.info(processes.running + ' external process(es) are still running; Nyuu will exit when these do');
+					
+					// try killing pipes after a 5s wait; unsure if this actually helps anything
+					procShutdownDelay = setTimeout(function() {
+						processes.closeAll();
+					}, 4000).unref();
 				}, 1000).unref();
 				processes.onEnd(function() {
-					clearTimeout(procWarnTO);
+					clearTimeout(procShutdownDelay);
 					cb();
 				});
 			} else cb();
