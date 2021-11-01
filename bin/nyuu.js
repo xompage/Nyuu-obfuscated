@@ -1231,7 +1231,7 @@ var filesToUpload = argv._;
 						})
 					);
 				else
-					filesToUpload = filesToUpload.concat(data[1].split('\0'));
+					filesToUpload = filesToUpload.concat(data[1].replace(/\0$/, '').split('\0'));
 			});
 			cb();
 		});
