@@ -92,6 +92,7 @@ comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 
 // if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts)
+// Note: for Message-ID (if the keepMessageId option is true), the function should return strings that wont't vary in length for the same post, as Nyuu requires same length Message IDs to be used when re-generating the ID
 postHeaders: {
 	// required headers
 	'Message-ID': null, // default: auto-generated
