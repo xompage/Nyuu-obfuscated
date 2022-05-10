@@ -1305,25 +1305,36 @@ var filesToUpload = argv._;
 				});
 			}
 			setTimeout(function() {
-				if(process._getActiveHandles) { // undocumented function, but seems to always work
-					var ah = process._getActiveHandles().filter(function(h) {
-						// exclude stdout/stderr from count
-						return !h.constructor || h.constructor.name != 'WriteStream' || (h.fd != 1 && h.fd != 2);
-					});
+				if(process._getActiveHandles || process.getActiveResourcesInfo) {
 					var hTypes = {};
-					ah.forEach(function(h) {
-						var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
-						if(cn in hTypes)
-							hTypes[cn]++;
-						else
-							hTypes[cn] = 1;
-					});
+					var ah;
+					if(process._getActiveHandles) { // undocumented function, but seems to always work
+						ah = process._getActiveHandles().filter(function(h) {
+							// exclude stdout/stderr from count
+							return !h.constructor || h.constructor.name != 'WriteStream' || (h.fd != 1 && h.fd != 2);
+						});
+						ah.forEach(function(h) {
+							var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
+							if(cn in hTypes)
+								hTypes[cn]++;
+							else
+								hTypes[cn] = 1;
+						});
+					} else {
+						process.getActiveResourcesInfo().forEach(function(h) {
+							if(h in hTypes)
+								hTypes[h]++;
+							else
+								hTypes[h] = 1;
+						});
+						// TODO: is there any way to exclude stdout/stderr?
+					}
 					var handleStr = '';
 					for(var hn in hTypes) {
 						handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
 					}
 					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
-					if(verbosity >= 4) {
+					if(verbosity >= 4 && ah) {
 						process.stderr.write(require('util').inspect(ah, {colors: argv.colorize}) + '\n');
 					}
 				} else

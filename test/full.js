@@ -29,7 +29,6 @@ if(false) { // debug toggle
 var lastServerPort = 0;
 var clientOpts = function(opts) {
 	var o = {};
-	deepMerge(o, require('../config'));
 	deepMerge(o, {
 		server: {
 			connect: {
@@ -88,10 +87,23 @@ var clientOpts = function(opts) {
 		},
 	});
 	
-	// TODO: ability to test multi-server
 	deepMerge(o, opts);
-	o.servers = [o.server];
-	return o;
+	if(!o.servers)
+		o.servers = [o.server];
+	else
+		o.servers.forEach(function(server) {
+			// whacky reverse-merge - use o.server as a base and merge set items on top
+			var s = {};
+			deepMerge(s, server);
+			deepMerge(server, o.server);
+			deepMerge(server, s);
+		});
+	
+	var optBase = {};
+	deepMerge(optBase, require('../config'));
+	deepMerge(optBase, o);
+	
+	return optBase;
 };
 
 var testSkel = function(files, opts, cb, ulHooks) {
@@ -419,6 +431,55 @@ describe('Nyuu', function() {
 			done(err);
 		});
 	});
+	
+/* TODO: can't seem to get this test working properly - it doesn't fail when the cancel bug [fixed in 30e640489e33aa82172769080b519615282b9b68] is introduced
+	it('should cancel check connection if a post error occurs during check connection connect' +ulType, function(done) {
+		var opts = {
+			servers: [
+				// distinguish post/check connections with auth
+				{
+					postConnections: 1,
+					checkConnections: 0,
+					user: null,
+					timeout: 10,
+					connectRetries: 0,
+					requestRetries: 0,
+					postRetries: 0,
+				},
+				{
+					postConnections: 0,
+					checkConnections: 1,
+					user: 'joe',
+					connTimeout: 100,
+				}
+			],
+			check: {
+				delay: 0,
+				tries: 1
+			},
+			skipErrors: ['post-reject', 'connect-fail'],
+			rawInput: !!ulType
+		};
+		
+		(function(cb) {
+			var server = testSkel(files, opts, function(err) {
+				if(err) return cb(err);
+				server.close(function() {
+					cb(null, server);
+				});
+			});
+			var post;
+			server.onRequest(function(req, data) {
+				if(req == 'AUTHINFO') return true; // don't let the check connection connect
+				if(req == 'POST') return true; // cause posting to time out and error
+			});
+		})(function(err, server) {
+			if(err && err.code == 'timeout')
+				return done();
+			done(err || new Error('Timeout error did not occur'));
+		});
+	});
+	*/
 });
 
 it('complex test', function(done) {
