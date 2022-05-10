@@ -133,7 +133,8 @@ Article/Post Options:
                              Defaults to 'username <username@host>', where
                              these values are sourced from the local system.
   -g,  --groups              Shortcut for `-H Newsgroups=...`
-                             Separate multiple groups with commas.
+                             Separate multiple groups with commas, without any
+                             spaces.
                              Defaults to alt.binaries.test
        --date                Override the Date header, Message-ID timestamp,
                              and timestamps for generated NZBs, with specified

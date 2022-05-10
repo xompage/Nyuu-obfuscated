@@ -29,7 +29,8 @@ Article/Post Options:
   -f,  --from                Name and email of uploader.
                              Defaults to 'username <username@host>', where
                              these values are sourced from the local system.
-  -g,  --groups              Comma separated list of groups to post to.
+  -g,  --groups              Comma separated list of groups to post to. Do
+                             not add spaces between commas.
                              Defaults to alt.binaries.test
 
 Post Check Options:
