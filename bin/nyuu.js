@@ -482,6 +482,11 @@ var optMap = {
 			return v;
 		}
 	},
+	'skip-symlinks': {
+		type: 'bool',
+		alias: 'L',
+		map: 'skipSymlinks'
+	},
 	'input-file': {
 		type: 'array',
 		alias: 'i'

@@ -456,7 +456,7 @@ Input Files:
 
   Additional arguments are taken as files to be posted. Directories can be
   specified as well, in which case all files inside are processed according
-  to the following option:
+  to the following options:
 
   -r,  --subdirs             How directories should be handled, can be:
                                  skip: ignore nested files
@@ -465,6 +465,11 @@ Input Files:
                                           (default)
                                  keep: upload all files in sub-directories
                                        (with recursion)
+  -L,  --skip-symlinks       If specified, all symbolic links will be ignored.
+                             Note that this affects file symlinks as well as
+                             directory traversal (if `--subdirs=keep` is
+                             specified). By default, all symlinks are followed.
+                             This option takes no values.
 
   Alternatively, a list of files can be supplied, with the following options:
 
