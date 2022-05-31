@@ -4,10 +4,10 @@ var os = require('os');
 var compileConcurrency = os.cpus().length;
 var python = null;
 // process.env.path = '' + process.env.path; // if need to specify a Python path
-var buildArch = os.arch(); // x86 or x64
-var buildOs = os.platform();
+var buildArch = process.env.BUILD_ARCH || os.arch(); // x86 or x64
+var buildOs = process.env.BUILD_OS || os.platform();
 var nexeBase = './build';
-var nodeVer = '12.20.0';
+var nodeVer = process.env.BUILD_NODEVER || '12.22.12';
 var staticness = '--fully-static'; // set to '--partly-static' if building with glibc
 var vsSuite = null; // if on Windows, and it's having trouble finding Visual Studio, try set this to, e.g. 'vs2019' or 'vs2017'
 
@@ -93,7 +93,7 @@ nexe.compile({
 	},
 	//fakeArgv: 'nyuu',
 	//sourceUrl: '<disable_download>',
-	loglevel: 'info',
+	loglevel: process.env.BUILD_LOGLEVEL || 'info',
 	
 	patches: [
 		// remove nexe's boot-nexe code + fix argv
