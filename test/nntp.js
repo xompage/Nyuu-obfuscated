@@ -640,6 +640,7 @@ it('should call all end/close callbacks when closed');
 
 it('should not connect if destroyed straight after', function(done) {
 	var server, client;
+	var cancelled = false;
 	waterfall([
 		killServer,
 		function(cb) {
@@ -656,12 +657,14 @@ it('should not connect if destroyed straight after', function(done) {
 			client = _client;
 			client.connect(function(err) {
 				assert.equal(err.code, 'cancelled');
-				cb();
+				cancelled = true;
 			});
 			client.destroy();
+			tl.defer(cb);
 		},
 		function(cb) {
 			assert.equal(client.state, 'inactive');
+			assert(cancelled);
 			closeTest(client, server, cb);
 		}
 	], done);
