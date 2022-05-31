@@ -111,7 +111,7 @@ If NPM is installed (usually comes bundled with
 to install Nyuu:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install -g nyuu
+npm install -g nyuu --production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You’ll then be able to run Nyuu via the **nyuu** command.
@@ -123,7 +123,7 @@ titled “Node.js” for more details.
 If you get a `gyp ERR! stack Error: EACCES: permission denied` error when installing, try the following command instead:
 
 ```
-npm install -g nyuu --unsafe-perm
+npm install -g nyuu --production --unsafe-perm
 ```
 
 Note: on some systems, you won’t get an error during installation, but when running Nyuu, it crashes with the error `Error: Cannot find module './build/Release/yencode.node'`. If that is the case, you may need to run the above command to get it to install properly.
@@ -159,7 +159,7 @@ them together), the following command (executed inside the Nyuu directory) is
 all you need to set up the dependencies:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install
+npm install --production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you don’t want to use NPM, you can use your package manager instead if it has
