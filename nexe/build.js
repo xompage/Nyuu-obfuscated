@@ -218,7 +218,7 @@ void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> con
 			}
 			
 			// MSVC - disable debug info
-			data = data.replace(/'GenerateDebugInformation': 'true',/, "'GenerateDebugInformation': 'false',");
+			data = data.replace(/'GenerateDebugInformation': 'true',/, "'GenerateDebugInformation': 'false',\n'AdditionalOptions': ['/emittoolversioninfo:no'],");
 			
 			await compiler.setFileContentsAsync('common.gypi', data);
 			return next();
