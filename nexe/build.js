@@ -8,7 +8,7 @@ var buildArch = process.env.BUILD_ARCH || os.arch(); // x86 or x64
 var buildOs = process.env.BUILD_OS || os.platform();
 var nexeBase = './build';
 var nodeVer = process.env.BUILD_NODEVER || '12.22.12';
-var staticness = '--fully-static'; // set to '--partly-static' if building with glibc
+var staticness = process.env.BUILD_STATIC || '--fully-static'; // set to '--partly-static' if building with glibc
 var vsSuite = null; // if on Windows, and it's having trouble finding Visual Studio, try set this to, e.g. 'vs2019' or 'vs2017'
 
 var yencSrc = './node_modules/yencode/';
@@ -68,6 +68,11 @@ if(parseFloat(nodeVer) >= 10) {
 	vcbuildArgs.push('noperfctr');
 }
 if(vsSuite) vcbuildArgs.push(vsSuite);
+
+if(process.env.BUILD_CONFIGURE)
+	configureArgs = configureArgs.concat(process.env.BUILD_CONFIGURE.split(' '));
+if(process.env.BUILD_VCBUILD)
+	vcbuildArgs = vcbuildArgs.concat(process.env.BUILD_VCBUILD.split(' '));
 
 nexe.compile({
 	input: null, // we'll overwrite _third_party_main instead
