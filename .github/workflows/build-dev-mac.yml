@@ -19,5 +19,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./nyuu.txz
-          name: nyuu-${{ steps.get_release.outputs.tag_name }}-macos-x64.7z
+          name: nyuu-${{ github.ref_name }}-macos-x64.7z
           retention-days: 5

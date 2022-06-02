@@ -18,9 +18,9 @@ jobs:
       - run: npm install --production
       - run: (cd nexe && npm install --production)
       - run: (cd nexe && node build)
-      - run: 7z a -t7z -mx=9 nyuu.7z config-sample.json nexe/nyuu.exe
+      - run: ren nexe/nyuu.exe nyuu.exe && 7z a -t7z -mx=9 nyuu.7z config-sample.json nyuu.exe
       - uses: actions/upload-artifact@v3
         with:
           path: ./nyuu.7z
-          name: nyuu-${{ steps.get_release.outputs.tag_name }}-win32.7z
+          name: nyuu-${{ github.ref_name }}-win32.7z
           retention-days: 5
