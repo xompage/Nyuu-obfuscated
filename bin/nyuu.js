@@ -1395,7 +1395,7 @@ var filesToUpload = argv._;
 				'Total articles: ' + totalPieces + ' (' + friendlySize(totalSize) + ')',
 				'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
 				'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-				uploader.numCheckConns ? 'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')' : false,
+				uploader.numCheckConns ? 'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')' + (uploader.articlesRechecked ? ' (+'+uploader.articlesRechecked+' re-checked)':'') : false,
 				'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
 				'Upload Rate (network|real): ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
 			].filter(function(e){return e;});
@@ -1436,6 +1436,7 @@ var filesToUpload = argv._;
 				case 'stderr':
 				case 'stdout':
 					if(getProcessIndicator) break; // no need to double output =P
+					var mainPostingDone = false;
 					var ProgressRecorder = require('../lib/progrec');
 					var byteSamples = new ProgressRecorder(180);
 					var progressSamples = new ProgressRecorder(180);
@@ -1466,18 +1467,37 @@ var filesToUpload = argv._;
 							var LINE_WIDTH = 35;
 							var barSize = Math.floor(chkPerc*LINE_WIDTH);
 							var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
-							return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + (uploader.bytesPosted ?
-								' ' + friendlySize(speed) + '/s, ETA ' + eta
-							: '');
+							var suffix = '';
+							if(mainPostingDone) {
+								if(uploader.articlesPosted < totalPieces)
+									suffix = ' reposting ' + (totalPieces - uploader.articlesPosted) + ' article(s)';
+								else if(uploader.checkPending || uploader.checkRePending)
+									suffix = ' awaiting check on ' + (uploader.checkPending + uploader.checkRePending) + ' article(s)';
+							} else if(uploader.bytesPosted)
+								suffix = ' ' + friendlySize(speed) + '/s, ETA ' + eta;
+							return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + suffix;
 						} else {
 							// extended display
-							var posted = '' + uploader.articlesChecked;
-							if(uploader.articlesChecked != uploader.articlesPosted)
-								posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-							var ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (network: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s) ETA ' + eta;
-							if(ret.length > 80)
-								// if too long, strip the network post speed
-								ret = ret.replace(/ \(network\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+							var ret = '';
+							if(mainPostingDone) {
+								ret = 'Checked: ' + uploader.articlesChecked + ' ('+toPercent(chkPerc) + ')';
+								if(uploader.checkPending || uploader.checkRePending) {
+									if(uploader.checkPending)
+										ret += ', ' + uploader.checkPending + (uploader.checkRePending ? '+'+uploader.checkRePending:'') + ' pending';
+									else
+										ret += ', ' + uploader.checkRePending + ' pending re-check';
+								}
+								if(uploader.articlesPosted < totalPieces)
+									ret += ', ' + (totalPieces - uploader.articlesPosted) + ' to re-post';
+							} else {
+								var posted = '' + uploader.articlesChecked;
+								if(uploader.articlesChecked != uploader.articlesPosted)
+									posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
+								ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (network: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s) ETA ' + eta;
+								if(ret.length > 80)
+									// if too long, strip the network post speed
+									ret = ret.replace(/ \(network\: [0-9.]+ [A-Zi]+\/s\)/, ',');
+							}
 							return '\x1b[0G\x1B[0K' + ret;
 						}
 					};
@@ -1485,6 +1505,8 @@ var filesToUpload = argv._;
 					var seInterval = setInterval(function() {
 						byteSamples.add(uploader.bytesPosted);
 						progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
+						if(uploader.articlesPosted == totalPieces && uploader.numCheckConns)
+							mainPostingDone = true; // we've moved into a 'primarily checking' phase
 						process[prgTarget].write(getProcessIndicator());
 					}, 1000);
 					process.on('finished', function() {
@@ -1521,6 +1543,9 @@ var filesToUpload = argv._;
 							'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
 							'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
 							'Re-read queue size: ' + uploader.reloadQueue.queue.length,
+							'',
+							'Article activity: ' + uploader.postActive + ' posting, ' + uploader.checkActive + ' checking',
+							'Articles awaiting check: ' + uploader.checkPending + ' + ' + uploader.checkRePending + ' awaiting re-check',
 							'', ''
 						]).join('\r\n'));
 						
