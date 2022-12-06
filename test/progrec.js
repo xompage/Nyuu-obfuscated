@@ -1,7 +1,7 @@
 "use strict";
 
 var assert = require("assert");
-var ProgressRecorder = require('../lib/progrec');
+var ProgressRecorder = require('../cli/progrec');
 
 describe('Progress Recorder', function() {
 
