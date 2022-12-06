@@ -12,7 +12,7 @@ var error = function(msg) {
 };
 var processes;
 var processStart = function(purpose) {
-	if(!processes) processes = new (require('../lib/procman'))();
+	if(!processes) processes = new (require('../cli/procman'))();
 	var proc = processes.start.apply(processes, Array.prototype.slice.call(arguments, 1));
 	proc.once('exit', function(code) {
 		if(logger && code) logger.warn(purpose + ' process exited with code ' + code);
@@ -46,7 +46,7 @@ var friendlySize = function(s) {
 	return (Math.round(s *100)/100) + ' ' + units[i];
 };
 
-var arg_parser = require('../lib/arg_parser');
+var arg_parser = require('../cli/arg_parser');
 
 
 var servOptMap = {
@@ -1061,7 +1061,7 @@ if(argv.progress) {
 				progress.push({type: type});
 				
 				if(argv['preload-modules'])
-					require('../lib/progrec');
+					require('../cli/progrec');
 			break;
 			case 'tcp':
 			case 'http':
@@ -1268,7 +1268,7 @@ var filesToUpload = argv._;
 			if(!ret.size)
 				error('Invalid size specified for process input: ' + file);
 			if(argv['preload-modules']) {
-				require('../lib/procman');
+				require('../cli/procman');
 				require('../lib/streamreader');
 			}
 			return ret;
@@ -1437,7 +1437,7 @@ var filesToUpload = argv._;
 				case 'stdout':
 					if(getProcessIndicator) break; // no need to double output =P
 					var mainPostingDone = false;
-					var ProgressRecorder = require('../lib/progrec');
+					var ProgressRecorder = require('../cli/progrec');
 					var byteSamples = new ProgressRecorder(180);
 					var progressSamples = new ProgressRecorder(180);
 					byteSamples.add(0);
