@@ -23,30 +23,9 @@ var processStart = function(purpose) {
 	return proc;
 };
 
-var repeatChar = function(c, l) {
-	if(c.repeat) return c.repeat(l);
-	var buf = Buffer(l);
-	buf.fill(c);
-	return buf.toString();
-};
-var lpad = function(s, l, c) {
-	if(s.length > l) return s;
-	return repeatChar((c || ' '), l-s.length) + s;
-};
-var rpad = function(s, l, c) {
-	if(s.length > l) return s;
-	return s + repeatChar((c || ' '), l-s.length);
-};
-var friendlySize = function(s) {
-	var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
-	for(var i=0; i<units.length; i++) {
-		if(s < 10000) break;
-		s /= 1024;
-	}
-	return (Math.round(s *100)/100) + ' ' + units[i];
-};
 
 var arg_parser = require('../cli/arg_parser');
+var cliUtil = require('../cli/util');
 
 
 var servOptMap = {
@@ -243,7 +222,7 @@ var _mainTransform = function(rx, v) {
 		return v.replace(rx, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'filenum': return filenum;
-				case '0filenum': return lpad(''+filenum, (''+filenumtotal).length, '0');
+				case '0filenum': return cliUtil.lpad(''+filenum, (''+filenumtotal).length, '0');
 				case 'files': return filenumtotal;
 				case 'filename': return filename;
 				case 'fnamebase': return filename.replace(re_group_fname, '');
@@ -252,9 +231,9 @@ var _mainTransform = function(rx, v) {
 				case 'filemsize': return Math.round(filesize / 10485.76) / 100;
 				case 'filegsize': return Math.round(filesize / 10737418.24) / 100;
 				case 'filetsize': return Math.round(filesize / 10995116277.76) / 100;
-				case 'fileasize': return friendlySize(filesize);
+				case 'fileasize': return cliUtil.friendlySize(filesize);
 				case 'part': return part;
-				case '0part': return lpad(''+part, (''+parts).length, '0');
+				case '0part': return cliUtil.lpad(''+part, (''+parts).length, '0');
 				case 'parts': return parts;
 				// ugly hack which relies on placement of the options
 				case 'comment': return argv.comment || '';
@@ -1049,7 +1028,7 @@ if(argv.progress) {
 		var arg = str.substr(m[0].length);
 		switch(type) {
 			case 'log':
-				progress.push({type: 'log', interval: arg_parser.parseTime(arg) || 60});
+				progress.push({type: 'log', interval: arg_parser.parseTime(arg) || 60*1000});
 			break;
 			case 'stderr':
 			case 'stderrx':
@@ -1105,7 +1084,7 @@ if(argv.progress) {
 	stdErrProgress = true;
 }
 
-var getProcessIndicator = null;
+var progressMgr = require('../cli/progressmgr');
 var writeNewline = function() {
 	process.stderr.write('\n');
 };
@@ -1115,18 +1094,17 @@ if(argv.colorize) {
 	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + '\x1B['+col+'m' + logTimestamp('') + type + '\x1B[39m ' + msg.toString() + '\n'
-			+ (getProcessIndicator && stdErrProgress ? getProcessIndicator() : '')
+			+ (progressMgr.getProcessIndicator && stdErrProgress ? progressMgr.getProcessIndicator() : '')
 		);
 	};
 } else {
 	writeLog = function(col, type, msg) {
 		process.stderr.write(
 			clrRow + logTimestamp('') + type + ' ' + msg.toString() + '\n'
-			+ (getProcessIndicator && stdErrProgress ? getProcessIndicator() : '')
+			+ (progressMgr.getProcessIndicator && stdErrProgress ? progressMgr.getProcessIndicator() : '')
 		);
 	};
 }
-var errorCount = 0;
 var logger = {
 	debug: function(msg) {
 		writeLog('36', '[DBG ]', msg);
@@ -1139,7 +1117,7 @@ var logger = {
 	},
 	error: function(msg) {
 		writeLog('31', '[ERR ]', msg);
-		errorCount++;
+		progressMgr.errorCount++;
 	}
 };
 
@@ -1147,7 +1125,7 @@ if(verbosity < 4) logger.debug = function(){};
 if(verbosity < 3) logger.info = function(){};
 if(verbosity < 2) logger.warn = function(){};
 if(verbosity < 1) {
-	logger.error = function(){errorCount++;};
+	logger.error = function(){progressMgr.errorCount++;};
 	// suppress output from uncaught exceptions
 	process.once('uncaughtException', function(err) {
 		process.exit(isNode010 ? 8 : 1);
@@ -1156,9 +1134,9 @@ if(verbosity < 1) {
 	Error.stackTraceLimit = 25; // increase limit as I've had cases where 10 entries wasn't enough
 	process.once('uncaughtException', function(err) {
 		process.emit('finished');
-		if(getProcessIndicator)
+		if(progressMgr.getProcessIndicator)
 			process.removeListener('exit', writeNewline);
-		getProcessIndicator = null;
+		progressMgr.getProcessIndicator = null;
 		logger.error('Unexpected fatal exception encountered, stack trace below');
 		throw err; // this seems to change the exit code a bit :/
 	});
@@ -1171,8 +1149,8 @@ process.once('finished', function() {
 var displayCompleteMessage = function(err) {
 	if(err)
 		Nyuu.log.error(err.toString() + (err.skippable ? ' (use `skip-errors` to ignore)':''));
-	else if(errorCount)
-		Nyuu.log.info('Process complete, with ' + errorCount + ' error(s)');
+	else if(progressMgr.errorCount)
+		Nyuu.log.info('Process complete, with ' + progressMgr.errorCount + ' error(s)');
 	else
 		Nyuu.log.info('Process complete');
 };
@@ -1278,16 +1256,16 @@ var filesToUpload = argv._;
 		}
 		return file;
 	}), ulOpts, function(err) {
-		if(getProcessIndicator)
+		if(progressMgr.getProcessIndicator)
 			process.removeListener('exit', writeNewline);
 		process.emit('finished');
-		getProcessIndicator = null;
+		progressMgr.getProcessIndicator = null;
 		if(err) {
 			displayCompleteMessage(err);
 			process.exitCode = 33;
 		} else {
 			displayCompleteMessage();
-			process.exitCode = errorCount ? 32 : 0;
+			process.exitCode = progressMgr.errorCount ? 32 : 0;
 		}
 		(function(cb) {
 			if(processes && processes.running) {
@@ -1313,37 +1291,15 @@ var filesToUpload = argv._;
 				});
 			}
 			setTimeout(function() {
-				if(process._getActiveHandles || process.getActiveResourcesInfo) {
-					var hTypes = {};
-					var ah;
-					if(process._getActiveHandles) { // undocumented function, but seems to always work
-						ah = process._getActiveHandles().filter(function(h) {
-							// exclude stdout/stderr from count
-							return !h.constructor || h.constructor.name != 'WriteStream' || (h.fd != 1 && h.fd != 2);
-						});
-						ah.forEach(function(h) {
-							var cn = (h.constructor ? h.constructor.name : 0) || 'unknown';
-							if(cn in hTypes)
-								hTypes[cn]++;
-							else
-								hTypes[cn] = 1;
-						});
-					} else {
-						process.getActiveResourcesInfo().forEach(function(h) {
-							if(h in hTypes)
-								hTypes[h]++;
-							else
-								hTypes[h] = 1;
-						});
-						// TODO: is there any way to exclude stdout/stderr?
-					}
+				var handles = cliUtil.activeHandleCounts();
+				if(handles) {
 					var handleStr = '';
-					for(var hn in hTypes) {
-						handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
+					for(var hn in handles[0]) {
+						handleStr += ', ' + hn + (handles[0][hn] > 1 ? ' (' + handles[0][hn] + ')' : '');
 					}
 					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
-					if(verbosity >= 4 && ah) {
-						process.stderr.write(require('util').inspect(ah, {colors: argv.colorize}) + '\n');
+					if(verbosity >= 4 && handles[1]) {
+						process.stderr.write(require('util').inspect(handles[1], {colors: argv.colorize}) + '\n');
 					}
 				} else
 					Nyuu.log.warn('Process did not terminate cleanly');
@@ -1353,27 +1309,6 @@ var filesToUpload = argv._;
 	});
 	
 	// display some stats
-	var decimalPoint = ('' + 1.1).replace(/1/g, '');
-	var friendlyTime = function(t, compact) {
-		var days = (t / 86400000) | 0;
-		t %= 86400000;
-		var seg = [];
-		var sect = [3600000, 60000, 1000];
-		if(compact && t < 3600000)
-			sect.shift();
-		sect.forEach(function(s) {
-			seg.push(lpad('' + ((t / s) | 0), 2, '0'));
-			t %= s;
-		});
-		var ret = (days ? days + 'd,' : '') + seg.join(':');
-		if(!compact)
-			ret += decimalPoint + lpad(t + '', 3, '0');
-		return ret;
-	};
-	var toPercent = function(n) {
-		return (Math.round(n*10000)/100).toFixed(2) + '%';
-	};
-	var retArg = function(_) { return _; };
 	fuploader.once('start', function(files, uploader) {
 		var totalSize = 0, totalPieces = 0, totalFiles = 0;
 		for(var filename in files) {
@@ -1384,321 +1319,48 @@ var filesToUpload = argv._;
 		}
 		if(argv['input-raw-posts']) {
 			totalPieces = totalFiles;
-			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) totalling about ' + friendlySize(totalSize));
+			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) totalling about ' + cliUtil.friendlySize(totalSize));
 		} else
-			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + friendlySize(totalSize));
+			Nyuu.log.info('Uploading ' + totalPieces + ' article(s) from ' + totalFiles + ' file(s) totalling ' + cliUtil.friendlySize(totalSize));
 		
 		var startTime = Date.now();
-		var progressReport = function(now) {
-			now = now || Date.now();
-			return [
-				'Total articles: ' + totalPieces + ' (' + friendlySize(totalSize) + ')',
-				'Articles read: ' + uploader.articlesRead + ' (' + toPercent(uploader.articlesRead/totalPieces) + ')' + (uploader.articlesReRead ? ' (+' + uploader.articlesReRead + ' re-read)':''),
-				'Articles posted: ' + uploader.articlesPosted + ' (' + toPercent(uploader.articlesPosted/totalPieces) + ')' + (uploader.articlesRePosted ? ' (+' + uploader.articlesRePosted + ' re-posted)':''),
-				uploader.numCheckConns ? 'Articles checked: ' + uploader.articlesChecked + ' (' + toPercent(uploader.articlesChecked/totalPieces) + ')' + (uploader.articlesRechecked ? ' (+'+uploader.articlesRechecked+' re-checked)':'') : false,
-				'Errors skipped: ' + errorCount + ' across ' + uploader.articleErrors + ' article(s)',
-				'Upload Rate (network|real): ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s | ' + friendlySize(uploader.bytesPosted/(now-startTime)*1000) + '/s',
-			].filter(function(e){return e;});
-		};
 		var reportOnEnd = false;
 		var getCompleteStatus = function(err) {
-			var msg;
-			var time = Date.now() - startTime;
-			if(err) {
-				msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
-				var unchecked = uploader.articlesPosted - uploader.articlesChecked;
-				if(unchecked)
-					msg += ' (' + unchecked + ' unchecked)';
-				msg += ' in ' + friendlyTime(time) + ' (' + friendlySize(uploader.bytesPosted/time*1000) + '/s)';
-			} else {
-				msg = 'Finished uploading ' + friendlySize(totalSize) + ' in ' + friendlyTime(time) + ' (' + friendlySize(totalSize/time*1000) + '/s)';
+			if(reportOnEnd) {
+				var now = Date.now();
 				
-				if(errorCount)
-					msg += ', with ' + errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+				return (err ? 'Process has been aborted.' : 'Process complete.') + ' Report follows:\n' +
+				'         Elapsed time: ' + cliUtil.friendlyTime(now-startTime) + '\n' +
+				'         ' + progressMgr.progressReport(now).join('\n         ');
+			} else {
+				var msg;
+				var time = Date.now() - startTime;
+				if(err) {
+					msg = 'Process has been aborted. Posted ' + uploader.articlesPosted + ' article(s)';
+					var unchecked = uploader.articlesPosted - uploader.articlesChecked;
+					if(unchecked)
+						msg += ' (' + unchecked + ' unchecked)';
+					msg += ' in ' + cliUtil.friendlyTime(time) + ' (' + cliUtil.friendlySize(uploader.bytesPosted/time*1000) + '/s)';
+				} else {
+					msg = 'Finished uploading ' + cliUtil.friendlySize(totalSize) + ' in ' + cliUtil.friendlyTime(time) + ' (' + cliUtil.friendlySize(totalSize/time*1000) + '/s)';
+					
+					if(progressMgr.errorCount)
+						msg += ', with ' + progressMgr.errorCount + ' error(s) across ' + uploader.articleErrors + ' post(s)';
+				}
+				
+				return msg + '. Network upload rate: ' + cliUtil.friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s';
 			}
-			
-			return msg + '. Network upload rate: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s';
 		};
 		
 		progress.forEach(function(prg) {
-			switch(prg.type) {
-				case 'log':
-					var logInterval = setInterval(function() {
-						Nyuu.log.info('Article posting progress: ' + uploader.articlesRead + ' read, ' + uploader.articlesPosted + ' posted' + (uploader.numCheckConns ? ', ' + uploader.articlesChecked + ' checked' : ''));
-					}, prg.interval);
-					process.on('finished', function() {
-						clearInterval(logInterval);
-					});
-				break;
-				case 'stderrx':
-				case 'stdoutx':
-					reportOnEnd = true;
-				case 'stderr':
-				case 'stdout':
-					if(getProcessIndicator) break; // no need to double output =P
-					var mainPostingDone = false;
-					var ProgressRecorder = require('../cli/progrec');
-					var byteSamples = new ProgressRecorder(180);
-					var progressSamples = new ProgressRecorder(180);
-					byteSamples.add(0);
-					progressSamples.add(0);
-					getProcessIndicator = function() {
-						var chkPerc = uploader.articlesChecked / totalPieces,
-						    pstPerc = uploader.articlesPosted / totalPieces,
-						    totPerc = toPercent((chkPerc+pstPerc)/2);
-						
-						// calculate speed over last 4s
-						var speed = uploader.bytesPosted; // for first sample, just use current overall progress
-						var completed = (uploader.articlesChecked + uploader.articlesPosted)/2;
-						var advancement = completed;
-						if(byteSamples.count() >= 2) {
-							speed = byteSamples.average(4, 4*ulOpts.articleSize);
-							advancement = progressSamples.average(10, 20);
-						}
-						
-						var eta = (totalPieces - completed) / advancement;
-						eta = Math.round(eta)*1000;
-						if(!isNaN(eta) && isFinite(eta) && eta > 0)
-							eta = friendlyTime(eta, true);
-						else
-							eta = '-';
-						
-						if(prg.type == 'stderr' || prg.type == 'stdout') {
-							var LINE_WIDTH = 35;
-							var barSize = Math.floor(chkPerc*LINE_WIDTH);
-							var line = repeatChar('=', barSize) + repeatChar('-', Math.floor(pstPerc * LINE_WIDTH) - barSize);
-							var suffix = '';
-							if(mainPostingDone) {
-								if(uploader.articlesPosted < totalPieces)
-									suffix = ' reposting ' + (totalPieces - uploader.articlesPosted) + ' article(s)';
-								else if(uploader.checkPending || uploader.checkRePending)
-									suffix = ' awaiting check on ' + (uploader.checkPending + uploader.checkRePending) + ' article(s)';
-							} else if(uploader.bytesPosted)
-								suffix = ' ' + friendlySize(speed) + '/s, ETA ' + eta;
-							return '\x1b[0G\x1B[0K ' + lpad(totPerc, 6) + '  [' + rpad(line, LINE_WIDTH) + ']' + suffix;
-						} else {
-							// extended display
-							var ret = '';
-							if(mainPostingDone) {
-								ret = 'Checked: ' + uploader.articlesChecked + ' ('+toPercent(chkPerc) + ')';
-								if(uploader.checkPending || uploader.checkRePending) {
-									if(uploader.checkPending)
-										ret += ', ' + uploader.checkPending + (uploader.checkRePending ? '+'+uploader.checkRePending:'') + ' pending';
-									else
-										ret += ', ' + uploader.checkRePending + ' pending re-check';
-								}
-								if(uploader.articlesPosted < totalPieces)
-									ret += ', ' + (totalPieces - uploader.articlesPosted) + ' to re-post';
-							} else {
-								var posted = '' + uploader.articlesChecked;
-								if(uploader.articlesChecked != uploader.articlesPosted)
-									posted += '+' + (uploader.articlesPosted - uploader.articlesChecked);
-								ret = 'Posted: ' + posted + '/' + totalPieces + ' (' + totPerc + ') @ ' + friendlySize(speed) + '/s (network: ' + friendlySize(uploader.currentNetworkUploadBytes()/uploader.currentNetworkUploadTime()*1000) + '/s) ETA ' + eta;
-								if(ret.length > 80)
-									// if too long, strip the network post speed
-									ret = ret.replace(/ \(network\: [0-9.]+ [A-Zi]+\/s\)/, ',');
-							}
-							return '\x1b[0G\x1B[0K' + ret;
-						}
-					};
-					var prgTarget = prg.type.substr(0, 6);
-					var seInterval = setInterval(function() {
-						byteSamples.add(uploader.bytesPosted);
-						progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);
-						if(uploader.articlesPosted == totalPieces && uploader.numCheckConns)
-							mainPostingDone = true; // we've moved into a 'primarily checking' phase
-						process[prgTarget].write(getProcessIndicator());
-					}, 1000);
-					process.on('finished', function() {
-						clearInterval(seInterval);
-						// force final progress to be written; this will usually be cleared and hence be unnecessary, but can be useful if someone's parsing the output
-						process[prgTarget].write(getProcessIndicator());
-						
-						if(reportOnEnd) {
-							getCompleteStatus = function(err) {
-								var now = Date.now();
-								
-								return (err ? 'Process has been aborted.' : 'Process complete.') + ' Report follows:\n' +
-									'         Elapsed time: ' + friendlyTime(now-startTime) + '\n' +
-								'         ' + progressReport(now).join('\n         ');
-							};
-						}
-					});
-					// if unexpected exit, force a newline to prevent some possible terminal corruption
-					process.on('exit', writeNewline);
-				break;
-				case 'tcp':
-				case 'http':
-					var writeState = function(conn) {
-						var now = Date.now();
-						
-						// TODO: JSON output etc
-						conn.write([
-							'Time: ' + (new Date(now)),
-							'Start time: ' + (new Date(startTime)),
-							''
-						].concat(progressReport(now)).concat([
-							'',
-							'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
-							'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
-							'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
-							'Re-read queue size: ' + uploader.reloadQueue.queue.length,
-							'',
-							'Article activity: ' + uploader.postActive + ' posting, ' + uploader.checkActive + ' checking',
-							'Articles awaiting check: ' + uploader.checkPending + ' + ' + uploader.checkRePending + ' awaiting re-check',
-							'', ''
-						]).join('\r\n'));
-						
-						var dumpConnections = function(conns) {
-							var i = 0;
-							conns.forEach(function(c) {
-								conn.write('Connection #' + (++i) + '\r\n');
-								if(c) {
-									conn.write([
-										'  State: ' + c.getCurrentActivity() + (c.lastActivity ? ' for ' + ((now - c.lastActivity)/1000) + 's' : ''),
-										'  Transfer: ' + friendlySize(c.bytesRecv) + ' down / ' + friendlySize(c.bytesSent) + ' up',
-										'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
-										'  Reconnects: ' + (c.numConnects-1),
-										'  Errors: ' + c.numErrors,
-										'', ''
-									].join('\r\n'));
-								} else {
-									conn.write('  State: finished\r\n\r\n')
-								}
-							});
-						};
-						if(uploader.postConnections.length) {
-							conn.write('===== Post Connections\' Status =====\r\n');
-							dumpConnections(uploader.postConnections);
-						}
-						if(uploader.checkConnections.length) {
-							conn.write('===== Check Connections\' Status =====\r\n');
-							dumpConnections(uploader.checkConnections);
-						}
-					};
-					
-					var server;
-					if(prg.type == 'http') {
-						var url = require('url');
-						server = require('http').createServer(function(req, resp) {
-							var path = url.parse(req.url).pathname.replace(/\/$/, '');
-							var m;
-							if(m = path.match(/^\/(post|check)queue\/?$/)) {
-								// dump post/check queue
-								var isCheckQueue = (m[1] == 'check');
-								resp.writeHead(200, {
-									'Content-Type': 'text/plain'
-								});
-								var dumpPost = function(post) {
-									var subj = post.getHeader('subject');
-									if(subj === null) subj = '[unknown, post evicted from cache]';
-									resp.write([
-										'Message-ID: ' + post.messageId,
-										'Subject: ' + subj,
-										'Body length: ' + post.postLen,
-										'Post attempts: ' + post.postTries,
-										''
-									].join('\r\n'));
-									if(isCheckQueue)
-										resp.write('Check attempts: ' + post.chkFailures + '\r\n');
-								};
-								uploader[isCheckQueue ? 'checkQueue' : 'queue'].queue.forEach(function(post) {
-									dumpPost(post);
-									resp.write('\r\n');
-								});
-								if(isCheckQueue && uploader.checkQueue.pendingAdds) {
-									resp.write('\r\n===== Delayed checks =====\r\n');
-									for(var k in uploader.checkQueue.queuePending) {
-										dumpPost(uploader.checkQueue.queuePending[k].data);
-										resp.write('\r\n');
-									}
-								}
-								resp.end();
-							} else if(m = path.match(/^\/(check)queue\/([^/]+)\/?$/)) {
-								// search queue for target post
-								var q = uploader.checkQueue.queue;
-								var post;
-								for(var k in q) {
-									if(q[k].messageId == m[2]) {
-										post = q[k];
-										break;
-									}
-								}
-								if(!post) {
-									// check deferred queue too
-									var q = uploader.checkQueue.queuePending;
-									for(var k in q) {
-										if(q[k].data.messageId == m[2]) {
-											post = q[k].data;
-											break;
-										}
-									}
-								}
-								if(post) {
-									if(post.data) {
-										// dump post from check queue
-										resp.writeHead(200, {
-											'Content-Type': 'message/rfc977' // our made up MIME type; follows similarly to SMTP mail
-										});
-										resp.write(post.data);
-									} else {
-										resp.writeHead(500, {
-											'Content-Type': 'text/plain'
-										});
-										resp.write('Specified post exists, but cannot be retrieved as it has been evicted from cache');
-									}
-								} else {
-									resp.writeHead(404, {
-										'Content-Type': 'text/plain'
-									});
-									resp.write('Specified post not found in queue');
-								}
-								resp.end();
-							} else if(!path || path == '/') {
-								// dump overall status
-								resp.writeHead(200, {
-									'Content-Type': 'text/plain'
-								});
-								writeState(resp);
-								resp.end();
-							} else {
-								resp.writeHead(404, {
-									'Content-Type': 'text/plain'
-								});
-								resp.end('Invalid URL');
-							}
-							req.socket.unref();
-						});
-					} else {
-						server = require('net').createServer(function(conn) {
-							writeState(conn);
-							conn.end();
-							conn.unref();
-						});
-					}
-					server.on('error', function(err) {
-						Nyuu.log.warn('StatusServer ' + err.toString());
-					});
-					server.once('listening', process.on.bind(process, 'finished', function() {
-						server.close();
-					}));
-					if(prg.socket) {
-						server.listen(prg.socket, function() {
-							Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening at ' + prg.socket);
-						});
-					} else {
-						server.listen(prg.port, prg.host, function() {
-							var addr = server.address();
-							if(addr.family == 'IPv6')
-								addr = '[' + addr.address + ']:' + addr.port;
-							else
-								addr = addr.address + ':' + addr.port;
-							Nyuu.log.info('Status ' + prg.type.toUpperCase() + ' server listening on ' + addr);
-						});
-					}
-				break;
+			if(prg.type == 'stdoutx' || prg.type == 'stderrx')
+				reportOnEnd = true;
+			if(prg.type.substr(0, 3) == 'std') {
+				// if unexpected exit, force a newline to prevent some possible terminal corruption
+				process.on('exit', writeNewline);
 			}
 		});
+		progressMgr.start(progress, uploader, Nyuu.log, totalPieces, totalSize, startTime, ulOpts.articleSize);
 		
 		displayCompleteMessage = function(err) {
 			if(err)
