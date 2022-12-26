@@ -5,7 +5,10 @@ var toPercent = function(n) {
 	return (Math.round(n*10000)/100).toFixed(2) + '%';
 };
 
-var writeState = function(uploader, startTime, conn) {
+var procman = require('./procman');
+var timerMgr = require('../lib/timeoutwrap');
+
+var writeState = function(uploader, startTime, conn, debug) {
 	var now = Date.now();
 	
 	// TODO: JSON output etc
@@ -17,7 +20,6 @@ var writeState = function(uploader, startTime, conn) {
 		'',
 		'Post queue size: ' + uploader.queue.queue.length + ' (' + toPercent(Math.min(uploader.queue.queue.length/uploader.queue.size, 1)) + ' full)' + (uploader.queue.hasFinished ? ' - finished' : ''),
 		'Check queue size: ' + uploader.checkQueue.queue.length + ' + ' + uploader.checkQueue.pendingAdds + ' delayed' + ' (' + toPercent(Math.min((uploader.checkQueue.queue.length+uploader.checkQueue.pendingAdds)/uploader.checkQueue.size, 1)) + ' full)' + (uploader.checkQueue.hasFinished ? ' - finished' : ''),
-		'Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)',
 		'Re-read queue size: ' + uploader.reloadQueue.queue.length,
 		'',
 		'Article activity: ' + uploader.postActive + ' posting, ' + uploader.checkActive + ' checking',
@@ -50,6 +52,28 @@ var writeState = function(uploader, startTime, conn) {
 	if(uploader.checkConnections.length) {
 		conn.write('===== Check Connections\' Status =====\r\n');
 		dumpConnections(uploader.checkConnections);
+	}
+	
+	if(debug) {
+		conn.write('===== Active Timers =====\r\n');
+		var timers = timerMgr.all();
+		if(timers.length) {
+			conn.write(cliUtil.repeatChar(' ', 20) + '| Remaining / Delay (ms)\r\n');
+			timers.forEach(function(timer) {
+				conn.write(cliUtil.rpad(timer.label, 20, ' ') + '| ' + cliUtil.lpad(''+(now-timer.start), 9, ' ') + '  ' + cliUtil.lpad(''+timer.delay, 9, ' ') + '\r\n');
+			});
+			conn.write('\r\n');
+		} else {
+			conn.write('[none]\r\n\r\n');
+		}
+		
+		// TODO: consider listing managed processes, opened NZB files, buffer pool state, file reader state
+		
+		conn.write('===== Other =====\r\n');
+		conn.write('Check cache size: ' + uploader.checkCache.cacheSize + ' (' + toPercent(Math.min(uploader.checkCache.cacheSize/uploader.checkCache.size, 1)) + ' full)\r\n');
+		var handles = cliUtil.activeHandleCounts();
+		if(handles)
+			conn.write('Active Handles: ' + cliUtil.activeHandlesStr(handles[0]) + '\r\n');
 	}
 };
 
@@ -251,12 +275,12 @@ module.exports = {
 						resp.write('Specified post not found in queue');
 					}
 					resp.end();
-				} else if(!path || path == '/') {
+				} else if(!path || path == '/' || path == '/debug') {
 					// dump overall status
 					resp.writeHead(200, {
 						'Content-Type': 'text/plain'
 					});
-					writeState(uploader, startTime, resp);
+					writeState(uploader, startTime, resp, path == '/debug');
 					resp.end();
 				} else {
 					resp.writeHead(404, {

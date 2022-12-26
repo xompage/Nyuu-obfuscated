@@ -1293,11 +1293,7 @@ var filesToUpload = argv._;
 			setTimeout(function() {
 				var handles = cliUtil.activeHandleCounts();
 				if(handles) {
-					var handleStr = '';
-					for(var hn in handles[0]) {
-						handleStr += ', ' + hn + (handles[0][hn] > 1 ? ' (' + handles[0][hn] + ')' : '');
-					}
-					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + handleStr.substr(2));
+					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + cliUtil.activeHandlesStr(handles[0]));
 					if(verbosity >= 4 && handles[1]) {
 						process.stderr.write(require('util').inspect(handles[1], {colors: argv.colorize}) + '\n');
 					}

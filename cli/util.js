@@ -67,6 +67,13 @@ module.exports = {
 			// TODO: is there any way to exclude stdout/stderr?
 		}
 		return [hTypes, ah];
+	},
+	activeHandlesStr: function(hTypes) {
+		var handleStr = '';
+		for(var hn in hTypes) {
+			handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
+		}
+		return handleStr.substr(2);
 	}
 	
 };
