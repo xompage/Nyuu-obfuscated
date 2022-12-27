@@ -1571,6 +1571,37 @@ it('should ignore posting timeout if requested', function(done) {
 	], done);
 });
 
+it('should retry posting if timeout occurred and timeouts are to be ignored', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {onPostTimeout: ['ignore']}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			client.connect(cb);
+		},
+		function(cb) {
+			assert.equal(client.state, 'connected');
+			
+			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+			server.expect('POST\r\n', function() {
+				// don't respond - timeout should occur and post be retried
+				
+				this.expect('POST\r\n', function() {
+					assert.equal(this.connCount, 2);
+					this.expect(msg, '240 <new-article> Article received ok');
+					this.respond('340  Send article');
+				});
+			});
+			client.post(new DummyPost(msg), cb);
+		},
+		function(a, cb) {
+			assert.equal(a, 'new-article');
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+
 it('should handle server responding early during chunked post upload', function(done) {
 	var server, client;
 	var sendNextChunks = 0;
