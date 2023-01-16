@@ -1184,41 +1184,48 @@ it('should resend request if connection lost before response received', function
 		}
 	], done);
 });
-it('should reattempt to post if connection drops out', function(done) {
-	var server, client;
-	waterfall([
-		setupTest.bind(null, {uploadChunkSize: 1}),
-		function(_server, _client, cb) {
-			server = _server;
-			client = _client;
-			client.connect(cb);
-		},
-		function(cb) {
-			assert.equal(client.state, 'connected');
-			
-			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
-			server.expect('POST\r\n', function() {
-				this.expect(msg, function() {
-					this.expect('POST\r\n', function() {
-						this.expect(msg, '240 <new-article> Article received ok');
+['post','post-upload'].forEach(function(test) {
+	it('should reattempt to post if connection drops out (during '+test+')', function(done) {
+		var server, client;
+		waterfall([
+			setupTest.bind(null, {uploadChunkSize: 1}),
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				assert.equal(client.state, 'connected');
+				
+				var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+				server.expect('POST\r\n', function() {
+					var doRetryAction = function() {
+						server.expect('POST\r\n', function() {
+							this.expect(msg, '240 <new-article> Article received ok');
+							this.respond('340  Send article');
+						});
+						// we'll hijack this test case to check that the input buffer gets cleared on reconnect, by sending some junk data
+						server._conn.write('blah'); // should be ignored by client
+						setTimeout(function() {
+							server.drop();
+						}, 30);
+					};
+					if(test == 'post-upload') {
+						this.expect(msg, doRetryAction);
 						this.respond('340  Send article');
-					});
-					// we'll hijack this test case to check that the input buffer gets cleared on reconnect, by sending some junk data
-					this._conn.write('blah'); // should be ignored by client
-					setTimeout(function() {
-						server.drop();
-					}, 30);
+					} else {
+						doRetryAction();
+					}
 				});
-				this.respond('340  Send article');
-			});
-			client.post(new DummyPost(msg), cb);
-		},
-		function(a, cb) {
-			assert.equal(a, 'new-article');
-			
-			closeTest(client, server, cb);
-		}
-	], done);
+				client.post(new DummyPost(msg), cb);
+			},
+			function(a, cb) {
+				assert.equal(a, 'new-article');
+				
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 
 [false, true].forEach(function(reconn) {
@@ -1773,6 +1780,43 @@ it('should return error if reconnect completely fails during a request', functio
 				assert.equal(client.state, 'inactive');
 				cb();
 			});
+		},
+		function(cb) {
+			closeTest(client, server, cb);
+		}
+	], done);
+});
+it('should return auth fail if connection drops during a request and reconnect fails auth', function(done) {
+	var server, client;
+	waterfall([
+		setupTest.bind(null, {connectRetries: 0}),
+		function(_server, _client, cb) {
+			server = _server;
+			client = _client;
+			setupAuth(client, server);
+			client.connect(cb);
+		},
+		function(cb) {
+			// send req
+			server.expect('POST\r\n', function() {
+				server.expect('AUTHINFO USER nyuu\r\n', function() {
+					assert.equal(client.state, 'authenticating');
+					this.expect('AUTHINFO PASS iamreallylucy\r\n', function() {
+						this.respond('482 Too many connections');
+					});
+					this.respond('381 Give AUTHINFO PASS command');
+				});
+				this.disconnect();
+			});
+			client.post(new DummyPost('a'), tl.fn1(function(err, messageId) {
+				assert(!messageId);
+				assert.equal(err.code, 'connect_fail');
+				assert.equal(client.state, 'inactive');
+				cb();
+			}));
+		},
+		function(cb) {
+			closeTest(client, server, cb);
 		}
 	], done);
 });
@@ -2205,37 +2249,44 @@ it('should give up after max request retries hit', function(done) {
 		}
 	], done);
 });
-it('should give up after max request retries hit (post timeout)', function(done) {
-	var server, client;
-	waterfall([
-		setupTest,
-		function(_server, _client, cb) {
-			server = _server;
-			client = _client;
-			client.connect(cb);
-		},
-		function(cb) {
-			var allDone = false;
-			var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
-			async.timesSeries(6, function(n, cb) {
-				server.expect('POST\r\n', function() {
-					this.expect(msg, cb);
-					this.respond('340  Send article');
+['post','post-upload'].forEach(function(test) {
+	it('should give up after max request retries hit ('+test+' timeout)', function(done) {
+		var server, client;
+		waterfall([
+			setupTest,
+			function(_server, _client, cb) {
+				server = _server;
+				client = _client;
+				client.connect(cb);
+			},
+			function(cb) {
+				var allDone = false;
+				var msg = 'My-Secret: not telling\r\n\r\nNyuu breaks free again!\r\n.\r\n';
+				async.timesSeries(6, function(n, cb) {
+					if(test == 'post-upload') {
+						server.expect('POST\r\n', function() {
+							this.expect(msg, cb);
+							this.respond('340  Send article');
+						});
+					} else {
+						server.expect('POST\r\n', cb);
+					}
+				}, function(err) {
+					if(err) throw err;
+					allDone = true;
 				});
-			}, function(err) {
-				if(err) throw err;
-				allDone = true;
-			});
-			client.post(new DummyPost(msg), function(err, messageId) {
-				assert.equal(err.code, 'timeout');
-				assert(messageId); // should still return the message-id because we accepted the POST request
-				assert(allDone);
-				cb();
-			});
-		}, function(cb) {
-			closeTest(client, server, cb);
-		}
-	], done);
+				client.post(new DummyPost(msg), function(err, messageId) {
+					assert.equal(err.code, 'timeout');
+					if(test == 'post-upload')
+						assert(messageId); // should still return the message-id because we accepted the POST request
+					assert(allDone);
+					cb();
+				});
+			}, function(cb) {
+				closeTest(client, server, cb);
+			}
+		], done);
+	});
 });
 it('should give up after max post retries hit');
 
