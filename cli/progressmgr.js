@@ -35,9 +35,9 @@ var writeState = function(uploader, startTime, conn, debug) {
 				conn.write([
 					'  State: ' + c.getCurrentActivity() + (c.lastActivity ? ' for ' + ((now - c.lastActivity)/1000) + 's' : ''),
 					'  Transfer: ' + cliUtil.friendlySize(c.bytesRecv) + ' down / ' + cliUtil.friendlySize(c.bytesSent) + ' up',
-					'  Requests: ' + c.numRequests + ' (' + c.numPosts + ' posts)',
+					'  Requests: ' + c.numRequestsDetail(),
 					'  Connects: ' + c.numConnects,
-					'  Errors: ' + c.numErrors,
+					'  Errors: ' + c.numErrorsDetail(),
 					'', ''
 				].join('\r\n'));
 			} else {
