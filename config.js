@@ -84,6 +84,7 @@ useLazyConnect: false, // if true, will only create connections when needed, rat
 /** Post/Article Options **/
 articleSize: 716800, // in bytes, must be a multiple of 2
 bytesPerLine: 128, // in bytes, note: as per yEnc specifications, it's possible to exceed this number
+articleEncoding: 'utf8', // must be an "8-bit charset" (i.e. not utf16 or the like)
 
 postDate: null, // if set, override timestamps used for Message-ID header, Date header and NZB timestamps
 keepMessageId: false, // if true, don't randomize Message-ID header every time the post is submitted; if custom function supplied for Message-ID, it is called when it is to be regenerated

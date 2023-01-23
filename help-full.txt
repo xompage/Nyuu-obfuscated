@@ -156,6 +156,9 @@ Article/Post Options:
                              This option can be specified multiple times. Note
                              that specifying the same header more than once is
                              currently not supported.
+       --article-encoding    Character encoding used in article/yEnc headers.
+                             Also affects NNTP commands. Accepted values are
+                             `ascii`, `latin1` and `utf8` (default `utf8`)
 
 Post Check Options:
 

@@ -147,7 +147,7 @@ NNTPConnection.prototype = {
 	
 	onData: function(chunk) {
 		// grab incomming lines
-		this.dataQueue += chunk.toString();
+		this.dataQueue += chunk.toString('binary');
 		if(this.postMode) {
 			return this.onPostData();
 		}
@@ -254,7 +254,7 @@ NNTPConnection.prototype = {
 		var p = data.indexOf('\r\n\r\n');
 		if(p < 0) return false;
 		sData = sData.substr(0, p+2);
-		data = data.slice(new Buffer(sData).length + 2);
+		data = data.slice(new Buffer(sData, 'binary').length + 2);
 		
 		// parse headers
 		var h = {};
@@ -269,10 +269,10 @@ NNTPConnection.prototype = {
 		return this.server.addPost(h, data);
 	},
 	_respond: function(code, msg) {
-		this.conn.write(code + ' ' + msg + '\r\n');
+		this.conn.write(code + ' ' + msg + '\r\n', 'binary');
 		// slower, but may pick up more bugs?
 		/* this.conn.write(code + ' ');
-		this.conn.write(msg);
+		this.conn.write(msg, 'binary');
 		this.conn.write('\r\n'); */
 	}
 };

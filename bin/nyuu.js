@@ -311,6 +311,12 @@ var optMap = {
 			return v;
 		}
 	},
+	'article-encoding': {
+		type: 'enum',
+		enum: ['ascii','latin1','utf8'],
+		map: 'articleEncoding',
+		default: 'utf8'
+	},
 	comment: {
 		type: 'string',
 		alias: 't',
