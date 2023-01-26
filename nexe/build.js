@@ -10,6 +10,7 @@ var nexeBase = './build';
 var nodeVer = process.env.BUILD_NODEVER || '12.22.12';
 var staticness = process.env.BUILD_STATIC || '--fully-static'; // set to '--partly-static' if building with glibc
 var vsSuite = null; // if on Windows, and it's having trouble finding Visual Studio, try set this to, e.g. 'vs2019' or 'vs2017'
+// downloads can be disabled by editing the 'sourceUrl' line below; source code needs to be placed in `${nexeBase}/${nodeVer}`
 
 var yencSrc = './node_modules/yencode/';
 var nexe = require('nexe');
@@ -233,6 +234,20 @@ void yencode_init(Local<Object> exports, Local<Value> module, Local<Context> con
 		// strip icon
 		async (compiler, next) => {
 			await compiler.replaceInFileAsync('src/res/node.rc', /1 ICON node\.ico/, '');
+			return next();
+		},
+		
+		// fix for NodeJS 12 on MSVC 2019 x86
+		async (compiler, next) => {
+			if(parseFloat(nodeVer) >= 12 && parseFloat(nodeVer) < 13 && buildOs == 'win32' && buildArch == 'x86') {
+				// for whatever reason, building Node 12 using 2019 build tools results in a horribly broken executable, but works fine in 2017
+				// Node's own Windows builds seem to be using 2017 for Node 12.x
+				var data = await compiler.readFileAsync('vcbuild.bat');
+				data = data.contents.toString();
+				data = data.replace('GYP_MSVS_VERSION=2019', 'GYP_MSVS_VERSION=2017'); // seems to be required, even if no MSI is built
+				data = data.replace('PLATFORM_TOOLSET=v142', 'PLATFORM_TOOLSET=v141');
+				await compiler.setFileContentsAsync('vcbuild.bat', data);
+			}
 			return next();
 		},
 		
