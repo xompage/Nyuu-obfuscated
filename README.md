@@ -286,7 +286,7 @@ command like `export AR=gcc-ar`
 Usage
 =====
 
-For command line usage, [see here](help.txt), [or here](help-short.txt) for a
+For command line usage, [see here](help-full.txt), [or here](help.txt) for a
 summarized list of options.
 
 Default Configuration

@@ -1,6 +1,6 @@
 {
 " This is a sample config file which can be given to Nyuu using the -C flag ":0,
-" See help-short.txt for an explanation for what each item does ":0,
+" See help.txt for an explanation for what each item does ":0,
 " Be aware that this file needs to be formatted as JSON. Basically, values you give need to be surrounded by double-quotes with a comma at the end (see below for examples). The only values which don't use quotes are integers and the special values 'true', 'false' and 'null' ":0,
 
 " *** Server Options *** ":0,
