@@ -214,9 +214,17 @@ var servOptMap = {
 	},
 };
 
+var randStr = function(len) {
+	var rnd = '';
+	var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	while(len--)
+		rnd += chars[(Math.random() * chars.length) | 0];
+	return rnd;
+};
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
 var _mainTransform = function(rx, v) {
 	if(!v) return;
+	if(!rx.test(v)) return v; // shortcut: if no tokens are used, don't force function evaluation
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, extra) {
 		return v.replace(rx, function(m, token, a1) {
@@ -243,11 +251,7 @@ var _mainTransform = function(rx, v) {
 				case 'value': return extra;
 				default:
 					// rand(n)
-					var rnd = '';
-					var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-					while(a1--)
-						rnd += chars[(Math.random() * chars.length) | 0];
-					return rnd;
+					return randStr(a1);
 			}
 		});
 	};
@@ -260,7 +264,7 @@ var filenameTransformFn = function(v) {
 	if(!v) return;
 	var path = require('path');
 	return function(filename) {
-		return v.replace(/\$?\{(filename|basename|pathname)\}/ig, function(m, token, a1) {
+		return v.replace(/\$?\{(filename|basename|pathname|rand\((\d+)\))\}/ig, function(m, token, a1) {
 			switch(token.toLowerCase()) {
 				case 'basename':
 					return path.basename(filename);
@@ -268,6 +272,9 @@ var filenameTransformFn = function(v) {
 					return path.dirname(filename);
 				case 'filename':
 					return filename;
+				default:
+					// rand(n)
+					return randStr(a1);
 			}
 		});
 	};
@@ -365,12 +372,14 @@ var optMap = {
 	from: {
 		type: 'string',
 		alias: 'f',
-		map: 'postHeaders/From'
+		map: 'postHeaders/From',
+		fn: articleHeaderFn
 	},
 	groups: {
 		type: 'string',
 		alias: 'g',
-		map: 'postHeaders/Newsgroups'
+		map: 'postHeaders/Newsgroups',
+		fn: articleHeaderFn
 	},
 	'message-id': {
 		type: 'string',
@@ -924,7 +933,7 @@ if(argv.header) {
 		if(!kk) {
 			headerCMap[k.toLowerCase()] = kk = k;
 		}
-		ulOpts.postHeaders[kk] = argv.header[k];
+		ulOpts.postHeaders[kk] = articleHeaderFn(argv.header[k]);
 	}
 }
 

@@ -125,6 +125,8 @@ Article/Post Options:
                                             specified in command supplied
                                  {basename} Base file name without path
                                  {pathname} Path component of file name
+                             This also accepts the ${rand(N)} token (see
+                             `--subject`).
                              Default is `{basename}` which effectively
                              discards path names.
                              Note that this option has no effect on files not
@@ -156,6 +158,8 @@ Article/Post Options:
                              This option can be specified multiple times. Note
                              that specifying the same header more than once is
                              currently not supported.
+                             Tokens listed in the `--subject` option can be used
+                             in the header value.
        --article-encoding    Character encoding used in article/yEnc headers.
                              Also affects NNTP commands. Accepted values are
                              `ascii`, `latin1` and `utf8` (default `utf8`)
