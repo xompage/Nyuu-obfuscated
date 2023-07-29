@@ -257,6 +257,7 @@ var _mainTransform = function(rx, v) {
 	};
 };
 var articleHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig);
+var yencNameFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|parts|comment2?|rand\((\d+)\))\}/ig);
 var nzbHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|value)\}/ig);
 var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts)\}/ig;
 var fileTransformFn = _mainTransform.bind(null, RE_FILE_TRANSFORM);
@@ -324,6 +325,11 @@ var optMap = {
 		map: 'articleEncoding',
 		default: 'utf8'
 	},
+	'yenc-name': {
+		type: 'string',
+		map: 'yencName',
+		fn: yencNameFn
+	},
 	comment: {
 		type: 'string',
 		alias: 't',
@@ -355,7 +361,7 @@ var optMap = {
 		map: 'groupFiles'
 	},
 	header: {
-		type: 'map',
+		type: 'map2',
 		alias: 'H'
 	},
 	subject: {
@@ -933,7 +939,10 @@ if(argv.header) {
 		if(!kk) {
 			headerCMap[k.toLowerCase()] = kk = k;
 		}
-		ulOpts.postHeaders[kk] = articleHeaderFn(argv.header[k]);
+		if(argv.header[k] === undefined)
+			delete ulOpts.postHeaders[kk];
+		else
+			ulOpts.postHeaders[kk] = articleHeaderFn(argv.header[k]);
 	}
 }
 

@@ -85,6 +85,7 @@ useLazyConnect: false, // if true, will only create connections when needed, rat
 articleSize: 716800, // in bytes, must be a multiple of 2
 bytesPerLine: 128, // in bytes, note: as per yEnc specifications, it's possible to exceed this number
 articleEncoding: 'utf8', // must be an "8-bit charset" (i.e. not utf16 or the like)
+yencName: null, // set this to a function to overwrite/customise the 'name' field in the yEnc header; arguments are same as those for 'postHeaders' functions, with the 'part' argument always being 1
 
 postDate: null, // if set, override timestamps used for Message-ID header, Date header and NZB timestamps
 keepMessageId: false, // if true, don't randomize Message-ID header every time the post is submitted; if custom function supplied for Message-ID, it is called when it is to be regenerated
@@ -93,6 +94,7 @@ comment2: '', // subject post-comment
 groupFiles: false, // group "similar" files (based on filename) together into sub-collections, similar to how usenet indexers would do it; only affects the file counter in the subject line
 
 // if any of the following are functions, they'll be called with args(filenum, filenumtotal, filename, size, part, parts)
+// - if the function returns null/undefined, the header is not sent
 // Note: for Message-ID (if the keepMessageId option is true), the function should return strings that wont't vary in length for the same post, as Nyuu requires same length Message IDs to be used when re-generating the ID
 postHeaders: {
 	// required headers

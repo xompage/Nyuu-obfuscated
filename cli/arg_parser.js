@@ -57,7 +57,7 @@ module.exports = function(argv, opts) {
 		var o = opts[key];
 		if(o === undefined)
 			throw new Error('Unknown option `' + key + '`');
-		var isMultiple = (['list','array','map'].indexOf(o.type) !== -1);
+		var isMultiple = (['list','array','map','map2'].indexOf(o.type) !== -1);
 		if((key in ret) && !isMultiple)
 			throw new Error('Option `' + key + '` specified more than once');
 		
@@ -105,7 +105,7 @@ module.exports = function(argv, opts) {
 			}
 			
 			if(!(key in ret))
-				ret[key] = (o.type == 'map') ? {} : [];
+				ret[key] = (o.type == 'map' || o.type == 'map2') ? {} : [];
 			else if(!ret[key]) { // option set to a special scalar value
 				if(ret[key] === null)
 					throw new Error('No value specified for `' + key + '`');
@@ -123,9 +123,12 @@ module.exports = function(argv, opts) {
 					ret[key].push(val);
 					break;
 				case 'map':
+				case 'map2':
 					var m;
 					if(m = val.match(/^(.+?)[=:](.*)$/))
 						ret[key][m[1].trim()] = m[2].trim();
+					else if(o.type == 'map2')
+						ret[key][val.trim()] = undefined;
 					else
 						throw new Error('Invalid format for `' + key + '`');
 					break;
@@ -192,7 +195,7 @@ module.exports = function(argv, opts) {
 						throw new Error('Unexpected value specified in `' + arg + '`');
 					var k = arg.substr(5).toLowerCase();
 					var opt = opts[k];
-					if(opt && ['list','array','map','bool'].indexOf(opt.type) === -1)
+					if(opt && ['list','array','map','map2','bool'].indexOf(opt.type) === -1)
 						// note that, for multi-value types, --no-opt explicitly sets a blank array/map
 						throw new Error('Cannot specify `' + arg + '`');
 					setKey(k, false, true);
@@ -263,11 +266,11 @@ module.exports = function(argv, opts) {
 		var o = opts[k];
 		if(o.default !== undefined && !(k in ret))
 			ret[k] = o.default;
-		else if((k in ret) && ['list','array','map'].indexOf(o.type) !== -1 && !ret[k])
+		else if((k in ret) && ['list','array','map','map2'].indexOf(o.type) !== -1 && !ret[k])
 			if(ret[k] === null)
 				ret[k] = o.ifSetDefault;
 			else
-				ret[k] = (o.type == 'map') ? {} : [];
+				ret[k] = (o.type == 'map' || o.type == 'map2') ? {} : [];
 		
 		if(!(k in ret) && o.required)
 			throw new Error('Missing value for `' + k + '`');
@@ -336,7 +339,7 @@ var parseObject = function(config, opts) {
 				
 				case 'array':
 				case 'list': // will be parsed later
-				case 'map': // will be parsed later
+				case 'map': case 'map2': // will be parsed later
 					v = [v];
 					break;
 			}
@@ -377,12 +380,17 @@ var parseObject = function(config, opts) {
 				ret[k] = v;
 				break;
 			case 'map':
+			case 'map2':
 				if(Array.isArray(v)) { // array of strings -> parse to object
 					ret[k] = {};
 					v.forEach(function(s) {
+						if(typeof s !== 'string')
+							throw new Error('Invalid format for `' + k + '`');
 						var m;
-						if(typeof s === 'string' && (m = s.match(/^(.+?)[=:](.*)$/)))
+						if(m = s.match(/^(.+?)[=:](.*)$/))
 							ret[k][m[1].trim()] = m[2].trim();
+						else if(opt.type == 'map2')
+							ret[k][s.trim()] = undefined;
 						else
 							throw new Error('Invalid format for `' + k + '`');
 					});

@@ -99,7 +99,7 @@ Article/Post Options:
                                              respectively, e.g. {filemsize}
                                  {fileasize} Friendly formatted file size, e.g.
                                              '4.85 MiB' or '35.1 GiB'
-                                 {part}      Article part number
+                                 {part}      Article part number, starts at 1
                                  {0part}     Article part number, pre-padded
                                              with 0's to be as long as {parts}
                                  {parts}     Number of articles for the file
@@ -155,11 +155,19 @@ Article/Post Options:
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
+                                 -H MyHeader
+                             The first two set MyHeader to MyValue, whilst the
+                             third unsets the header MyHeader.
                              This option can be specified multiple times. Note
                              that specifying the same header more than once is
                              currently not supported.
                              Tokens listed in the `--subject` option can be used
                              in the header value.
+       --yenc-name           Override the value of the 'name' field in the yEnc
+                             header. This option accepts the same tokens as
+                             `--subject`, except for {size}, {timestamp}, {part}
+                             and {0part}.
+                             Default is `{filename}`
        --article-encoding    Character encoding used in article/yEnc headers.
                              Also affects NNTP commands. Accepted values are
                              `ascii`, `latin1` and `utf8` (default `utf8`)
