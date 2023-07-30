@@ -935,13 +935,16 @@ if(argv.header) {
 	
 	for(var k in argv.header) {
 		// handle casing wierdness
-		var kk = headerCMap[k.toLowerCase()];
+		var kl = k.toLowerCase();
+		var kk = headerCMap[kl];
 		if(!kk) {
-			headerCMap[k.toLowerCase()] = kk = k;
+			headerCMap[kl] = kk = k;
 		}
-		if(argv.header[k] === undefined)
+		if(argv.header[k] === undefined) {
+			if(kl == 'message-id')
+				error('The Message-ID header cannot be unset');
 			delete ulOpts.postHeaders[kk];
-		else
+		} else
 			ulOpts.postHeaders[kk] = articleHeaderFn(argv.header[k]);
 	}
 }
