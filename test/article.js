@@ -11,7 +11,7 @@ describe('Article', function() {
 
 var simpleCheck = function(pool) {
 	var a = new MultiEncoder('some\nfile', 6, 3);
-	assert.equal(a.filename, 'somefile');
+	assert.equal(a.filename, 'some\nfile');
 	assert.ok(a.line_size);
 	
 	var s;
@@ -19,7 +19,7 @@ var simpleCheck = function(pool) {
 	a.setHeaders({
 		Subject: 'first post!',
 		From: function(filename, filesize, part, parts, post) {
-			assert.equal(filename, 'somefile');
+			assert.equal(filename, 'some\nfile');
 			assert.equal(filesize, 6);
 			assert.equal(part, 1);
 			assert.equal(parts, 2);
@@ -36,6 +36,7 @@ var simpleCheck = function(pool) {
 	
 	// first part should not have a crc32 (but may have a pcrc32)
 	assert(!s.match(/[^p]crc32=/));
+	assert(s.match(/name=somefile/));
 	assert.notEqual(headers.indexOf('first post!'), -1);
 	assert.equal(a1Headers.subject, 'first post!');
 	assert.notEqual(headers.indexOf('fromfield'), -1);
@@ -44,7 +45,16 @@ var simpleCheck = function(pool) {
 	// TODO: consider parsing data and checking everything
 	
 	a.setHeaders({
-		'X-Test': ''
+		'X-Test': '',
+		'Message-ID': function(filename, filesize, part, parts, post) {
+			assert.equal(filename, 'some\nfile');
+			assert.equal(filesize, 6);
+			assert.equal(part, 2);
+			assert.equal(parts, 2);
+			assert.equal(post.rawSize, 3);
+			return 'test\u0080msgid';
+		},
+		missing: function() { return null; }
 	});
 	var a2Headers = {};
 	var a2 = a.generate(new Buffer('def'), pool, a2Headers);
@@ -57,6 +67,8 @@ var simpleCheck = function(pool) {
 	assert.notEqual(headers.indexOf('X-Test:'), -1);
 	assert.equal(a2Headers['x-test'], '');
 	assert(!a2Headers.subject); // since we didn't supply one
+	assert(!('missing' in a2Headers));
+	assert.equal(a2.messageId, 'test.msgid'); // Unicode character should be replaced
 	
 	assert.equal(a.pos, 6);
 	
