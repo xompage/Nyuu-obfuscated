@@ -190,17 +190,17 @@ module.exports = function(argv, opts) {
 				}
 
 				var eq = arg.indexOf('=');
-				if(arg.substr(2, 3).toLowerCase() === 'no-') { // TODO: consider allowing options which start with 'no-' ?
+				if(arg.substring(2, 5).toLowerCase() === 'no-') { // TODO: consider allowing options which start with 'no-' ?
 					if(eq !== -1)
 						throw new Error('Unexpected value specified in `' + arg + '`');
-					var k = arg.substr(5).toLowerCase();
+					var k = arg.substring(5).toLowerCase();
 					var opt = opts[k];
 					if(opt && ['list','array','map','map2','bool'].indexOf(opt.type) === -1)
 						// note that, for multi-value types, --no-opt explicitly sets a blank array/map
 						throw new Error('Cannot specify `' + arg + '`');
 					setKey(k, false, true);
 				} else {
-					var k = arg.substr(2);
+					var k = arg.substring(2);
 					if(eq === -1) {
 						k = k.toLowerCase();
 						var opt = opts[k];
@@ -216,7 +216,7 @@ module.exports = function(argv, opts) {
 							}
 						}
 					} else
-						setKey(k.substr(0, eq-2).toLowerCase(), arg.substr(eq+1), true);
+						setKey(k.substring(0, eq-2).toLowerCase(), arg.substring(eq+1), true);
 				}
 				
 			} else {
@@ -245,7 +245,7 @@ module.exports = function(argv, opts) {
 							var explicit = (arg[j] === '=');
 							if(!explicit && j>2) // have something like `-bkval` where `-b` is a bool and `-k` expects a value, this is vague and may signify user error, so reject this
 								throw new Error('Ambiguous option `' + arg + '` supplied, as `' + arg[j] + '` (`' + k + '`) expects a value; please check usage');
-							setKey(k, arg.substr(j + explicit), explicit);
+							setKey(k, arg.substring(j + explicit), explicit);
 						}
 						
 						break;

@@ -182,7 +182,7 @@ module.exports = {
 							return '\x1b[0G\x1B[0K' + ret;
 						}
 					};
-					var prgTarget = prg.type.substr(0, 6);
+					var prgTarget = prg.type.substring(0, 6);
 					var seInterval = setInterval(function() {
 						byteSamples.add(uploader.bytesPosted);
 						progressSamples.add((uploader.articlesChecked + uploader.articlesPosted)/2);

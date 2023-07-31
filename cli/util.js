@@ -73,7 +73,7 @@ module.exports = {
 		for(var hn in hTypes) {
 			handleStr += ', ' + hn + (hTypes[hn] > 1 ? ' (' + hTypes[hn] + ')' : '');
 		}
-		return handleStr.substr(2);
+		return handleStr.substring(2);
 	}
 	
 };

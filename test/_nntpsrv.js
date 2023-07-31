@@ -54,9 +54,9 @@ NNTPServer.prototype = {
 		if(!headers.newsgroups) throw new Error('Post missing groups spec');
 		var messageId = headers['message-id'];
 		if(messageId) {
-			if(messageId.substr(0, 1) != '<' || messageId.substr(-1, 1) != '>')
+			if(messageId.substring(0, 1) != '<' || messageId.slice(-1) != '>')
 				throw new Error('Received malformed Message-ID: ' + messageId);
-			messageId = messageId.substr(1, messageId.length-2);
+			messageId = messageId.substring(1, messageId.length-1);
 		}
 		if(('message-id' in headers) && (messageId in this.postIdMap))
 			return false;
@@ -153,12 +153,12 @@ NNTPConnection.prototype = {
 		}
 		var p;
 		while((p = this.dataQueue.indexOf('\r\n')) >= 0) {
-			var line = this.dataQueue.substr(0, p);
-			this.dataQueue = this.dataQueue.substr(p+2);
+			var line = this.dataQueue.substring(0, p);
+			this.dataQueue = this.dataQueue.substring(p+2);
 			
 			var m = line.match(/^([A-Za-z]+) ?/);
 			if(!m) throw new Error('Unexpected message format: ' + line);
-			this.onRequest(m[1].toUpperCase(), line.substr(m[0].length));
+			this.onRequest(m[1].toUpperCase(), line.substring(m[0].length));
 			
 			if(this.postMode) {
 				return this.onPostData();
@@ -170,12 +170,12 @@ NNTPConnection.prototype = {
 		if(p >= 0) {
 			// post received
 			var messageId;
-			if(messageId = this.addPost(this.dataQueue.substr(0, p))) {
+			if(messageId = this.addPost(this.dataQueue.substring(0, p))) {
 				this._respond(240, '<' + messageId + '> Article received ok');
 			} else {
 				this._respond(441, ''); // TODO: fix 
 			}
-			this.dataQueue = this.dataQueue.substr(p+5);
+			this.dataQueue = this.dataQueue.substring(p+5);
 			this.postMode = false;
 			return this.onData('');
 		}
@@ -253,7 +253,7 @@ NNTPConnection.prototype = {
 		var sData = data.toString();
 		var p = data.indexOf('\r\n\r\n');
 		if(p < 0) return false;
-		sData = sData.substr(0, p+2);
+		sData = sData.substring(0, p+2);
 		data = data.slice(new Buffer(sData, 'binary').length + 2);
 		
 		// parse headers

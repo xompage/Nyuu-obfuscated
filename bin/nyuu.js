@@ -736,7 +736,7 @@ if(argv.config || process.env.NYUU_CONFIG) {
 		confType = 'json';
 	else if(confFile.match(/\.js$/i))
 		confType = 'js';
-	else if(confData.trim().substr(0, 1) == '{')
+	else if(confData.trim().substring(0, 1) == '{')
 		confType = 'json';
 	else if(confData.match(/(^|[^a-zA-Z0-9])exports[^a-zA-Z0-9]/))
 		confType = 'js';
@@ -825,7 +825,7 @@ var servOptHelper = function(k, val, type, servers) {
 		case 'host':
 			if(val.match(/^unix:/i)) {
 				key = 'connect/path';
-				val  = val.substr(5);
+				val  = val.substring(5);
 			} else
 				key = 'connect/host';
 		break;
@@ -893,7 +893,7 @@ if(argv['dump-failed-posts']) {
 		if(fs.statSync(argv['dump-failed-posts']).isDirectory()) {
 			// if supplied a folder, append a directory separator if not supplied
 			var sep = require('path').sep;
-			if(ulOpts.dumpPostLoc.substr(-1) != sep)
+			if(ulOpts.dumpPostLoc.slice(-1) != sep)
 				ulOpts.dumpPostLoc += sep;
 		}
 	} catch(x) {}
@@ -909,7 +909,7 @@ if(argv['copy-input']) {
 	
 	var copyProc = copyTarget.match(/^proc:\/\//i);
 	if(copyProc)
-		copyTarget = copyTarget.substr(7);
+		copyTarget = copyTarget.substring(7);
 	
 	ulOpts.inputCopy = function(filename, size) {
 		if(copyIncl && !filename.match(copyIncl)) return;
@@ -986,13 +986,13 @@ if(argv['out']) {
 	if(argv['out'] == '-') {
 		ulOpts.nzb.writeTo = process.stdout;
 	} else if(/^fd:\/\/\d+$/i.test(argv['out'])) {
-		ulOpts.nzb.writeTo = fs.createWriteStream(null, {fd: argv['out'].substr(5)|0, encoding: ulOpts.nzb.writeOpts.encoding});
+		ulOpts.nzb.writeTo = fs.createWriteStream(null, {fd: argv['out'].substring(5)|0, encoding: ulOpts.nzb.writeOpts.encoding});
 	} else {
 		var outTokens = RE_FILE_TRANSFORM.test(argv['out']);
 		var nzbOpts = ulOpts.nzb;
 		if(outTokens) delete nzbOpts.writeTo;
 		if(/^proc:\/\//i.test(argv['out'])) {
-			var proc = argv['out'].substr(7);
+			var proc = argv['out'].substring(7);
 			if(outTokens) {
 				var tr = fileTransformFn(proc), procsStarted = {};
 				ulOpts.nzb = function() {
@@ -1052,7 +1052,7 @@ if(argv.progress) {
 		var m = str.match(/^([a-z]+)(:|$)/i);
 		if(!m) error('Unknown progress specification: ' + str);
 		var type = m[1].toLowerCase();
-		var arg = str.substr(m[0].length);
+		var arg = str.substring(m[0].length);
 		switch(type) {
 			case 'log':
 				progress.push({type: 'log', interval: arg_parser.parseTime(arg) || 60*1000});
@@ -1072,12 +1072,12 @@ if(argv.progress) {
 			case 'tcp':
 			case 'http':
 				var o = {type: type, port: 0};
-				if(arg.substr(0, 5) == 'unix:') {
-					o.socket = arg.substr(5);
+				if(arg.substring(0, 5) == 'unix:') {
+					o.socket = arg.substring(5);
 				} else if(m = arg.match(/^([a-z0-9\-.]*|\[[a-f0-9:]+\]):(\d*)$/i)) {
 					if(m[1].length) {
-						if(m[1].substr(0, 1) == '[')
-							o.host = m[1].substr(1, m[1].length-2);
+						if(m[1].substring(0, 1) == '[')
+							o.host = m[1].substring(1, m[1].length-1);
 						else
 							o.host = m[1];
 					}
@@ -1211,7 +1211,7 @@ var filesToUpload = argv._;
 					stdInUsed = true;
 					stream = process.stdin;
 				} else {
-					stream = fs.createReadStream(null, {fd: fl[0].substr(5)|0});
+					stream = fs.createReadStream(null, {fd: fl[0].substring(5)|0});
 				}
 				// read from stream
 				var data = '';
@@ -1223,7 +1223,7 @@ var filesToUpload = argv._;
 				});
 				stream.once('error', cb);
 			} else if(/^proc:\/\//i.test(fl[0])) {
-				require('child_process').exec(fl[0].substr(7), {maxBuffer: 1048576*32, encoding: inlistEnc}, function(err, stdout, stderr) {
+				require('child_process').exec(fl[0].substring(7), {maxBuffer: 1048576*32, encoding: inlistEnc}, function(err, stdout, stderr) {
 					if(stderr && stderr.length && verbosity >= 4 && !err) {
 						logger.debug('File list process outputted to stderr: ' + stderr.toString(inlistEnc));
 					}
@@ -1256,7 +1256,7 @@ var filesToUpload = argv._;
 		// TODO: consider supporting deferred filesize gathering?
 		var m = file.match(/^procjson:\/\/(.+?,.+?,.+)$/i);
 		if(m) {
-			if(m[1].substr(0, 1) != '[')
+			if(m[1].substring(0, 1) != '[')
 				m[1] = '[' + m[1] + ']';
 			m = JSON.parse(m[1]);
 			if(!Array.isArray(m) || m.length != 3)
@@ -1378,7 +1378,7 @@ var filesToUpload = argv._;
 		progress.forEach(function(prg) {
 			if(prg.type == 'stdoutx' || prg.type == 'stderrx')
 				reportOnEnd = true;
-			if(prg.type.substr(0, 3) == 'std') {
+			if(prg.type.substring(0, 3) == 'std') {
 				// if unexpected exit, force a newline to prevent some possible terminal corruption
 				process.on('exit', writeNewline);
 			}

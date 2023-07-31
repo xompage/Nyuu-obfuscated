@@ -1630,9 +1630,9 @@ it('should handle server responding early during chunked post upload', function(
 			var msg = 'X:b\r\n\r\nm\r\n.\r\n';
 			server.expect('POST\r\n', function() {
 				// respond after only receiving first chunk
-				this.expect(msg.substr(0, 4), function() {
+				this.expect(msg.substring(0, 4), function() {
 					this.expect('POST\r\n', function() { // expect a re-post attempt
-						this.expect(msg.substr(0, 4), '240 <new-article> Article received ok');
+						this.expect(msg.substring(0, 4), '240 <new-article> Article received ok');
 						sendNextChunks = 1;
 						this.respond('340  Send article');
 					});
@@ -1673,7 +1673,7 @@ it('should handle disconnect during chunked post upload, and retry', function(do
 			
 			var msg = 'X:b\r\n\r\nm\r\n.\r\n';
 			server.expect('POST\r\n', function() {
-				this.expect(msg.substr(0, 4), function() {
+				this.expect(msg.substring(0, 4), function() {
 					this.expect('POST\r\n', function() {
 						sendNextChunks = 10;
 						this.expect(msg, '240 <new-article> Article received ok');
@@ -1722,7 +1722,7 @@ it('should handle disconnect during chunked post upload, and retry', function(do
 				
 				var msg = 'X:b\r\n\r\nm\r\n.\r\n';
 				server.expect('POST\r\n', function() {
-					this.expect(msg.substr(0, 4), function() {
+					this.expect(msg.substring(0, 4), function() {
 						if(ef == 'destroy') {
 							client.destroy();
 							tl.defer(cb);
