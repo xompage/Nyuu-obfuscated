@@ -254,7 +254,7 @@ NNTPConnection.prototype = {
 		var p = data.indexOf('\r\n\r\n');
 		if(p < 0) return false;
 		sData = sData.substring(0, p+2);
-		data = data.slice(new Buffer(sData, 'binary').length + 2);
+		data = data.slice(Buffer.byteLength(sData) + 2);
 		
 		// parse headers
 		var h = {};

@@ -4,6 +4,7 @@ var assert = require("assert");
 
 var MultiEncoder = require('../lib/article');
 var BufferPool = require('../lib/bufferpool');
+var bufferSlice = Buffer.prototype.subarray || Buffer.prototype.slice;
 
 describe('Article', function() {
 
@@ -32,7 +33,7 @@ var simpleCheck = function(pool) {
 	assert.equal(a1.part, 1);
 	s = a1.data.toString();
 	
-	var headers = a1.data.slice(0, a1.postPos).toString();
+	var headers = bufferSlice.call(a1.data, 0, a1.postPos).toString();
 	
 	// first part should not have a crc32 (but may have a pcrc32)
 	assert(!s.match(/[^p]crc32=/));
@@ -60,7 +61,7 @@ var simpleCheck = function(pool) {
 	var a2 = a.generate(new Buffer('def'), pool, a2Headers);
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
-	headers = a2.data.slice(0, a2.postPos).toString();
+	headers = bufferSlice.call(a2.data, 0, a2.postPos).toString();
 	
 	// check a2 has a crc32
 	assert.notEqual(s.indexOf('crc32='), -1);
