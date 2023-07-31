@@ -224,7 +224,7 @@ var randStr = function(len) {
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
 var _mainTransform = function(rx, v) {
 	if(!v) return;
-	if(!rx.test(v)) return v; // shortcut: if no tokens are used, don't force function evaluation
+	if((''+v).search(rx) == -1) return v; // shortcut: if no tokens are used, don't force function evaluation
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
 	return function(filenum, filenumtotal, filename, filesize, part, parts, extra) {
 		return v.replace(rx, function(m, token, a1) {
@@ -988,7 +988,7 @@ if(argv['out']) {
 	} else if(/^fd:\/\/\d+$/i.test(argv['out'])) {
 		ulOpts.nzb.writeTo = fs.createWriteStream(null, {fd: argv['out'].substring(5)|0, encoding: ulOpts.nzb.writeOpts.encoding});
 	} else {
-		var outTokens = RE_FILE_TRANSFORM.test(argv['out']);
+		var outTokens = argv['out'].search(RE_FILE_TRANSFORM) >= 0;
 		var nzbOpts = ulOpts.nzb;
 		if(outTokens) delete nzbOpts.writeTo;
 		if(/^proc:\/\//i.test(argv['out'])) {
