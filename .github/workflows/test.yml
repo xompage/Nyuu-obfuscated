@@ -1,0 +1,35 @@
+name: Build release binary
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  test-node:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - version: '0.10.40'
+          flags: ''
+          mocha: '3.5.3'
+        - version: '4.9.1'
+          flags: ''
+          mocha: '5.2.0'
+        - version: '8.17.0'
+          flags: '--trace-warnings'
+          mocha: '7.2.0'
+        - version: '12.22.12'
+          flags: '--trace-warnings'
+          mocha: '9.2.2'
+        - version: '20.5.0'
+          flags: '--pending-deprecation --throw-deprecation --trace-warnings'
+          mocha: '10.2.0'
+    name: Test on Node v${{ matrix.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - run: (npm install --production && npm install mocha@${{ matrix.mocha }})
+      - run: node ${{ matrix.flags }} node_modules/mocha/bin/_mocha
