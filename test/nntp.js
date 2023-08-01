@@ -5,6 +5,9 @@ var async = require('async');
 var NNTP = require('../lib/nntp');
 var net = require('net');
 
+var allocBuffer = (Buffer.allocUnsafe || Buffer);
+var toBuffer = (Buffer.alloc ? Buffer.from : Buffer);
+
 // async.waterfall wrapper which checks if callbacks are called more than once
 var waterfall = function(funcs, cb) {
 	var called = Array(funcs.length);
@@ -24,7 +27,7 @@ var waterfall = function(funcs, cb) {
 
 // mimick Post object as far as the NNTP module requires it
 function DummyPost(data) {
-	this.data = new Buffer(data);
+	this.data = toBuffer(data);
 	this.randomizeMessageID = function() {
 		return this.messageId = 'xxxx';
 	};
@@ -67,7 +70,7 @@ NNTP.log = {
 
 // emulate a simple echo/expectation server
 function TestServer(onConn) {
-	this.data = new Buffer(0);
+	this.data = allocBuffer(0);
 	
 	var cOpts = {allowHalfOpen: true};
 	if(TEST_SSL) {
@@ -123,7 +126,7 @@ TestServer.prototype = {
 		if(this.data.length == this._expect.length) {
 			assert.equal(this.data.toString(), this._expect.toString());
 			this._expect = null;
-			this.data = new Buffer(0);
+			this.data = allocBuffer(0);
 			if(typeof this._expectAction == 'function')
 				this._expectAction.call(this);
 			else if(this._expectAction || this._expectAction === '')
@@ -131,7 +134,7 @@ TestServer.prototype = {
 		}
 	},
 	expect: function(data, response) {
-		this._expect = new Buffer(data);
+		this._expect = toBuffer(data);
 		this._expectAction = response;
 	},
 	respond: function(msg) {

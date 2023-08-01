@@ -2,6 +2,7 @@
 
 var assert = require("assert");
 var Newbz = require('../lib/nzbbuffer');
+var toBuffer = (Buffer.alloc ? Buffer.from : Buffer);
 
 describe('NZB Buffered Generator', function() {
 	it('should basically work', function(done) {
@@ -12,7 +13,7 @@ describe('NZB Buffered Generator', function() {
 				another_tag : '"hello world"'
 			},
 			function(blob, encoding) {
-				data.push(new Buffer(blob, encoding));
+				data.push(toBuffer(blob, encoding));
 			},
 			true,
 			'utf8'
@@ -73,7 +74,7 @@ describe('NZB Buffered Generator', function() {
 		var nzb = new Newbz(
 			{},
 			function(blob, encoding) {
-				data.push(new Buffer(blob, encoding));
+				data.push(toBuffer(blob, encoding));
 			},
 			true,
 			'utf8'
@@ -101,7 +102,7 @@ describe('NZB Buffered Generator', function() {
 		var nzb = new Newbz(
 			{},
 			function(blob, encoding) {
-				data.push(new Buffer(blob, encoding));
+				data.push(toBuffer(blob, encoding));
 			},
 			true,
 			'utf8'

@@ -5,6 +5,7 @@ var assert = require("assert");
 var MultiEncoder = require('../lib/article');
 var BufferPool = require('../lib/bufferpool');
 var bufferSlice = Buffer.prototype.subarray || Buffer.prototype.slice;
+var toBuffer = (Buffer.alloc ? Buffer.from : Buffer);
 
 describe('Article', function() {
 
@@ -29,7 +30,7 @@ var simpleCheck = function(pool) {
 		}
 	});
 	var a1Headers = {};
-	var a1 = a.generate(new Buffer('abc'), pool, a1Headers);
+	var a1 = a.generate(toBuffer('abc'), pool, a1Headers);
 	assert.equal(a1.part, 1);
 	s = a1.data.toString();
 	
@@ -58,7 +59,7 @@ var simpleCheck = function(pool) {
 		missing: function() { return null; }
 	});
 	var a2Headers = {};
-	var a2 = a.generate(new Buffer('def'), pool, a2Headers);
+	var a2 = a.generate(toBuffer('def'), pool, a2Headers);
 	assert.equal(a2.part, 2);
 	s = a2.data.toString();
 	headers = bufferSlice.call(a2.data, 0, a2.postPos).toString();
@@ -74,14 +75,14 @@ var simpleCheck = function(pool) {
 	assert.equal(a.pos, 6);
 	
 	// test release+reload
-	var oldData = new Buffer(a1.data);
+	var oldData = toBuffer(a1.data);
 	a1.releaseData();
-	a1.reloadData(new Buffer('abc'));
+	a1.reloadData(toBuffer('abc'));
 	assert.equal(oldData.toString('hex'), a1.data.toString('hex'));
 	
-	oldData = new Buffer(a2.data);
+	oldData = toBuffer(a2.data);
 	a2.releaseData();
-	a2.reloadData(new Buffer('def'));
+	a2.reloadData(toBuffer('def'));
 	assert.equal(oldData.toString('hex'), a2.data.toString('hex'));
 };
 
@@ -101,31 +102,31 @@ it('basic (large) pooled post test', function(done) {
 it('should throw if sent too many parts', function(done) {
 	var a = new MultiEncoder('file', 6, 6);
 	a.setHeaders({});
-	var a1 = a.generate(new Buffer('aabbcc'));
+	var a1 = a.generate(toBuffer('aabbcc'));
 	
 	assert.equal(a1.part, 1);
 	assert.notEqual(a1.data.toString().indexOf('crc32='), -1);
 	
 	assert.throws(function() {
-		a.generate(new Buffer('b'));
+		a.generate(toBuffer('b'));
 	}, Error);
 	done();
 });
 it('should throw if sent too much data', function(done) {
 	var a = new MultiEncoder('file', 3, 2);
 	a.setHeaders({});
-	a.generate(new Buffer('aa'));
+	a.generate(toBuffer('aa'));
 	assert.throws(function() {
-		a.generate(new Buffer('bb'));
+		a.generate(toBuffer('bb'));
 	}, Error);
 	done();
 });
 it('should throw if sent data isn\'t expected amount', function(done) {
 	var a = new MultiEncoder('file', 5, 3);
 	a.setHeaders({});
-	a.generate(new Buffer('aa'));
+	a.generate(toBuffer('aa'));
 	assert.throws(function() {
-		a.generate(new Buffer('bb'));
+		a.generate(toBuffer('bb'));
 	}, Error);
 	done();
 });
