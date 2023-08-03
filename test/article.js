@@ -4,7 +4,7 @@ var assert = require("assert");
 
 var MultiEncoder = require('../lib/article');
 var BufferPool = require('../lib/bufferpool');
-var bufferSlice = Buffer.prototype.subarray || Buffer.prototype.slice;
+var bufferSlice = Buffer.prototype.readBigInt64BE ? Buffer.prototype.subarray : Buffer.prototype.slice;
 var toBuffer = (Buffer.alloc ? Buffer.from : Buffer);
 
 describe('Article', function() {

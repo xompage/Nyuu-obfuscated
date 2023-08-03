@@ -1,4 +1,4 @@
-name: Build release binary
+name: Run Tests
 on:
   workflow_dispatch:
   push:
