@@ -214,6 +214,8 @@ var servOptMap = {
 	},
 };
 
+var argv;
+
 var randStr = function(len) {
 	var rnd = '';
 	var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -221,64 +223,131 @@ var randStr = function(len) {
 		rnd += chars[(Math.random() * chars.length) | 0];
 	return rnd;
 };
+function UserScriptError(message, area) {
+	var r = Error.call(this, message);
+	r.name = 'UserScriptError';
+	r.area = area;
+	return r;
+}
+UserScriptError.prototype = Object.create(Error.prototype, {
+	constructor: UserScriptError
+});
+
+// check whether an evaluation token (e.g. ${blah}) is present
+// note that we include ` and \ to be consistent with template string behaviour; without this check, "a`b" and "a`${'b'}" may behave differently
+var RE_EVAL_TOKEN_PRESENT = /\$\{.*\}|[`\\]/;
 // NOTE: for `{comment/2}` to work, this must be defined after the comment/2 options!
-var _mainTransform = function(rx, v) {
+var _mainTransform = function(rx, area, v) {
 	if(!v) return;
-	if((''+v).search(rx) == -1) return v; // shortcut: if no tokens are used, don't force function evaluation
+	
 	var re_group_fname = /(\.[a-z0-9]{1,10}){0,2}(\.vol\d+[\-+]\d+\.par2)?(\.\d+|\.part\d+)?$/i;
-	return function(filenum, filenumtotal, filename, filesize, part, parts, extra) {
-		return v.replace(rx, function(m, token, a1) {
-			switch(token.toLowerCase()) {
-				case 'filenum': return filenum;
-				case '0filenum': return cliUtil.lpad(''+filenum, (''+filenumtotal).length, '0');
-				case 'files': return filenumtotal;
-				case 'filename': return filename;
-				case 'fnamebase': return filename.replace(re_group_fname, '');
-				case 'filesize': return filesize;
-				case 'fileksize': return Math.round(filesize / 10.24) / 100;
-				case 'filemsize': return Math.round(filesize / 10485.76) / 100;
-				case 'filegsize': return Math.round(filesize / 10737418.24) / 100;
-				case 'filetsize': return Math.round(filesize / 10995116277.76) / 100;
-				case 'fileasize': return cliUtil.friendlySize(filesize);
-				case 'part': return part;
-				case '0part': return cliUtil.lpad(''+part, (''+parts).length, '0');
-				case 'parts': return parts;
-				// ugly hack which relies on placement of the options
-				case 'comment': return argv.comment || '';
-				case 'comment2': return argv.comment2 || '';
-				case 'size': return extra.rawSize;
-				case 'timestamp': return extra.genTime;
-				case 'value': return extra;
-				default:
-					// rand(n)
-					return randStr(a1);
-			}
-		});
-	};
+	if(!argv['token-eval']) {
+		if((''+v).search(rx) == -1) return v; // shortcut: if no tokens are used, don't force function evaluation
+		return function(filenum, filenumtotal, filename, filesize, part, parts, extra) {
+			return v.replace(rx, function(m, token, a1) {
+				switch(token.toLowerCase()) {
+					case 'filenum': return filenum;
+					case '0filenum': return cliUtil.lpad(''+filenum, (''+filenumtotal).length, '0');
+					case 'files': return filenumtotal;
+					case 'filename': return filename;
+					case 'fnamebase': return filename.replace(re_group_fname, '');
+					case 'filesize': return filesize;
+					case 'fileksize': return Math.round(filesize / 10.24) / 100;
+					case 'filemsize': return Math.round(filesize / 10485.76) / 100;
+					case 'filegsize': return Math.round(filesize / 10737418.24) / 100;
+					case 'filetsize': return Math.round(filesize / 10995116277.76) / 100;
+					case 'fileasize': return cliUtil.friendlySize(filesize);
+					case 'part': return part;
+					case '0part': return cliUtil.lpad(''+part, (''+parts).length, '0');
+					case 'parts': return parts;
+					
+					case 'comment': return argv.comment || '';
+					case 'comment2': return argv.comment2 || '';
+					case 'size': return extra.rawSize;
+					case 'timestamp': return extra.genTime;
+					case 'value': return extra;
+					default:
+						// rand(n)
+						return randStr(a1);
+				}
+			});
+		};
+	} else {
+		// if there's no special characters, take a shortcut
+		if((''+v).search(RE_EVAL_TOKEN_PRESENT) == -1) return v;
+		var fn;
+		try {
+			fn = new Function('__friendlySize', 'comment', 'comment2', 'rand', 'UserScriptError',
+				'filenum', 'files', 'filename', 'filesize', 'part', 'parts', '__extra',
+				
+				'let fnamebase = filename.replace(' + re_group_fname.toString() + ', "");' +
+				'let fileksize = Math.round(filesize / 10.24) / 100;' +
+				'let filemsize = Math.round(filesize / 10485.76) / 100;' +
+				'let filegsize = Math.round(filesize / 10737418.24) / 100;' +
+				'let filetsize = Math.round(filesize / 10995116277.76) / 100;' +
+				'let fileasize = __friendlySize(filesize);' +
+				'let size = __extra ? __extra.rawSize : undefined;' +
+				'let timestamp = __extra ? __extra.genTime : undefined;' +
+				'let value = __extra;' +
+				'let __r;' +
+				'try {__r=`' + v + '`;}' +
+				'catch(x) {throw new UserScriptError(x.toString(), "'+area+'");}' +
+				'return __r;'
+			);
+		} catch(x) {
+			var err = 'Syntax error in expression for `' + area + '`: ' + x.toString();
+			if(v.search(/[`\\]/) >= 0)
+				err += '\nNote: backslashes (\\) and backticks (`) may need to be escaped';
+			error(err);
+		}
+		return fn.bind(null, cliUtil.friendlySize, argv.comment||'', argv.comment2||'', randStr, UserScriptError);
+	}
 };
 var articleHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|size|comment2?|timestamp|rand\((\d+)\))\}/ig);
 var yencNameFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|parts|comment2?|rand\((\d+)\))\}/ig);
 var nzbHeaderFn = _mainTransform.bind(null, /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts|value)\}/ig);
 var RE_FILE_TRANSFORM = /\$?\{(0?filenum|files|filename|fnamebase|filesize|file[kmgta]size|0?part|parts)\}/ig;
 var fileTransformFn = _mainTransform.bind(null, RE_FILE_TRANSFORM);
-var filenameTransformFn = function(v) {
+var filenameTransformFn = function(area, v) {
 	if(!v) return;
-	var path = require('path');
-	return function(filename) {
-		return v.replace(/\$?\{(filename|basename|pathname|rand\((\d+)\))\}/ig, function(m, token, a1) {
-			switch(token.toLowerCase()) {
-				case 'basename':
-					return path.basename(filename);
-				case 'pathname':
-					return path.dirname(filename);
-				case 'filename':
-					return filename;
-				default:
-					// rand(n)
-					return randStr(a1);
-			}
-		});
-	};
+	if(!argv['token-eval']) {
+		var path = require('path');
+		return function(filename) {
+			return v.replace(/\$?\{(filename|basename|pathname|rand\((\d+)\))\}/ig, function(m, token, a1) {
+				switch(token.toLowerCase()) {
+					case 'basename':
+						return path.basename(filename);
+					case 'pathname':
+						return path.dirname(filename);
+					case 'filename':
+						return filename;
+					default:
+						// rand(n)
+						return randStr(a1);
+				}
+			});
+		};
+	} else {
+		var fn;
+		try {
+			fn = new Function('__path', 'rand', 'UserScriptError',
+				'filename',
+				
+				'let basename = __path.basename(filename);' +
+				'let pathname = __path.dirname(filename);' +
+				'let __r;' +
+				'try {__r = `' + v + '`;}' +
+				'catch(x) {throw new UserScriptError(x.toString(), "'+area+'");}' +
+				'return __r;'
+			);
+		} catch(x) {
+			var err = 'Syntax error in expression for `' + area + '`: ' + x.toString();
+			if(v.search(/[`\\]/) >= 0)
+				err += '\nNote: backslashes (\\) and backticks (`) may need to be escaped';
+			error(err);
+		}
+		return fn.bind(null, require('path'), randStr, UserScriptError);
+	}
 };
 var optMap = {
 	/*'check-reuse-conn': {
@@ -326,9 +395,7 @@ var optMap = {
 		default: 'utf8'
 	},
 	'yenc-name': {
-		type: 'string',
-		map: 'yencName',
-		fn: yencNameFn
+		type: 'string'
 	},
 	comment: {
 		type: 'string',
@@ -366,31 +433,21 @@ var optMap = {
 	},
 	subject: {
 		type: 'string',
-		alias: 's',
-		map: 'postHeaders/Subject',
-		fn: articleHeaderFn
+		alias: 's'
 	},
 	filename: {
-		type: 'string',
-		map: 'fileNameTransform',
-		fn: filenameTransformFn
+		type: 'string'
 	},
 	from: {
 		type: 'string',
-		alias: 'f',
-		map: 'postHeaders/From',
-		fn: articleHeaderFn
+		alias: 'f'
 	},
 	groups: {
 		type: 'string',
-		alias: 'g',
-		map: 'postHeaders/Newsgroups',
-		fn: articleHeaderFn
+		alias: 'g'
 	},
 	'message-id': {
-		type: 'string',
-		map: 'postHeaders/Message-ID',
-		fn: articleHeaderFn
+		type: 'string'
 	},
 	out: {
 		type: 'string',
@@ -428,14 +485,10 @@ var optMap = {
 		}
 	},
 	'nzb-subject': {
-		type: 'string',
-		map: 'nzb/overrides/subject',
-		fn: nzbHeaderFn
+		type: 'string'
 	},
 	'nzb-poster': {
-		type: 'string',
-		map: 'nzb/overrides/poster',
-		fn: nzbHeaderFn
+		type: 'string'
 	},
 	overwrite: {
 		type: 'bool',
@@ -562,6 +615,11 @@ var optMap = {
 		type: 'bool',
 		map: 'deleteRawPosts'
 	},
+	'token-eval': {
+		type: 'bool',
+		default: false,
+		alias: 'E'
+	},
 	'copy-input': {
 		type: 'string'
 	},
@@ -630,7 +688,6 @@ for(var k in servOptMap) {
 }
 
 
-var argv;
 try {
 	argv = arg_parser(process.argv.slice(2), optMap);
 } catch(x) {
@@ -927,6 +984,12 @@ if(argv['copy-input']) {
 }
 
 // map custom headers
+['Subject','From','Newsgroups','Message-ID'].forEach(function(header) {
+	var hl = header.toLowerCase();
+	if(hl == 'newsgroups') hl = 'groups';
+	if(hl in argv)
+		ulOpts.postHeaders[header] = articleHeaderFn(hl, argv[hl]);
+});
 if(argv.header) {
 	// to preserve case, build case-insensitive lookup
 	var headerCMap = {};
@@ -945,9 +1008,20 @@ if(argv.header) {
 				error('The Message-ID header cannot be unset');
 			delete ulOpts.postHeaders[kk];
 		} else
-			ulOpts.postHeaders[kk] = articleHeaderFn(argv.header[k]);
+			ulOpts.postHeaders[kk] = articleHeaderFn('header', argv.header[k]);
 	}
 }
+
+// token handling of other parameters
+if('yenc-name' in argv)
+	ulOpts.yencName = yencNameFn('yenc-name', argv['yenc-name']);
+if('filename' in argv)
+	ulOpts.fileNameTransform = filenameTransformFn('filename', argv['filename']);
+['subject','poster'].forEach(function(prop) {
+	var k = 'nzb-'+prop;
+	if(k in argv)
+		ulOpts.nzb.overrides[prop] = nzbHeaderFn(k, argv[k]);
+});
 
 // map custom meta tags
 if(argv.meta) util.extend(ulOpts.nzb.metaData, argv.meta);
@@ -988,13 +1062,13 @@ if(argv['out']) {
 	} else if(/^fd:\/\/\d+$/i.test(argv['out'])) {
 		ulOpts.nzb.writeTo = fs.createWriteStream(null, {fd: argv['out'].substring(5)|0, encoding: ulOpts.nzb.writeOpts.encoding});
 	} else {
-		var outTokens = argv['out'].search(RE_FILE_TRANSFORM) >= 0;
+		var outTokens = argv['out'].search(argv['token-eval'] ? RE_EVAL_TOKEN_PRESENT : RE_FILE_TRANSFORM) >= 0;
 		var nzbOpts = ulOpts.nzb;
 		if(outTokens) delete nzbOpts.writeTo;
 		if(/^proc:\/\//i.test(argv['out'])) {
 			var proc = argv['out'].substring(7);
 			if(outTokens) {
-				var tr = fileTransformFn(proc), procsStarted = {};
+				var tr = fileTransformFn('out', proc), procsStarted = {};
 				ulOpts.nzb = function() {
 					var proc = tr.apply(null, arguments);
 					if(!procsStarted[proc])
@@ -1011,7 +1085,7 @@ if(argv['out']) {
 				}.bind(null, proc);
 			}
 		} else if(outTokens) {
-			var tr = fileTransformFn(argv['out']);
+			var tr = fileTransformFn('out', argv['out']);
 			ulOpts.nzb = function() {
 				var opts = {writeTo: tr.apply(null, arguments)};
 				for(var k in nzbOpts)
@@ -1164,8 +1238,13 @@ if(verbosity < 1) {
 		if(progressMgr.getProcessIndicator)
 			process.removeListener('exit', writeNewline);
 		progressMgr.getProcessIndicator = null;
-		logger.error('Unexpected fatal exception encountered, stack trace below');
-		throw err; // this seems to change the exit code a bit :/
+		if(err.name == 'UserScriptError') {
+			logger.error('Evaluation failed for parameter `'+err.area+'`: ' + err.message);
+			process.exit(isNode010 ? 8 : 1);
+		} else {
+			logger.error('Unexpected fatal exception encountered, stack trace below');
+			throw err; // this seems to change the exit code a bit :/
+		}
 	});
 }
 

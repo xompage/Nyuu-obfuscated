@@ -391,7 +391,7 @@ Advanced Tuning Options:
                              slower, but may be useful if the CPU or disk is
                              overloaded.
 
-Post Dumping Options:
+Other Options:
 
        --dump-failed-posts   Write out articles that fail to post to this
                              location. Message-ID will be appended to this to
@@ -408,6 +408,24 @@ Post Dumping Options:
        --delete-raw-posts    Delete successfully posted raw articles (flag
                              option). This only has any effect if the
                              `--input-raw-posts` flag is specified.
+  -E,  --token-eval          For all options which accept tokens (except
+                             `--copy-input`), switches to an alternative
+                             evaluation strategy, where the value is treated as
+                             a Javascript template string. Note that variables
+                             starting with '0' are not available.
+                             Example value for `--subject`:
+                                 ${filename}: part ${part-1} of ${parts}
+                             WARNING: as the value is wrapped in a Javascript
+                             template string (backticks), without escaping,
+                             care must be taken when using backticks and
+                             backslashes. For example, the following will cause
+                             a syntax error:
+                                 --from 'A`nt ${Date.now()}'
+                             The backtick above needs to be escaped with a
+                             backslash, like in a template string.
+                             NOTE: this syntax and rules are not considered
+                             final, and may change in future Nyuu releases
+                             This option takes no values. Requires NodeJS >= 4
 
 UI Options:
 
