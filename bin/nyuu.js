@@ -391,8 +391,7 @@ var optMap = {
 	'article-encoding': {
 		type: 'enum',
 		enum: ['ascii','latin1','utf8'],
-		map: 'articleEncoding',
-		default: 'utf8'
+		map: 'articleEncoding'
 	},
 	'yenc-name': {
 		type: 'string'
@@ -549,8 +548,7 @@ var optMap = {
 		alias: '0'
 	},
 	'input-file-enc': {
-		type: 'string',
-		default: 'utf8'
+		type: 'string'
 	},
 	'disk-req-size': {
 		type: 'size',
@@ -617,7 +615,6 @@ var optMap = {
 	},
 	'token-eval': {
 		type: 'bool',
-		default: false,
 		alias: 'E'
 	},
 	'copy-input': {
@@ -695,6 +692,9 @@ try {
 }
 var isNode010 = process.version.match(/^v0\.10\./);
 
+var dumpObj = function(o) {
+	return require('util').inspect(o, {colors: argv.colorize})
+};
 
 if(argv['help-full'] || argv.help) {
 	var helpText;
@@ -742,7 +742,7 @@ if(argv['package-info']) {
 	
 	for(var i in m) {
 		console.error('\n' + i + ':');
-		process.stderr.write(require('util').inspect(m[i], {colors: argv.colorize}) + '\n');
+		process.stderr.write(dumpObj(m[i]) + '\n');
 	}
 	process.exit(0);
 }
@@ -1281,7 +1281,7 @@ var filesToUpload = argv._;
 	
 	if(fileLists) {
 		var stdInUsed = false;
-		var inlistEnc = argv['input-file-enc'];
+		var inlistEnc = argv['input-file-enc'] || 'utf8';
 		require('async').map(fileLists, function(fl, cb) {
 			if(fl[0] == '-' || /^fd:\/\/\d+$/i.test(fl[0])) {
 				var stream;
@@ -1401,7 +1401,7 @@ var filesToUpload = argv._;
 				if(handles) {
 					Nyuu.log.warn('Process did not terminate cleanly; active handles: ' + cliUtil.activeHandlesStr(handles[0]));
 					if(verbosity >= 4 && handles[1]) {
-						process.stderr.write(require('util').inspect(handles[1], {colors: argv.colorize}) + '\n');
+						process.stderr.write(dumpObj(handles[1]) + '\n');
 					}
 				} else
 					Nyuu.log.warn('Process did not terminate cleanly');
