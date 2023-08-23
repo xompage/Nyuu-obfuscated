@@ -118,7 +118,6 @@ nzb: {
 	writeOpts: { // for details, https://nodejs.org/api/fs.html#fs_fs_createwritestream_path_options
 		//mode: 0666,
 		flags: 'wx', // change to 'w' to overwrite file if it exists
-		defaultEncoding: 'utf-8',
 		encoding: 'utf-8',
 	},
 	overrides: {
