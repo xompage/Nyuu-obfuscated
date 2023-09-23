@@ -421,6 +421,10 @@ var optMap = {
 		type: 'bool',
 		map: 'keepMessageId'
 	},
+	'obfuscate-articles': {
+		type: 'bool',
+		map: 'obfuscateArticles'
+	},
 	'group-files': {
 		type: 'bool',
 		alias: 'F',
@@ -1055,6 +1059,9 @@ if(argv['preload-modules']) {
 // if doing raw posts, default keepMessageId to true
 if(argv['input-raw-posts'] && argv['keep-message-id'] !== false)
 	ulOpts.keepMessageId = true;
+
+if(argv['obfuscate-articles'])
+	ulOpts.obfuscateArticles = true;
 
 if(argv['out']) {
 	if(argv['out'] == '-') {

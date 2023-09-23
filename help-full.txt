@@ -152,6 +152,8 @@ Article/Post Options:
                              Default is similar to: ${rand(24)}-{timestamp}@nyuu
        --keep-message-id     Don't randomize Message-ID every time the post is
                              submitted. (flag option)
+       --obfuscate-articles  Randomize yenc header filename for every article
+                             with a randomized 32-62 hex string. (flag option)
   -H,  --header              Specify an NNTP header in either of these forms:
                                  -H "MyHeader: MyValue"
                                  -H MyHeader=MyValue
